@@ -1,5 +1,11 @@
 # vue-dockable-desktop
 
+[![npm version](https://img.shields.io/npm/v/vue-dockable-desktop.svg?color=blue)](https://www.npmjs.com/package/vue-dockable-desktop)
+[![Vue 3](https://img.shields.io/badge/Vue-3.4%2B-42b883.svg)](https://vuejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-first-3178c6.svg)](https://www.typescriptlang.org/)
+[![parity](https://img.shields.io/badge/parity-react--dockable--desktop%206.3.0-orange.svg)](docs/PARITY.md)
+[![license](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 A window manager and dockable layout engine for **Vue 3**. Fluid grid splits, tabbed
 groups, floating resizable windows, zero-unmount state preservation, side panels and
 modals, toasts, context menus, per-panel overlays, and internationalisation.
@@ -14,10 +20,11 @@ transliteration of its React sibling. It reads and writes the **same serialised 
 format** as [`react-dockable-desktop`](https://github.com/felipecarrillo100/react-dockable-desktop),
 so a layout saved by either library loads in the other.
 
-> **Status: 0.1.0, pre-release.** The public API is gated (`api-surface.json`) and covered
-> by 725 tests. It is not on npm yet — it will be published as
-> [`vue-dockable-desktop`](https://www.npmjs.com/package/vue-dockable-desktop), the same
-> name as this repository.
+> **Versioning.** vdd follows its own semver, independently of `react-dockable-desktop`:
+> matching the two numbers would be a promise that breaks the first time either library needs
+> a breaking change the other does not. Which rdd release a given version corresponds to is
+> stated per release in [CHANGELOG.md](CHANGELOG.md) — this one tracks **rdd 6.3.0** — and
+> feature by feature in [docs/PARITY.md](docs/PARITY.md).
 
 ## Install
 
@@ -25,11 +32,9 @@ so a layout saved by either library loads in the other.
 npm install vue-dockable-desktop
 ```
 
-Requires Vue 3.4+. No other runtime dependencies.
-
-The [npm package](https://www.npmjs.com/package/vue-dockable-desktop) is not published yet,
-so that command will not resolve until the first release; until then, clone the repository
-and run the [demo](#documentation) or `npm run build` to produce `dist/`.
+Requires Vue 3.4+. No other runtime dependencies. The published package is
+[`vue-dockable-desktop`](https://www.npmjs.com/package/vue-dockable-desktop); the public API
+is pinned by `api-surface.json` and covered by 725 tests.
 
 ## Quick start
 
@@ -54,6 +59,11 @@ createApp(App).use(workspace).mount('#app')
 
 ```vue
 <!-- App.vue -->
+<script setup lang="ts">
+// Components are imported, not registered globally, so a build only carries the ones it uses.
+import { VddDesktop, VddModals, VddSidePanels, VddToasts } from 'vue-dockable-desktop'
+</script>
+
 <template>
   <div class="app">
     <VddDesktop />
@@ -69,14 +79,14 @@ createApp(App).use(workspace).mount('#app')
 ```
 
 `createWorkspace()` returns a Vue plugin — the same shape as `createPinia()` or
-`createRouter()` — so `app.use(workspace)` registers the components and makes
-`useWorkspace()` available anywhere:
+`createRouter()` — so `app.use(workspace)` makes `useWorkspace()` available anywhere:
 
 ```ts
 import { useWorkspace } from 'vue-dockable-desktop'
 
 const ws = useWorkspace()
-ws.openPanel('map', { title: 'Overview' })
+// openPanel(instanceId, panelKey, options?) — the id is yours, the key is from `panels`.
+ws.openPanel('overview', 'map', { title: 'Overview' })
 localStorage.setItem('layout', ws.saveLayout())
 ```
 

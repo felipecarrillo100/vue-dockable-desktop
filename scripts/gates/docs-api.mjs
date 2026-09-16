@@ -55,9 +55,75 @@ const MIGRATION_HEADINGS = [
 const failures = []
 const files = readdirSync(MANUAL).filter(f => f.endsWith('.md')).sort()
 
+/**
+ * Every documented `openPanel(` call must pass the panel key as its second argument.
+ *
+ * The signature is `openPanel(instanceId, panelKey, options?)`, and the shape that goes wrong
+ * is `openPanel('map', { title })` — two arguments with the options where the key belongs. It
+ * type-checks nowhere, but prose is not compiled, so the README shipped it until a consumer
+ * smoke test caught it on the way to 1.0.0. Checked wherever examples live, the README
+ * included: that file is the npm landing page.
+ */
+function checkOpenPanelCalls(label, text) {
+  for (const match of text.matchAll(/openPanel\(\s*([^)]*)\)/g)) {
+    const args = match[1]
+    // Only the two-argument object form is wrong; a key as the second argument is fine, and
+    // so is a call written across lines with an options object third.
+    if (/^\s*['"`][^'"`]*['"`]\s*,\s*\{/.test(args)) {
+      failures.push(`${label}: openPanel(${args.split('\n')[0]}…) passes options where the ` +
+        'panel key belongs — the signature is openPanel(instanceId, panelKey, options?)')
+    }
+  }
+}
+
+/**
+ * A document that shows a component in a template must show where it comes from.
+ *
+ * `install()` provides the workspace and nothing else — components are imported, so that a
+ * build carries only the ones it uses. The manual and the README both claimed `app.use()`
+ * registered them globally, and a reader who copied either got `<vdddesktop></vdddesktop>`
+ * in the DOM: an unresolved custom element, silent in a production build. Caught by a
+ * consumer smoke test on the way to 1.0.0, and pinned here so the examples stay runnable.
+ *
+ * Scoped to the two documents a reader copies *wholesale* — the README quick start and the
+ * manual's first chapter. Everywhere else the examples are fragments illustrating one prop,
+ * and demanding an SFC header in each would be noise for no gain. The claim itself is
+ * checked everywhere instead, just below.
+ */
+function checkComponentImports(label, text) {
+  const used = new Set([...text.matchAll(/<(Vdd[A-Z][A-Za-z]*)[\s/>]/g)].map(m => m[1]))
+  if (!used.size) return
+  const imported = new Set(
+    [...text.matchAll(/import\s*\{([^}]+)\}\s*from\s*'vue-dockable-desktop'/g)]
+      .flatMap(m => m[1].split(',').map(x => x.trim())),
+  )
+  for (const name of used) {
+    if (!imported.has(name)) {
+      failures.push(`${label}: uses <${name}> in an example but never imports it from ` +
+        "'vue-dockable-desktop' — app.use() does not register components globally")
+    }
+  }
+}
+
+const readme = readFileSync('README.md', 'utf8')
+checkOpenPanelCalls('README.md', readme)
+checkComponentImports('README.md', readme)
+checkComponentImports('01-getting-started.md',
+  readFileSync(join(MANUAL, '01-getting-started.md'), 'utf8'))
+
+// And nowhere may claim the plugin registers them, which is how the wrong examples were
+// justified in the first place.
+for (const file of ['README.md', ...readdirSync(MANUAL).filter(f => f.endsWith('.md')).map(f => join(MANUAL, f))]) {
+  const text = readFileSync(file, 'utf8')
+  if (/use\([^)]*\)[^.]{0,40}registers the components|registers the components globally/.test(text)) {
+    failures.push(`${file}: claims app.use() registers the components — install() only provides the workspace`)
+  }
+}
+
 for (const file of files) {
   const path = join(MANUAL, file)
   const text = readFileSync(path, 'utf8')
+  checkOpenPanelCalls(file, text)
 
   // An outline chapter documents nothing yet, so it has nothing to get wrong.
   if (/^> \*\*Outline only\.\*\*/m.test(text)) continue

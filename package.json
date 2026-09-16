@@ -1,7 +1,7 @@
 {
   "name": "vue-dockable-desktop",
-  "version": "0.1.0",
-  "description": "A window manager and dockable layout engine for Vue 3. Fluid grid splits, tabbed groups, floating resizable windows, zero-unmount state preservation, context menus, and internationalisation.",
+  "version": "1.0.0",
+  "description": "Vue 3 port of react-dockable-desktop — a dockable layout engine with split docking, tabbed groups, floating windows and zero-unmount panel persistence.",
   "type": "module",
   "license": "MIT",
   "repository": {
@@ -24,12 +24,14 @@
     "./styles.css": "./dist/styles.css"
   },
   "files": [
-    "dist"
+    "dist",
+    "CHANGELOG.md"
   ],
   "sideEffects": [
     "**/*.css"
   ],
   "scripts": {
+    "prepublishOnly": "npm run gate -- M14",
     "dev": "vite",
     "playground": "vite playground",
     "build": "vite build && vue-tsc -p tsconfig.build.json --emitDeclarationOnly && node scripts/copy-css.mjs",
@@ -52,6 +54,8 @@
   "keywords": [
     "vue",
     "vue3",
+    "react-dockable-desktop",
+    "dockable-desktop",
     "dockable",
     "layout",
     "window-manager",

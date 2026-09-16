@@ -57,11 +57,15 @@ check('css-prefix catches an unprefixed class added via classList', 'src/core/pa
   s => s.replace("el.className = 'vdd-panel-store'", "el.classList.add('bare-store')"),
   'scripts/gates/css-prefix.mjs')
 
+check('M1 catches the exported version drifting from package.json', 'src/index.ts',
+  s => s.replace("export const version = '1.0.0'", "export const version = '0.9.0'"),
+  'node scripts/gates/m1.mjs')
+
 check('api-surface catches an undocumented export', 'src/index.ts',
   s => s + '\nexport const sneaky = 1\n', `${rebuild} && node scripts/gates/api-surface.mjs`)
 
 check('api-surface catches a removed export', 'src/index.ts',
-  s => s.replace("export const version = '0.1.0'", "const version = '0.1.0'\nvoid version"),
+  s => s.replace("export const version = '1.0.0'", "const version = '1.0.0'\nvoid version"),
   `${rebuild} && node scripts/gates/api-surface.mjs`)
 
 check('api-surface refuses a stale build', 'src/index.ts',
@@ -285,6 +289,21 @@ check('M12 catches the contribution store reaching into the workspace', 'src/cor
   s => s.replace("import type { SidebarTab } from './sidebarTypes'",
                  "import { WORKSPACE_KEY } from './workspace'\nvoid WORKSPACE_KEY\nimport type { SidebarTab } from './sidebarTypes'"),
   'node scripts/gates/m12.mjs')
+
+check('docs-api catches a copy-me example using a component it never imports', 'docs/manual/01-getting-started.md',
+  s => s.replace("import { VddDesktop, VddModals, VddSidePanels, VddToasts } from 'vue-dockable-desktop'",
+                 "import { VddDesktop } from 'vue-dockable-desktop'"),
+  'node scripts/gates/docs-api.mjs')
+
+check('docs-api catches the claim that app.use() registers the components', 'docs/manual/01-getting-started.md',
+  s => s.replace('`app.use()` makes `useWorkspace()` available everywhere',
+                 '`app.use()` registers the components globally and makes `useWorkspace()` available everywhere'),
+  'node scripts/gates/docs-api.mjs')
+
+check('docs-api catches a documented openPanel call with options where the key belongs', 'README.md',
+  s => s.replace("ws.openPanel('overview', 'map', { title: 'Overview' })",
+                 "ws.openPanel('map', { title: 'Overview' })"),
+  'node scripts/gates/docs-api.mjs')
 
 check('docs-api catches the manual naming a component that is not exported', 'docs/manual/06-sidebar-toolbar.md',
   s => s.replace('<VddSidebar', '<VddSidebarDeluxe'),
