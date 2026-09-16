@@ -19,6 +19,7 @@ design it rather than transliterated from React. See
 |---|---|---|
 | [decisions/](decisions/) | contributors | Architecture Decision Records — one file per decision, with the reasoning and the consequences |
 | [ROADMAP.md](ROADMAP.md) | contributors | Phases P0–P7, each with an exit criterion |
+| [evidence/](evidence/) | contributors | what each milestone's gate asserted and found, one file per milestone |
 | [PARITY.md](PARITY.md) | contributors, migrating users | rdd → vdd API map, test map, and the list of deliberate divergences |
 | [manual/](manual/) | library users | The user manual |
 

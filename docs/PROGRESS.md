@@ -8,41 +8,41 @@ Appended at each gate. One row per attempt, so failures stay visible.
 | M0 spike | run 2 — **fail** | — | harness: `probe()` did not forward `id` into `page.evaluate` |
 | M0 spike | run 3 — **fail** | — | harness: local `const URL` shadowed the global constructor |
 | M0 spike | run 4 — **fail** | — | **implementation:** scroll/focus lost returning from hidden — preserved state must outlive the hidden period |
-| **M0 spike** | **PASS** | 1 gate, 40 assertions | Both strategies preserve everything. S1 chosen ([0002](decisions/0002-zero-unmount-via-teleport.md)). [artifacts/M0](../artifacts/M0/README.md) |
+| **M0 spike** | **PASS** | 1 gate, 40 assertions | Both strategies preserve everything. S1 chosen ([0002](decisions/0002-zero-unmount-via-teleport.md)). [M0 record](evidence/M0.md) |
 | M1 scaffold | run 1 — **fail** | 1 | missing dev deps: `@types/node`, `@eslint/js` — caught by the types and lint gates |
-| **M1 scaffold** | **PASS** | 1 | Vite lib build, vue-tsc d.ts, vitest+jsdom, eslint, gate runner, 4 standing gates. All 6 gate rules proven non-vacuous by `npm run gate:selftest`. [artifacts/M1](../artifacts/M1/README.md) |
+| **M1 scaffold** | **PASS** | 1 | Vite lib build, vue-tsc d.ts, vitest+jsdom, eslint, gate runner, 4 standing gates. All 6 gate rules proven non-vacuous by `npm run gate:selftest`. [M1 record](evidence/M1.md) |
 | M2 pure logic | run 1 — **fail** | 115 | `findLeaf` unused; `Map` a reserved component name; `_`-prefixed unused vars |
-| **M2 pure logic** | **PASS** | **115** | 9 modules ported, stylesheet 4072→3737 lines and prefix-complete, 10 rdd fixtures read faithfully. Found rdd defects D8/D9/D10. [artifacts/M2](../artifacts/M2/README.md) |
+| **M2 pure logic** | **PASS** | **115** | 9 modules ported, stylesheet 4072→3737 lines and prefix-complete, 10 rdd fixtures read faithfully. Found rdd defects D8/D9/D10. [M2 record](evidence/M2.md) |
 | M3 store | run 1 — **fail** | 45 | `{ focus: false }` still stole the visible tab; one bad test |
 | M3 store | run 2 — **fail** | 247 | `process.env` vs the build tsconfig; a writable-computed type; an inline `import()` type; api surface grew |
-| **M3 store** | **PASS** | **247** | `createWorkspace` live before mount, one `activePanelId` resolution point (12 actions routed), D1–D4 fixed and pinned, **rdd layouts round-trip both ways**. [artifacts/M3](../artifacts/M3/README.md) |
+| **M3 store** | **PASS** | **247** | `createWorkspace` live before mount, one `activePanelId` resolution point (12 actions routed), D1–D4 fixed and pinned, **rdd layouts round-trip both ways**. [M3 record](evidence/M3.md) |
 | M4 grid | run 1 — **fail** | 269 | browser gate: 0px-tall split divider (missing structural CSS); `dockPanel` trusted a stale `lastLeafId`; gate over-reached into M5's floating scope |
 | M4 grid | run 2 — **fail** | 269 | eslint had no browser globals; api surface grew by `VddDesktop` |
-| **M4 grid** | **PASS** | **269** | `<VddDesktop>`, recursive grid, tabs, split resize, persistence port. **Browser gate: one mount, video never restarts, scroll and focus restored at every visible step.** [artifacts/M4](../artifacts/M4/README.md) |
+| **M4 grid** | **PASS** | **269** | `<VddDesktop>`, recursive grid, tabs, split resize, persistence port. **Browser gate: one mount, video never restarts, scroll and focus restored at every visible step.** [M4 record](evidence/M4.md) |
 | M5 floating | run 1 — **fail** | 294 | browser gate: corner handles did nothing (D5 clipping at window level); shadow read mid-transition |
 | M5 floating | run 2 — **fail** | 295 | the gate found the same clipping in the `@media (pointer: coarse)` rules, which my own test had missed |
-| **M5 floating** | **PASS** | **295** | drag, 8-way resize, maximise, anchored stacking (LTR+RTL), clamp. **Every handle measured exact in Chrome.** D5 rewritten — it is larger than catalogued. [artifacts/M5](../artifacts/M5/README.md) |
+| **M5 floating** | **PASS** | **295** | drag, 8-way resize, maximise, anchored stacking (LTR+RTL), clamp. **Every handle measured exact in Chrome.** D5 rewritten — it is larger than catalogued. [M5 record](evidence/M5.md) |
 | M6 drag-dock | run 1 — **fail** | 322 | gate matched its own comment about not using `:hover`; gates now strip comments |
 | M6 drag-dock | run 2 — **fail** | 322 | inline `import()` type annotations; an unused test parameter |
-| **M6 drag-dock** | **PASS** | **322** | every drop target driven with real pointer events, LTR + RTL + touch; reorder index correction; capture only on touch. [artifacts/M6](../artifacts/M6/README.md) |
+| **M6 drag-dock** | **PASS** | **322** | every drop target driven with real pointer events, LTR + RTL + touch; reorder index correction; capture only on touch. [M6 record](evidence/M6.md) |
 | M7 taskbar | runs 1–5 — **fail** | 342 | browser gate found: taskbar z-index and preview z-index missing (rdd had them inline); preview listeners bound to a `<Teleport>` root; the preview's function-ref teardown bypassed its own ownership check; two harness mismeasurements |
-| **M7 taskbar** | **PASS** | **342** | three visibility modes, live previews (same node, scaled, still playing), touch tap-to-preview. Found D11 + D12. [artifacts/M7](../artifacts/M7/README.md) |
+| **M7 taskbar** | **PASS** | **342** | three visibility modes, live previews (same node, scaled, still playing), touch tap-to-preview. Found D11 + D12. [M7 record](evidence/M7.md) |
 | M8 menus | run 1 — **fail** | 373 | a non-`Node` event target crashed the dismiss handler — surfaced as an unhandled error *after* all tests passed |
-| **M8 menus** | **PASS** | **373** | menu request as state, one builder for tab/window/taskbar menus, submenus, checkboxes, both dismissal paths. **D1 closed end to end.** [artifacts/M8](../artifacts/M8/README.md) |
+| **M8 menus** | **PASS** | **373** | menu request as state, one builder for tab/window/taskbar menus, submenus, checkboxes, both dismissal paths. **D1 closed end to end.** [M8 record](evidence/M8.md) |
 | M9 sidebar+toolbar | run 1 — **fail** | 506 | the api-surface gate held the new exports back until they were recorded; 21 type errors in my own test helpers (`ComponentMountingOptions` is the type to reach for, not `Parameters<typeof mount>`) |
-| **M9 sidebar+toolbar** | **PASS** | **506** | 133 tests ported one-to-one, every rdd handle method mapped to a model. Found **D13** (unprefixed keyframes) and closed the sidebar half of **D12**. [artifacts/M9](../artifacts/M9/README.md) |
+| **M9 sidebar+toolbar** | **PASS** | **506** | 133 tests ported one-to-one, every rdd handle method mapped to a model. Found **D13** (unprefixed keyframes) and closed the sidebar half of **D12**. [M9 record](evidence/M9.md) |
 | M10 overlays | run 1 — **fail** | 553 | api-surface held 23 new exports back until recorded; the M10 gate itself failed on a missing **D14** entry in PARITY.md and on one of its own regexes not matching a generic call |
-| **M10 overlays** | **PASS** | **555** | one close sequence for four container kinds, the toast emitter deleted, dirty-close wired end to end. Found **D14** and a `containerType` bug. [artifacts/M10](../artifacts/M10/README.md) |
+| **M10 overlays** | **PASS** | **555** | one close sequence for four container kinds, the toast emitter deleted, dirty-close wired end to end. Found **D14** and a `containerType` bug. [M10 record](evidence/M10.md) |
 | M11 overlay | run 1 — **fail** | 615 | ten tests died with "Maximum recursive updates": the stack-registration `watchEffect` read the state it wrote. Then the browser gate crashed on a null box (the second panel opened into the same leaf, hiding the overlay) and one lint error |
 | M11 overlay | run 2 — **fail** | 615 | browser gate: my D5 corner probe aimed at a pixel outside the widget's painted shape; and the stacking assertion assumed an order the bucket does not guarantee |
-| **M11 overlay** | **PASS** | **615** | **D5 measured** — 40 hit probes across 8 handles, visible-corner drag exact; stretch tracks a resizing panel; docked resize stops dead at a toolbar. Nine stale-closure refs deleted. [artifacts/M11](../artifacts/M11/README.md) |
+| **M11 overlay** | **PASS** | **615** | **D5 measured** — 40 hit probes across 8 handles, visible-corner drag exact; stretch tracks a resizing panel; docked resize stops dead at a toolbar. Nine stale-closure refs deleted. [M11 record](evidence/M11.md) |
 | M12 contributions+i18n | run 1 — **fail** | 673 | api-surface held 13 new exports; my own M12 gate rule rejected a parameter name it should have allowed; one union-type error and one reserved component name in my tests |
-| **M12 contributions+i18n** | **PASS** | **673** | the milestone where the **D2 fix pays off** — a hidden panel's contribution is never surfaced, asserted three ways. i18n collapsed from three hooks to three workspace fields; `classes` ported with a stronger test than rdd's. [artifacts/M12](../artifacts/M12/README.md) |
+| **M12 contributions+i18n** | **PASS** | **673** | the milestone where the **D2 fix pays off** — a hidden panel's contribution is never surfaced, asserted three ways. i18n collapsed from three hooks to three workspace fields; `classes` ported with a stronger test than rdd's. [M12 record](evidence/M12.md) |
 | M13 parity+docs | runs 1–12 — **fail** | 719 | the correspondence gate, mostly: five rdd suites missing from the test map, chapter 13 undrafted, four dead CSS rules, a dead `--vdd-z-base` hookup, a missing close-empty-group button, an infinite reactive loop in `<VddDesktop>`, a false-negative hole in the class scanner, and eleven rounds of the browser tour not reaching a state |
-| **M13 parity+docs** | **PASS** | **719** | 26 suites accounted for, 54-state browser tour proves no rule is dead, `non-vacuity` sweep added (74 modules, 90.9% lines). Found **D15** and a real reactive loop. [artifacts/M13](../artifacts/M13/README.md) |
+| **M13 parity+docs** | **PASS** | **719** | 26 suites accounted for, 54-state browser tour proves no rule is dead, `non-vacuity` sweep added (74 modules, 90.9% lines). Found **D15** and a real reactive loop. [M13 record](evidence/M13.md) |
 | M14 demo | run 1 — **fail** | 719 | browser gate **hung with no output**: `page.evaluate` awaits its function's return, and `requestClosePanel` on a dirty panel only settles when answered |
 | M14 demo | run 2 — **fail** | 719 | four reported failures, three of them the gate mis-modelling the app: its own `goto` counted as an unexpected navigation, a modal's curtain covers the panel that opened it, and the pre-save state snapshot was stale |
-| **M14 demo** | **PASS** | **719** | 24 demo sources, 16 panel kinds, a 32-step walkthrough with no console errors. Found a Leaflet/overlay stacking conflict now documented in the manual. [artifacts/M14](../artifacts/M14/README.md) |
+| **M14 demo** | **PASS** | **719** | 24 demo sources, 16 panel kinds, a 32-step walkthrough with no console errors. Found a Leaflet/overlay stacking conflict now documented in the manual. [M14 record](evidence/M14.md) |
 
 ## Decisions unlocked
 
@@ -127,7 +127,7 @@ Appended at each gate. One row per attempt, so failures stay visible.
 - **D5 is closed and measured**, on inner widgets as well as windows: every handle's full
   nominal area is hittable, and a press on the visible corner moves both edges by the exact
   pointer delta. The gate's first framing of that assertion was wrong and is documented in
-  [artifacts/M11](../artifacts/M11/README.md) — the pixel it probed lies outside the widget's
+  [M11 record](evidence/M11.md) — the pixel it probed lies outside the widget's
   painted shape, so it was never a defect.
 - **A weak test inherited from rdd**, found by mutation: PO25 could not distinguish "clears
   both buckets of its edge" from "clears only its own corner", because rdd put the taller

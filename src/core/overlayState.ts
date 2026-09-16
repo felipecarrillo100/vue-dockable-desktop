@@ -10,7 +10,7 @@
  */
 import { markRaw, reactive, ref, shallowRef } from 'vue'
 import type { Component, InjectionKey, Ref } from 'vue'
-import type { FloatAnchor } from '../types'
+import type { FloatAnchor, Label } from '../types'
 import type { Stretch, PanelFloatPlacement } from './stretch'
 import { bucketsFor } from './stretch'
 import { ANCHORS } from './panelOverlay'
@@ -18,7 +18,15 @@ import type { ToolbarInsets, ToolbarPosition } from './panelOverlay'
 
 /** A widget opened through `useFloatingWidgets()` rather than placed in the template. */
 export interface ManagedWidget {
-  title: string
+  /**
+   * The widget's header text: plain, or a localisable descriptor.
+   *
+   * A descriptor matters most here of all the title surfaces, because this object is *stored*:
+   * a resolved string handed to `openManaged` is frozen at the language that was current when
+   * the widget opened, while a descriptor is resolved on every render and so follows a locale
+   * change with no reopen.
+   */
+  title: Label
   icon?: Component
   /** Rendered as the widget's content. */
   component: Component

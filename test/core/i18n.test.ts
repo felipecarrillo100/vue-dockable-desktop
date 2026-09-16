@@ -24,6 +24,7 @@ import { defineComponent, h, nextTick } from 'vue'
 import { mount } from '@vue/test-utils'
 import type { VueWrapper } from '@vue/test-utils'
 import { createWorkspace } from '../../src/core/workspace'
+import { ref } from 'vue'
 import { defaultMessages, formatLabel } from '../../src/core/messages'
 import VddModals from '../../src/components/VddModals.vue'
 import VddSidePanels from '../../src/components/VddSidePanels.vue'
@@ -258,5 +259,46 @@ describe('the classes option', () => {
     expect(classes).toContain('mine')
     expect(classes).toContain('vdd-modal-window')
     expect(classes).toContain('vdd-modal-size-small')
+  })
+})
+
+// ─── Every title the library stores ──────────────────────────────────────────
+
+/**
+ * The invariant behind a bug reported against rdd 6.2.0, which this port shared: a title the
+ * library **stores** must be a `Label`, because a resolved string stored on the library's side
+ * can never be re-resolved.
+ *
+ * Stated here as a property of the whole surface rather than of one component, so a new stored
+ * title that takes a bare `string` has somewhere to fail. The rendering half is covered by
+ * PO28-PO30 in test/components/panelOverlay.test.ts; this covers the types and the store.
+ */
+describe('a title the library stores', () => {
+  it('accepts a descriptor everywhere it is stored, and resolves it through the workspace', () => {
+    const locale = ref<'es' | 'ru'>('es')
+    const table: Record<'es' | 'ru', Record<string, string>> = {
+      es: { 'x.title': 'Título' },
+      ru: { 'x.title': 'Заголовок' },
+    }
+    const ws = createWorkspace({
+      panels: {},
+      formatMessage: m => table[locale.value][m.id] ?? m.defaultMessage ?? m.id,
+    })
+    const descriptor = { id: 'x.title', defaultMessage: 'Title' }
+
+    // One descriptor, resolved twice: the resolution point every stored title goes through.
+    expect(ws.format(descriptor)).toBe('Título')
+    locale.value = 'ru'
+    expect(ws.format(descriptor)).toBe('Заголовок')
+  })
+
+  it('resolves a plain string without consulting the formatter', () => {
+    let calls = 0
+    const ws = createWorkspace({
+      panels: {},
+      formatMessage: m => { calls += 1; return m.defaultMessage ?? m.id },
+    })
+    expect(ws.format('Already text')).toBe('Already text')
+    expect(calls).toBe(0)
   })
 })

@@ -51,7 +51,7 @@ capture-at-each-move works for visible-to-visible transitions but fails for mini
 restore, the case that matters most. While a panel sits in the `display:none` container it
 has no layout, so every scroller reports `scrollHeight === clientHeight === 0`, the capture
 on the way *out* finds nothing, and the restore restores nothing. Verified failing, then
-verified fixed, in [artifacts/M0](../../artifacts/M0/README.md).
+verified fixed, in [the M0 record](../evidence/M0.md).
 
 Opt-out per panel via `defaultOptions.preserveScroll: false`, for panels that manage their
 own virtualised scrolling and would rather be told about the transition (`isMinimized` is

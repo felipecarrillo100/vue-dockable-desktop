@@ -15,7 +15,7 @@ format** as [`react-dockable-desktop`](https://github.com/felipecarrillo100/reac
 so a layout saved by either library loads in the other.
 
 > **Status: 0.1.0, pre-release.** The public API is gated (`api-surface.json`) and covered
-> by 719 tests. It is not on npm yet — it will be published as
+> by 725 tests. It is not on npm yet — it will be published as
 > [`vue-dockable-desktop`](https://www.npmjs.com/package/vue-dockable-desktop), the same
 > name as this repository.
 
@@ -104,9 +104,10 @@ localStorage.setItem('layout', ws.saveLayout())
 | [Live demo](https://felipecarrillo100.github.io/vue-dockable-desktop/demo/) | Every capability in one application — published from `demo/` by GitHub Pages on each push to `main` |
 | [`docs/manual/`](docs/manual/) | Users manual — 13 chapters, start with [Getting started](docs/manual/01-getting-started.md) |
 | [`docs/decisions/`](docs/decisions/) | ADRs — why the Vue design diverges from the React one |
-| [`docs/PARITY.md`](docs/PARITY.md) | Feature-by-feature parity with `react-dockable-desktop`, and the 15 deliberate divergences |
+| [`docs/PARITY.md`](docs/PARITY.md) | Feature-by-feature parity with `react-dockable-desktop`, and the 16 deliberate divergences |
 | [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) | The milestone plan and its gates |
 | [`docs/PROGRESS.md`](docs/PROGRESS.md) | One row per gate run |
+| [`CHANGELOG.md`](CHANGELOG.md) | What has changed, newest first |
 
 ## Repository layout
 
@@ -117,7 +118,7 @@ demo/           full sample application (maps, Monaco, Markdown, 16 panels)
 playground/     minimal harness used by the browser gates
 docs/           manual, ADRs, parity and plan
 scripts/gates/  the verification gates
-artifacts/M*/   milestone evidence referenced by docs/PROGRESS.md
+docs/evidence/  a written record per milestone gate (the gate's own output is not committed)
 ```
 
 ## Development

@@ -96,16 +96,17 @@ swapped out ([0013](decisions/0013-demo-scope.md)).
 ## The plan is complete
 
 All fifteen milestones (M0–M14) passed their gates. The record is in
-[PROGRESS.md](PROGRESS.md), one row per run, and each milestone's evidence is in
-`artifacts/M<n>/`.
+[PROGRESS.md](PROGRESS.md), one row per run, with each milestone's account in
+[evidence/](evidence/). The gate's own output — screenshots, `gate.json`, `browser.json` —
+is written to `artifacts/M<n>/` and is not committed, since re-running the gate regenerates it.
 
 | | |
 |---|---|
-| Tests | **719** across 32 files, against rdd's 468 |
-| Gate rules proven non-vacuous | **73** (`npm run gate:selftest`) |
+| Tests | **725** across 32 files, against rdd's 468 |
+| Gate rules proven non-vacuous | **75** (`npm run gate:selftest`) |
 | Source modules, all exercised | **74**, 90.9% of lines |
 | Public API | 49 runtime exports, 83 types, gated against `api-surface.json` |
-| Divergences from rdd, each explained | **15** (D1–D15) |
+| Divergences from rdd, each explained | **16** (D1–D16) |
 | Decisions recorded | 15, all settled |
 | Manual | 13 chapters, all drafted against the shipped API |
 | Demo | 24 sources, 16 panel kinds, a 32-step browser walkthrough |
@@ -116,7 +117,7 @@ gate. `npm run gate:sweep` runs the per-module coverage sweep.
 
 ### What the port fixed
 
-Fourteen of the fifteen divergences are defects vdd does not reproduce, each with a test and a
+Fifteen of the sixteen divergences are defects vdd does not reproduce, each with a test and a
 gate rule so it cannot come back. The four worth naming:
 
 - **D2** — `activePanelId` could name a panel the user could not see, so an app's toolbar

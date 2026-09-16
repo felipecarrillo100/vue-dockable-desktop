@@ -257,6 +257,14 @@ check('M12 catches a consumer class replacing the library\'s own instead of addi
   s => s.replace(':class="[c.body, hostBodyClass]"', ':class="hostBodyClass"'),
   'node scripts/gates/m12.mjs')
 
+check('M12 catches a stored widget title typed as a bare string', 'src/core/overlayState.ts',
+  s => s.replace('title: Label', 'title: string'),
+  'node scripts/gates/m12.mjs')
+
+check('M12 catches a widget header interpolating its title instead of resolving it', 'src/components/VddFloatingWidget.vue',
+  s => s.replace('{{ ws.format(title) }}', '{{ title }}'),
+  'node scripts/gates/m12.mjs')
+
 check('M12 catches an un-namespaced message id', 'src/core/messages.ts',
   s => s.replace("closeTab: { id: 'vdd.closeTab'", "closeTab: { id: 'closeTab'"),
   'node scripts/gates/m12.mjs')

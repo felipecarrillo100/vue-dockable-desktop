@@ -25,12 +25,13 @@ import {
 } from '../core/panelOverlay'
 import { addAxis, bucketsFor, releaseAxis, stretchesBlock, stretchesInline } from '../core/stretch'
 import type { PanelFloatPlacement, Stretch } from '../core/stretch'
-import type { FloatAnchor } from '../types'
+import type { FloatAnchor, Label } from '../types'
 
 const props = withDefaults(defineProps<{
   /** Unique within this panel's overlay. Drives z-order and stack membership. */
   widgetId: string
-  title: string
+  /** Header text: plain, or a localisable descriptor resolved on every render. */
+  title: Label
   icon?: Component
   /** Width in pixels. Ignored while the inline axis is stretched, and returned to on release. */
   width?: number
@@ -444,7 +445,7 @@ function onResizeDown(dir: ResizeDir, event: PointerEvent): void {
   >
     <div class="vdd-panel-float__header" data-vdd-widget-header @pointerdown="onHeaderDown">
       <span v-if="icon" class="vdd-panel-float__icon"><component :is="icon" /></span>
-      <span class="vdd-panel-float__title">{{ title }}</span>
+      <span class="vdd-panel-float__title">{{ ws.format(title) }}</span>
       <button
         type="button"
         class="vdd-panel-float__close"

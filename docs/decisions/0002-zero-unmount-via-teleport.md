@@ -1,6 +1,6 @@
 # 0002 — Zero unmount via `<Teleport>` over a cached element
 
-**Status:** Accepted — proven by the M0 spike ([artifacts/M0](../../artifacts/M0/README.md))
+**Status:** Accepted — proven by the M0 spike ([the M0 record](../evidence/M0.md))
 
 ## Context
 

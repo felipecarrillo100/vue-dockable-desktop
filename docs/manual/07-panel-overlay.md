@@ -89,7 +89,7 @@ back onto another corner. Widgets sharing a corner stack along the block axis wi
 | | |
 |---|---|
 | `widget-id` | unique within this panel's overlay; drives z-order and stacking |
-| `title`, `icon` | header content |
+| `title`, `icon` | header content. `title` is a `Label` — plain text or a message descriptor |
 | `v-model:open` | whether it is mounted |
 | `v-model:placement` | `{ anchor, stretch }` — see below |
 | `width`, `height` | pixels. Ignored on a stretched axis, and returned to when it is released |
@@ -219,6 +219,27 @@ widgets.closeAll()
 
 `openIds` is a reactive list of what is open, and `isOpen(id)` asks about one. A widget
 written in the template is the simpler option and behaves identically otherwise.
+
+### Titles that follow the language
+
+`title` is a `Label`, so it takes a message descriptor as well as a string:
+
+```ts
+widgets.open('legend', {
+  title: { id: 'legend.title', defaultMessage: 'Legend' },
+  component: Legend,
+})
+```
+
+The descriptor is resolved on every render, so the header follows a locale change with no
+reopen. That matters more here than anywhere else, because this object is the one title the
+library *stores*: a string you resolve yourself is frozen at the language that was current when
+you called `open()`, and the only way to change it would be to call `open()` again for every
+open id. A widget in the template can use either — its props re-render with your own component
+anyway.
+
+The same applies to `props`, in the other direction: they are your component's, so a panel that
+must follow the language should read the locale itself rather than receive already-resolved text.
 
 ## Coming from react-dockable-desktop
 

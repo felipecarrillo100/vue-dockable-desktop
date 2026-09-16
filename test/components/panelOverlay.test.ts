@@ -12,6 +12,11 @@
  *   `usePanelFloatingWindowManager()`         `useFloatingWidgets()`         (PO7, PO8)
  *   three React contexts for render isolation one store                    (PO10, PO11)
  *
+ * PO28–PO30 cover a bug reported against rdd 6.2.0 and present here too: a widget title the
+ * library *stores* was typed `string`, so it could not be a localisable descriptor and never
+ * followed a locale change. PO29 is the one that would have caught it — PO28 alone would also
+ * pass a fix that resolved the title once, at `open()` time.
+ *
  * `usePanelFloatingWindow()` was `useState(false)` plus three callbacks, bundled into a hook
  * because that is the only way to share it in React. In Vue it is `ref(false)`, so the hook
  * would be strictly more code than it saves — PO6 asserts the model instead, and the
@@ -25,7 +30,7 @@
  */
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { defineComponent, h, nextTick, ref } from 'vue'
-import type { Component } from 'vue'
+import type { Component, Ref } from 'vue'
 import { mount } from '@vue/test-utils'
 import type { VueWrapper } from '@vue/test-utils'
 import { createWorkspace } from '../../src/core/workspace'
@@ -1104,5 +1109,85 @@ describe('PO27: resize-to-stretch snapping', () => {
     } finally {
       restore()
     }
+  })
+})
+
+// ─── PO28–PO30 ───────────────────────────────────────────────────────────────
+
+describe('PO28–PO30: a stored widget title is localisable', () => {
+  const TABLES: Record<Locale, Record<string, string>> = {
+    es: { 'legend.title': 'Leyenda SLD' },
+    ru: { 'legend.title': 'Легенда SLD' },
+  }
+  type Locale = 'es' | 'ru'
+  const DESCRIPTOR = { id: 'legend.title', defaultMessage: 'SLD Legend' }
+
+  type Api = ReturnType<typeof useFloatingWidgets>
+  let api: Api
+
+  /**
+   * A workspace whose formatter reads a ref, which is how an application switches language:
+   * no plugin is rebuilt and no component is remounted, so anything that resolves a label
+   * during render simply re-renders.
+   */
+  function renderWithLocale(locale: Ref<Locale>) {
+    const ws = createWorkspace({
+      panels: {},
+      formatMessage: m => TABLES[locale.value][m.id] ?? m.defaultMessage ?? m.id,
+    })
+    const probe = defineComponent({
+      name: 'Probe',
+      setup() { api = useFloatingWidgets(); return () => h('span') },
+    })
+    const host = defineComponent({
+      components: { VddPanelOverlay },
+      setup: () => ({ Probe: probe }),
+      template: '<VddPanelOverlay><component :is="Probe" /></VddPanelOverlay>',
+    })
+    const wrapper = mount(host, { global: { plugins: [ws] }, attachTo: document.body }) as VueWrapper
+    mounted.push(wrapper)
+    return ws
+  }
+
+  const titleText = () => document.querySelector('.vdd-panel-float__title')?.textContent
+
+  it('PO28: open() accepts a descriptor title and resolves it through the formatter', async () => {
+    renderWithLocale(ref<Locale>('es'))
+    api.open('legend', { title: DESCRIPTOR, component: Dot })
+    await nextTick()
+    expect(titleText()).toBe('Leyenda SLD')
+  })
+
+  it('PO29: the title re-resolves when the locale changes, with no reopen', async () => {
+    const locale = ref<Locale>('es')
+    renderWithLocale(locale)
+    api.open('legend', { title: DESCRIPTOR, component: Dot })
+    await nextTick()
+    expect(titleText()).toBe('Leyenda SLD')
+    locale.value = 'ru'
+    await nextTick()
+    expect(titleText()).toBe('Легенда SLD')
+  })
+
+  it('PO30: a plain string title renders unchanged', async () => {
+    renderWithLocale(ref<Locale>('es'))
+    api.open('legend', { title: 'SLD Legend', component: Dot })
+    await nextTick()
+    expect(titleText()).toBe('SLD Legend')
+  })
+
+  it('PO30: a descriptor on a template widget resolves too', async () => {
+    const ws = createWorkspace({
+      panels: {},
+      formatMessage: m => TABLES.es[m.id] ?? m.defaultMessage ?? m.id,
+    })
+    const host = defineComponent({
+      components: { VddPanelOverlay, VddFloatingWidget },
+      setup: () => ({ title: DESCRIPTOR, Dot }),
+      template: '<VddPanelOverlay><VddFloatingWidget widget-id="legend" :title="title"><component :is="Dot" /></VddFloatingWidget></VddPanelOverlay>',
+    })
+    mounted.push(mount(host, { global: { plugins: [ws] }, attachTo: document.body }) as VueWrapper)
+    await nextTick()
+    expect(titleText()).toBe('Leyenda SLD')
   })
 })

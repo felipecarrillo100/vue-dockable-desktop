@@ -22,6 +22,8 @@ const messages = src('src/core/messages.ts')
 const colorScheme = src('src/composables/useColorScheme.ts')
 const desktop = src('src/components/VddDesktop.vue')
 const frame = src('src/components/VddOverlayFrame.vue')
+const overlayState = src('src/core/overlayState.ts')
+const widget = src('src/components/VddFloatingWidget.vue')
 
 // ── 1. The invariant ───────────────────────────────────────────────────────
 // Read from `activePanelId` and nothing else. Not the first key of `panels` (which is
@@ -88,6 +90,17 @@ for (const m of messages.matchAll(/id: '([^']+)'/g)) {
   must(m[1].startsWith('vdd.'), `message id "${m[1]}" is not namespaced under vdd.`)
 }
 
+// Every title the library *stores* must be a Label, and must be resolved where it is rendered.
+// A resolved string kept on the library's side can never be re-resolved, so a `string` here is
+// a title that is permanently in whatever language was current when it was stored. This is the
+// rdd 6.2.0 report; vdd shared the defect. PO28-PO30 cover the behaviour.
+must(/title: Label\b/.test(overlayState),
+  'ManagedWidget.title must be a Label — a stored string can never follow a locale change')
+must(/\{\{ ws\.format\(title\) \}\}/.test(widget),
+  'the widget header must resolve its title through ws.format on every render')
+must(!/\{\{ title \}\}/.test(widget),
+  'the widget header must not interpolate a raw title, which renders a descriptor as its own JSON')
+
 // ── 6. The consumer classes actually reach an element ──────────────────────
 // rdd's own test asserted only that its hook returned the config — true of any object, and
 // unable to fail. The library has already shipped four CSS hookups that matched nothing.
@@ -131,4 +144,5 @@ if (failures.length) {
   console.error('M12: FAIL'); failures.forEach(f => console.error('  ' + f)); process.exit(1)
 }
 console.log('M12: ok — contributions read activePanelId only, withdrawal guarded, ' +
-  'i18n reachable without a component, classes reach their elements, diagnostics actionable')
+  'i18n reachable without a component, stored titles localisable, classes reach their elements, ' +
+  'diagnostics actionable')
