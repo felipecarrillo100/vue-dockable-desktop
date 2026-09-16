@@ -1,0 +1,8 @@
+ff1b511e7aad748fb56fb7c038b2ac628a6635a4  spike/dbg.mjs
+460ffd331377a1c2b19667726e81d30e90f7989b  spike/gate.mjs
+044b3a54e55393244b97a4ba1d158ef5809e6694  spike/index.html
+e0f59b9ee7c23e2336a0901c49a74fcc34a327f0  spike/src/App.vue
+2e7445e88d1a6055ae768b1408abfd969914cc92  spike/src/main.ts
+d705dcc701a20bef3fd0b168225e1ea72d2531b5  spike/src/panels/HostilePanel.vue
+2f875c00bb61f5726b972b4ec7f851e1f6a84a3c  spike/src/persistence.ts
+88d4026af04ebeb4a10ea84f66e00e20d7a8e715  spike/vite.config.ts

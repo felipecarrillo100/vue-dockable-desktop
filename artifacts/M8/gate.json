@@ -1,0 +1,58 @@
+{
+  "milestone": "M8",
+  "passed": true,
+  "at": "2026-09-15T22:33:35.777Z",
+  "tests": {
+    "total": 373,
+    "passed": 373,
+    "failed": 0,
+    "files": 20
+  },
+  "steps": [
+    {
+      "name": "types",
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "lint",
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "tests",
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "build",
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "counts",
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "css-prefix",
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "api-surface",
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "M8",
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "M8 browser",
+      "ok": true,
+      "status": 0
+    }
+  ]
+}

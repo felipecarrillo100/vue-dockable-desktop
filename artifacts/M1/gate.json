@@ -1,0 +1,53 @@
+{
+  "milestone": "M1",
+  "passed": true,
+  "at": "2026-09-15T20:50:29.918Z",
+  "tests": {
+    "total": 1,
+    "passed": 1,
+    "failed": 0,
+    "files": 1
+  },
+  "steps": [
+    {
+      "name": "types",
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "lint",
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "tests",
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "build",
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "counts",
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "css-prefix",
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "api-surface",
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "M1",
+      "ok": true,
+      "status": 0
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+# M8 — Context menus · **PASS**
+
+`npm run gate -- M8` · raw: [gate.json](gate.json) · browser: [browser.json](browser.json) ·
+screenshot: [menu.png](menu.png)
+
+```
+  ok  types · lint · tests · build · counts · css-prefix · api-surface · M8 · M8 browser
+  tests: 373/373 across 20 files
+M8 GATE: PASS
+```
+
+## Measured in the browser
+
+```
+  near the right edge   right:999   (viewport 1000)
+  near the bottom edge  bottom:695  (viewport 700)
+  in the corner         right:999 bottom:695
+  stacking              topmost: vdd-context-menu__item
+  clickable             ran: ["Above everything"]
+  submenu ltr           gap:2px  alignedTop:true   → nested item ran, menu closed
+  submenu rtl           gap:2px  alignedTop:true   → opened leftwards
+  tab menu              ["Float Window","Minimize Panel","Close Tab"] → minimise worked
+  taskbar menu          ["Restore Panel","Maximize Panel","Close Panel"]
+  D1 taskbar maximize   state:floating maximized:true fillsWorkspace:true
+```
+
+Clamping, stacking and submenu placement all need the menu's own measured size, so none of
+it can be checked in jsdom.
+
+## D1 is closed, end to end
+
+rdd's taskbar offered a **"Maximize" item whose action did nothing at all**: `maximizePanel`
+only mapped over floating windows, and a minimised panel is not in that list. Asserting the
+store alone would have missed that the item is even offered, so the gate right-clicks the
+icon, reads the menu, clicks the item, and then measures that the window **fills the
+workspace**. `maximizePanel` restores first, and the gate asserts that in the source too.
+
+## Design
+
+The menu request is **state on the workspace**, and `<VddContextMenu>` renders whatever is
+pending. So `showContextMenu()` works from any component — or from none at all, which a test
+asserts. rdd needed a provider, an adapter ref and a registration handshake for this, because
+its menu had to be reachable from components on both sides of the workspace in the tree.
+
+Menus are offered from three places through one builder (`core/panelMenu.ts`), so a tab, a
+floating window's title bar and a taskbar icon cannot drift apart: a tab and a window get
+Float / Minimize / Close, a taskbar icon gets Restore / Maximize / Close, and both append
+whatever the panel itself contributed behind a separator.
+
+An action a panel has opted out of is **absent, not disabled** — a panel with
+`canDrag`, `canMinimize` and `canClose` all false gets no menu at all rather than three dead
+entries. Contributed items are re-read on every open, so `disabled: !dirty.value` needs no
+wiring; a test proves an item can appear between two openings.
+
+Item kinds, all ported with rdd's field names so menu arrays transfer verbatim: simple items
+with icons, tooltips and `cyAction` test hooks, separators, checkboxes (including
+`active: false` to hide the column and `enabled: false` to disable the row), and one level of
+submenu.
+
+## Two fixes worth naming
+
+**Dismissal needs two listeners, and the gate pins both.** A capture-phase `pointerdown`
+runs before a canvas or map gesture handler can swallow the event; a bubbled `click` on
+`window` survives a `stopPropagation` on pointerdown, which WebGL canvases commonly do. rdd
+learned this against real mapping libraries, and a test here reproduces it with a div that
+stops pointerdown.
+
+**A non-`Node` event target crashed the dismiss handler.** `Node.contains()` throws for
+anything that is not a Node, and an event target need not be one — a click dispatched on
+`window` is the ordinary case. The handler now treats an untestable target as "not the menu"
+and dismisses, which is the safe default. Surfaced as an unhandled error *after* all 373
+tests had passed: the suite was green and the gate still failed, which is the behaviour I
+want from a gate.
+
+## Fixes during the milestone
+
+- The panel-menu registry is a plain `Map`, so a `computed` asking "does this panel
+  contribute anything?" (the window's more-actions button) cached the answer from before the
+  panel ever registered. A version counter makes registrations trackable while the items
+  themselves stay non-reactive, since they are pulled fresh anyway.
+- `MenuHost.format` was widened to `(label: unknown)`, which looks harmless but breaks
+  assignability: a function accepting a narrow type cannot stand in for one accepting
+  anything.
+- The gate right-clicked raw coordinates measured while the taskbar was still appearing, so
+  the click landed on empty space — and "no menu opened" is indistinguishable from "the menu
+  was empty". It now uses `locator.click()`, which waits for stability.

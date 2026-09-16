@@ -1,0 +1,109 @@
+# M9 — Sidebar and toolbar · **PASS**
+
+`npm run gate -- M9` · raw: [gate.json](gate.json)
+
+```
+  ok  types · lint · tests · build · counts · css-prefix · api-surface · M9
+  tests: 506/506 across 22 files
+M9 GATE: PASS
+```
+
+The largest test milestone: **133 new tests** (91 sidebar + 42 toolbar), taking the suite from
+373 to 506. No browser gate — everything here is DOM structure, class names and state, all of
+which jsdom can see. The geometry that cannot be checked in jsdom (a flyout clamped back
+inside the viewport) reuses the measured placement helper already gated in M8.
+
+## Eight imperative methods became four models
+
+rdd drove the sidebar through a ref: `openTab`, `closeDrawer`, `getActiveTab`, `show`, `hide`,
+`toggle`, `setWidth`, `getWidth`, and the toolbar through three more. Every one was a getter
+or a setter for a piece of state — which is what React forces when a prop cannot be two-way.
+
+Here they are `v-model:active-tab-id`, `v-model:visible`, `v-model:strip-visible`,
+`v-model:width`, plus `useSidebar()` for the two that are genuinely commands. The consequence
+worth naming: binding a model makes the caller the source of truth and omitting it lets the
+component keep its own, so "controlled" and "uncontrolled" stop being two code paths in the
+component and become one thing the caller decides. rdd needed separate handling for each.
+
+**No handle test was dropped.** Each is mapped to its counterpart, and the mapping is
+tabulated in the header of each ported file so the vdd suite can be read against the React
+one line by line. Two tests changed shape, each justified at the test:
+
+- **SB22** — rdd's `setWidth` clamped to `minWidth`/`maxWidth` inside the component. A model
+  has no setter to clamp in, and silently rewriting the caller's own ref is not something a
+  Vue component should do. vdd clamps where the value is *produced* (the resize drag) and
+  bounds the *render* with min/max-width, so a value the caller sets out of range still cannot
+  draw out of range. The test asserts both halves.
+- **SB26** — asserted an inline `flex-basis: 0`, which vdd moved to the stylesheet. It now
+  reads the CSS source and then asserts the component actually emits that class, so the rule
+  and its hookup are both covered.
+
+`<ToolbarProvider>` has no equivalent at all: toolbar state lives on the workspace
+([0004](../../docs/decisions/0004-store-outside-components.md)), so `useToolbar()` works
+anywhere `useWorkspace()` does — including from a panel, which is the case that motivated it.
+TB1 asserts the missing-*workspace* error instead of a missing provider.
+
+## Two divergences
+
+**D13 — six of nine `@keyframes` were unprefixed** (`fadeIn`, `scaleUp`, `slideInLeft`,
+`slideInRight`, `tooltipFadeIn`, `toolbar-flyout-in`). Keyframe names are global to the
+document exactly like class names, so a host stylesheet defining its own `fadeIn` — Bootstrap,
+Animate.css and plenty of app stylesheets do — silently replaces the library's animation, with
+no error anywhere. rdd's `rdd-` convention covers classes and custom properties and was never
+extended to keyframes. All nine are now prefixed, and the gate rejects both an unprefixed
+`@keyframes` name and an `animation:` that names one, so the two halves cannot drift.
+
+**D12 turned out to be wider than catalogued.** The sidebar's *entire* layout was inline in
+rdd's JSX: the flex row, the strip's collapse wrapper, the content wrapper's `flex-basis: 0`,
+the drawer's flex behaviour, and each pane's box. None of it appears in rdd's stylesheet. It
+is all CSS now, and the gate allows only genuinely per-render values to stay inline — the
+animating sizes and each pane's `display` — rejecting any other inline declaration in the
+sidebar files.
+
+## What the gate pins that the tests cannot
+
+Nine rules, each a defect vdd either inherited or narrowly avoided:
+
+1. Five structural selectors exist in CSS with their load-bearing properties (D12).
+2. Only the allowed per-render properties appear inline.
+3. The rail and drawer are rendered **exactly once** — the left and right arrangements are one
+   list keyed on position, not two branches of duplicated markup.
+4. Each pane provides its own tab context through a wrapper component.
+5. The secondary renders the primary component, forwards `$attrs` **and** typed props.
+6. The resize flag is per instance (`ref` in setup, not module scope).
+7. A controlled item is one whose prop is *present* — `false` and `null` included.
+8. The flyout teleports out, dismisses on capture-phase pointerdown and Escape, cleans up on
+   unmount, and guards non-`Node` targets.
+9. Every keyframe name is prefixed.
+
+`npm run gate:selftest` now proves **21** rules non-vacuous, including all eight new M9 rules.
+Each M9 mutation is a shape the code has actually had: a shared module-level resize flag, a
+second rail for the other side, truthiness instead of presence, a dropped `$attrs`.
+
+## Refactors during the milestone
+
+- **`VddSidebarRail` and `VddSidebarDrawer` extracted.** The first version had ~120 lines of
+  left/right duplicated markup in the parent — exactly the kind of thing that drifts. The
+  gate now enforces the single copy.
+- **`VddSidebarTabScope` added.** `provide` is per component instance and the drawer renders
+  every mounted pane inside one, so it cannot provide a different tab id to each. Without the
+  wrapper, `useSidebarTab()` inside a tab would resolve to whichever pane provided last.
+- **`SidebarProps` declared in `core/sidebarTypes.ts`** so `<VddSecondarySidebar>` can forward
+  with types intact. Forwarding through `$attrs` alone works at runtime and throws the types
+  away, which is most of the point of declaring them.
+
+## Fixes and a retraction
+
+- **The api-surface gate held M9 back** until its 22 new exports were recorded — working as
+  intended. The diff was additions only, nothing removed.
+- **21 type errors, all in my own test helpers.** `ComponentMountingOptions<typeof C>` is the
+  type to reach for; `Parameters<typeof mount>[1]` resolves against the wrong overload and
+  loses slot-prop checking. With the right type, slot lambdas are checked against the
+  component's real slot signatures.
+- **A "fix" I made and then reverted.** I believed `VddSidebar` forwarding a tab slot for
+  every mounted tab would defeat the drawer's `<slot>` fallback — the mechanism that renders a
+  tab's `component` — because a `<slot>` always produces a fragment. I changed it to forward
+  only the slots the caller gave, then mutation-tested the change: reverting it broke nothing.
+  Vue's `renderSlot` filters empty slot content before choosing the fallback, so the original
+  code was already correct. Reverted rather than keep code justified by a false premise. The
+  mutation check is the only reason I found out.

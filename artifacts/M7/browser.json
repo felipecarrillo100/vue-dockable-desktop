@@ -1,0 +1,65 @@
+{
+  "passed": true,
+  "failures": [],
+  "record": [
+    {
+      "step": "preview",
+      "containsPanel": true,
+      "sameNode": true,
+      "copies": 1,
+      "frame": {
+        "w": 116,
+        "h": 140,
+        "top": 617
+      },
+      "onScreen": true,
+      "scale": "matrix(0.194175, 0, 0, 0.194175, 0, 0)",
+      "glLost": false,
+      "mounts": 1,
+      "pointerEvents": "none"
+    },
+    {
+      "step": "still running",
+      "videoBefore": 0.85423,
+      "videoAfter": 1.78265
+    },
+    {
+      "step": "preview reachable",
+      "stillOpen": true,
+      "under": [
+        "vdd-taskbar-item-preview-frame",
+        "vdd-taskbar-item-tooltip"
+      ]
+    },
+    {
+      "step": "restore from preview",
+      "state": "docked",
+      "active": "a",
+      "scroll": 150,
+      "previewGone": true,
+      "inSlot": true
+    },
+    {
+      "step": "autohide",
+      "collapsed": {
+        "visible": 8,
+        "height": 29,
+        "expanded": false
+      },
+      "open": {
+        "visible": 29,
+        "height": 29,
+        "expanded": true
+      }
+    },
+    {
+      "step": "compact",
+      "hiddenWhenEmpty": true,
+      "shownWhenMinimised": true
+    }
+  ],
+  "onScreenSize": {
+    "width": 598,
+    "height": 721
+  }
+}

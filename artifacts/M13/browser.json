@@ -1,0 +1,509 @@
+{
+  "passed": true,
+  "failures": [],
+  "counts": {
+    "rendered": 226,
+    "styled": 229,
+    "exempt": 11
+  },
+  "tour": [
+    {
+      "step": "initial",
+      "total": 40,
+      "added": 40
+    },
+    {
+      "step": "panels and tabs",
+      "total": 76,
+      "added": 36
+    },
+    {
+      "step": "a floating window with a title icon",
+      "total": 90,
+      "added": 14
+    },
+    {
+      "step": "...docked back",
+      "total": 90,
+      "added": 0
+    },
+    {
+      "step": "split and dock",
+      "total": 90,
+      "added": 0
+    },
+    {
+      "step": "tab focus states",
+      "total": 90,
+      "added": 0
+    },
+    {
+      "step": "floating window",
+      "total": 90,
+      "added": 0
+    },
+    {
+      "step": "anchored window",
+      "total": 90,
+      "added": 0
+    },
+    {
+      "step": "maximized window",
+      "total": 91,
+      "added": 1
+    },
+    {
+      "step": "restored window",
+      "total": 91,
+      "added": 0
+    },
+    {
+      "step": "taskbar: always",
+      "total": 93,
+      "added": 2
+    },
+    {
+      "step": "taskbar: compact",
+      "total": 94,
+      "added": 1
+    },
+    {
+      "step": "taskbar: autohide",
+      "total": 96,
+      "added": 2
+    },
+    {
+      "step": "taskbar preview",
+      "total": 103,
+      "added": 7
+    },
+    {
+      "step": "taskbar overflow: scroll buttons",
+      "total": 104,
+      "added": 1
+    },
+    {
+      "step": "taskbar preview: the letter fallback",
+      "total": 105,
+      "added": 1
+    },
+    {
+      "step": "taskbar emptied again",
+      "total": 105,
+      "added": 0
+    },
+    {
+      "step": "taskbar: back to always",
+      "total": 105,
+      "added": 0
+    },
+    {
+      "step": "sidebar drawer",
+      "total": 110,
+      "added": 5
+    },
+    {
+      "step": "secondary sidebar drawer",
+      "total": 110,
+      "added": 0
+    },
+    {
+      "step": "toolbar radio and toggle",
+      "total": 110,
+      "added": 0
+    },
+    {
+      "step": "toolbar group flyout",
+      "total": 116,
+      "added": 6
+    },
+    {
+      "step": "toolbar flyout selection",
+      "total": 116,
+      "added": 0
+    },
+    {
+      "step": "toolbar hidden",
+      "total": 116,
+      "added": 0
+    },
+    {
+      "step": "toolbar shown",
+      "total": 116,
+      "added": 0
+    },
+    {
+      "step": "toolbar on every edge",
+      "total": 118,
+      "added": 0
+    },
+    {
+      "step": "animations opted out",
+      "total": 119,
+      "added": 1
+    },
+    {
+      "step": "animations back on",
+      "total": 119,
+      "added": 0
+    },
+    {
+      "step": "context menu with submenu",
+      "total": 132,
+      "added": 13
+    },
+    {
+      "step": "context menu dismissed",
+      "total": 132,
+      "added": 0
+    },
+    {
+      "step": "tab context menu",
+      "total": 132,
+      "added": 0
+    },
+    {
+      "step": "tab menu dismissed",
+      "total": 132,
+      "added": 0
+    },
+    {
+      "step": "side panels",
+      "total": 142,
+      "added": 10
+    },
+    {
+      "step": "modal with alert banner",
+      "total": 159,
+      "added": 17
+    },
+    {
+      "step": "modal dismissed",
+      "total": 159,
+      "added": 0
+    },
+    {
+      "step": "every confirmation alert type",
+      "total": 162,
+      "added": 3
+    },
+    {
+      "step": "a modal with an icon",
+      "total": 163,
+      "added": 1
+    },
+    {
+      "step": "every modal size",
+      "total": 167,
+      "added": 4
+    },
+    {
+      "step": "confirmations and sized modals dismissed",
+      "total": 167,
+      "added": 0
+    },
+    {
+      "step": "an unregistered panel",
+      "total": 168,
+      "added": 1
+    },
+    {
+      "step": "clear the overlays before the panel-overlay section",
+      "total": 168,
+      "added": 0
+    },
+    {
+      "step": "panel overlay",
+      "total": 168,
+      "added": 0
+    },
+    {
+      "step": "overlay widget drag and dropzones",
+      "total": 175,
+      "added": 0
+    },
+    {
+      "step": "overlay panel toolbar states",
+      "total": 176,
+      "added": 1
+    },
+    {
+      "step": "overlay toolbar search, expanded with results",
+      "total": 184,
+      "added": 8
+    },
+    {
+      "step": "overlay widget dropped on a corner zone",
+      "total": 185,
+      "added": 0
+    },
+    {
+      "step": "toasts, all four types",
+      "total": 196,
+      "added": 11
+    },
+    {
+      "step": "a toast mid-entry",
+      "total": 196,
+      "added": 0
+    },
+    {
+      "step": "a toast paused by hover",
+      "total": 197,
+      "added": 1
+    },
+    {
+      "step": "a toast mid-exit",
+      "total": 198,
+      "added": 0
+    },
+    {
+      "step": "toast container, every position",
+      "total": 201,
+      "added": 0
+    },
+    {
+      "step": "grid drag: drop targets, edge zones and a hovered corner",
+      "total": 226,
+      "added": 0
+    },
+    {
+      "step": "empty group",
+      "total": 226,
+      "added": 0
+    },
+    {
+      "step": "light colour scheme",
+      "total": 226,
+      "added": 0
+    }
+  ],
+  "rendered": [
+    "vdd-active",
+    "vdd-bottom",
+    "vdd-btn",
+    "vdd-btn-close-tab",
+    "vdd-btn-maximize-tab",
+    "vdd-btn-minimize-tab",
+    "vdd-btn-outline",
+    "vdd-btn-primary",
+    "vdd-btn-sm",
+    "vdd-close-tab-x",
+    "vdd-confirmation-actions",
+    "vdd-confirmation-alert",
+    "vdd-confirmation-alert-danger",
+    "vdd-confirmation-alert-info",
+    "vdd-confirmation-alert-success",
+    "vdd-confirmation-alert-warning",
+    "vdd-confirmation-form-body",
+    "vdd-confirmation-message",
+    "vdd-context-menu",
+    "vdd-context-menu--dark",
+    "vdd-context-menu--submenu",
+    "vdd-context-menu__checkbox",
+    "vdd-context-menu__checkbox--checked",
+    "vdd-context-menu__chevron",
+    "vdd-context-menu__icon",
+    "vdd-context-menu__item",
+    "vdd-context-menu__item--disabled",
+    "vdd-context-menu__item--has-submenu",
+    "vdd-context-menu__item--submenu-open",
+    "vdd-context-menu__label",
+    "vdd-context-menu__separator",
+    "vdd-corner-zone",
+    "vdd-corner-zone--bottom-left",
+    "vdd-corner-zone--bottom-right",
+    "vdd-corner-zone--hovered",
+    "vdd-corner-zone--top-left",
+    "vdd-corner-zone--top-right",
+    "vdd-custom-tab-btn",
+    "vdd-dock-drop-zone-overlay",
+    "vdd-dock-preview-highlight",
+    "vdd-dock-target-bottom",
+    "vdd-dock-target-box",
+    "vdd-dock-target-box--active",
+    "vdd-dock-target-center",
+    "vdd-dock-target-cross",
+    "vdd-dock-target-left",
+    "vdd-dock-target-right",
+    "vdd-dock-target-top",
+    "vdd-drag-ghost-tab",
+    "vdd-drag-hover-left",
+    "vdd-drag-hover-right",
+    "vdd-dragging-active",
+    "vdd-edge-trigger-bottom",
+    "vdd-edge-trigger-left",
+    "vdd-edge-trigger-right",
+    "vdd-edge-trigger-top",
+    "vdd-empty-leaf-placeholder",
+    "vdd-floating-window",
+    "vdd-floating-window-body",
+    "vdd-floating-window-title",
+    "vdd-floating-window-titlebar",
+    "vdd-header-close-empty-group",
+    "vdd-left",
+    "vdd-maximized",
+    "vdd-modal-body",
+    "vdd-modal-close-button",
+    "vdd-modal-curtain",
+    "vdd-modal-header",
+    "vdd-modal-icon",
+    "vdd-modal-overlay",
+    "vdd-modal-size-auto",
+    "vdd-modal-size-fullscreen",
+    "vdd-modal-size-large",
+    "vdd-modal-size-medium",
+    "vdd-modal-size-small",
+    "vdd-modal-title",
+    "vdd-modal-window",
+    "vdd-no-animations",
+    "vdd-panel-body",
+    "vdd-panel-content",
+    "vdd-panel-float",
+    "vdd-panel-float--active",
+    "vdd-panel-float-dropzone",
+    "vdd-panel-float-dropzone--bottom-left",
+    "vdd-panel-float-dropzone--bottom-right",
+    "vdd-panel-float-dropzone--hovered",
+    "vdd-panel-float-dropzone--top-left",
+    "vdd-panel-float-dropzone--top-right",
+    "vdd-panel-float__body",
+    "vdd-panel-float__close",
+    "vdd-panel-float__header",
+    "vdd-panel-float__icon",
+    "vdd-panel-float__title",
+    "vdd-panel-mount",
+    "vdd-panel-overlay-root",
+    "vdd-panel-port",
+    "vdd-panel-slot",
+    "vdd-panel-store",
+    "vdd-panel-toolbar",
+    "vdd-panel-toolbar--bottom",
+    "vdd-panel-toolbar--left",
+    "vdd-panel-toolbar--right",
+    "vdd-panel-toolbar--top",
+    "vdd-panel-toolbar-btn",
+    "vdd-panel-toolbar-btn--active",
+    "vdd-panel-toolbar-search",
+    "vdd-panel-toolbar-search--open",
+    "vdd-panel-toolbar-search__dropdown",
+    "vdd-panel-toolbar-search__group",
+    "vdd-panel-toolbar-search__input",
+    "vdd-panel-toolbar-search__item",
+    "vdd-panel-toolbar-search__item-desc",
+    "vdd-panel-toolbar-search__item-icon",
+    "vdd-panel-toolbar-search__item-label",
+    "vdd-panel-toolbar__center",
+    "vdd-panel-toolbar__item",
+    "vdd-panel-toolbar__sep",
+    "vdd-panel-toolbar__spacer",
+    "vdd-resize-e",
+    "vdd-resize-handle",
+    "vdd-resize-n",
+    "vdd-resize-ne",
+    "vdd-resize-nw",
+    "vdd-resize-s",
+    "vdd-resize-se",
+    "vdd-resize-sw",
+    "vdd-resize-w",
+    "vdd-resizer-bar",
+    "vdd-right",
+    "vdd-row",
+    "vdd-side-panel",
+    "vdd-side-panel-body",
+    "vdd-side-panel-close-button",
+    "vdd-side-panel-header",
+    "vdd-side-panel-icon",
+    "vdd-side-panel-left",
+    "vdd-side-panel-right",
+    "vdd-side-panel-title",
+    "vdd-side-panel-visible",
+    "vdd-side-panel-window",
+    "vdd-sidebar-content-drawer",
+    "vdd-sidebar-drawer-body",
+    "vdd-sidebar-drawer-close-button",
+    "vdd-sidebar-drawer-header",
+    "vdd-sidebar-drawer-pane",
+    "vdd-sidebar-footer-area",
+    "vdd-sidebar-header-action-btn",
+    "vdd-sidebar-header-area",
+    "vdd-sidebar-header-title",
+    "vdd-sidebar-layout",
+    "vdd-sidebar-main",
+    "vdd-sidebar-strip-outer",
+    "vdd-sidebar-tab-btn",
+    "vdd-sidebar-tabs-list",
+    "vdd-sidebar-tabs-strip",
+    "vdd-sidebar-tabs-strip--has-footer-action",
+    "vdd-sidebar-tabs-strip--has-header-action",
+    "vdd-tab-header-actions",
+    "vdd-tab-headers-container",
+    "vdd-taskbar-expanded",
+    "vdd-taskbar-footer-container",
+    "vdd-taskbar-glassmorphic-item",
+    "vdd-taskbar-item-icon",
+    "vdd-taskbar-item-preview-frame",
+    "vdd-taskbar-item-preview-host",
+    "vdd-taskbar-item-preview-letter",
+    "vdd-taskbar-item-tooltip",
+    "vdd-taskbar-items-container",
+    "vdd-taskbar-mode-always",
+    "vdd-taskbar-mode-autohide",
+    "vdd-taskbar-mode-compact",
+    "vdd-taskbar-nav-btn",
+    "vdd-taskbar-peek-handle",
+    "vdd-text-truncate",
+    "vdd-titlebar-actions",
+    "vdd-toast",
+    "vdd-toast--entering",
+    "vdd-toast--error",
+    "vdd-toast--exiting",
+    "vdd-toast--info",
+    "vdd-toast--paused",
+    "vdd-toast--success",
+    "vdd-toast--visible",
+    "vdd-toast--warning",
+    "vdd-toast-container",
+    "vdd-toast-container--bottom-left",
+    "vdd-toast-container--bottom-right",
+    "vdd-toast-container--newest-bottom",
+    "vdd-toast-container--top-left",
+    "vdd-toast-container--top-right",
+    "vdd-toast__body",
+    "vdd-toast__close",
+    "vdd-toast__icon",
+    "vdd-toast__progress",
+    "vdd-toolbar-btn",
+    "vdd-toolbar-btn-action",
+    "vdd-toolbar-btn-group",
+    "vdd-toolbar-btn-radio",
+    "vdd-toolbar-btn-toggle",
+    "vdd-toolbar-group-flyout",
+    "vdd-toolbar-group-flyout-icon",
+    "vdd-toolbar-group-flyout-item",
+    "vdd-toolbar-group-flyout-label",
+    "vdd-toolbar-group-flyout-sep",
+    "vdd-toolbar-group-flyout-shortcut",
+    "vdd-toolbar-separator",
+    "vdd-toolbar-strip",
+    "vdd-tooltip-close-x",
+    "vdd-tooltip-header-row",
+    "vdd-tooltip-title-text",
+    "vdd-top",
+    "vdd-unregistered-panel",
+    "vdd-window-focused",
+    "vdd-window-title-icon",
+    "vdd-workspace",
+    "vdd-workspace-branch",
+    "vdd-workspace-edge-preview",
+    "vdd-workspace-edge-trigger",
+    "vdd-workspace-panel",
+    "vdd-workspace-tab",
+    "vdd-workspace-tab-active-focused",
+    "vdd-workspace-tab-active-unfocused",
+    "vdd-workspace-tab-bar",
+    "vdd-workspace-tab-icon",
+    "vdd-workspace-tab-inactive",
+    "vdd-workspace-viewport"
+  ]
+}

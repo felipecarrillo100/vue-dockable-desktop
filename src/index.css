@@ -1,0 +1,3944 @@
+/*
+ * vue-dockable-desktop — stylesheet.
+ *
+ * Ported from react-dockable-desktop 6.2.0 and completed: every class is `vdd-` prefixed and
+ * every custom property is `--vdd-*`, with no exceptions. rdd's own migration had been left
+ * unfinished — ~35 unprefixed tokens (`--sidebar-*`, `--tab-*`, `--toolbar-*`), four bare
+ * classes, two dead rules and 30 demo-only `.sb-*` rules were still shipping in its published
+ * `styles.css`. All of that is resolved here and enforced by scripts/gates/css-prefix.mjs.
+ *
+ * Tokens live on `:root` deliberately, not scoped to the workspace element: the context menu,
+ * toasts, toolbar flyouts and the overlay search dropdown all teleport to `document.body`, and
+ * `<VddSidebar>` is normally an *ancestor* of `<VddDesktop>`. CSS variables only cascade
+ * downward, so scoping them would leave those parts unthemed.
+ *
+ * See docs/decisions/0008-css-prefix.md and docs/manual/10-theming.md.
+ */
+
+:root {
+  --vdd-styles-loaded: 1; /* sentinel — checked at mount to detect missing CSS import */
+  --vdd-z-base: 1000; /* base for floating windows + all chrome overlays; override via WindowManagerProvider's zIndexBase */
+  --vdd-bg-primary: #090b11;
+  --vdd-bg-workspace: #0f111a;
+  --vdd-bg-panel: #141722;
+  --vdd-bg-tab-bar: #0d0f16;
+  --vdd-text-primary: #f1f5f9;
+  --vdd-text-secondary: #94a3b8;
+  --vdd-border-color: rgba(255, 255, 255, 0.08);
+  --vdd-accent-color: #38bdf8; /* Modern Cyan/Sky-blue accent */
+  --vdd-accent-glow: rgba(56, 189, 248, 0.15);
+  --vdd-header-button-gap: 4px; /* Configurable gap spacing between titlebar action buttons */
+  /* Window skins variables */
+  --vdd-window-bg: rgba(20, 22, 28, var(--vdd-window-opacity, 0.85));
+  --vdd-window-border: rgba(255, 255, 255, 0.08);
+  --vdd-window-border-focused: rgba(255, 255, 255, 0.28);
+  --vdd-window-header-bg: rgba(0, 0, 0, 0.25);
+  --vdd-window-text: #f8f9fa;
+  --vdd-window-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  --vdd-window-shadow-focused: 0 24px 50px rgba(0, 0, 0, 0.55);
+  /* Modal theme variables */
+  --vdd-modal-curtain-bg: rgba(9, 11, 17, 0.65);
+  --vdd-modal-bg: rgba(20, 23, 34, 0.95);
+  --vdd-modal-border: rgba(255, 255, 255, 0.08);
+  --vdd-modal-header-bg: rgba(0, 0, 0, 0.15);
+  --vdd-modal-header-border: rgba(255, 255, 255, 0.06);
+  --vdd-modal-close-hover-color: #ffffff;
+  --vdd-side-panel-bg: rgba(20, 23, 34, 0.88);
+  --vdd-side-panel-border: rgba(255, 255, 255, 0.08);
+  --vdd-side-panel-header-bg: rgba(0, 0, 0, 0.15);
+  --vdd-side-panel-header-border: rgba(255, 255, 255, 0.06);
+  --vdd-side-panel-close-hover-color: #ffffff;
+  /* Grid/Docked panel theme variables */
+  --vdd-border-panel: rgba(255, 255, 255, 0.08);
+  --vdd-bg-tab-inactive: #0c0d12;
+  --vdd-text-tab-inactive: #858b99;
+  --vdd-text-tab-active: #ffffff;
+  /* Tab and control button hover colors */
+  --vdd-bg-tab-hover: #171a22;
+  --vdd-text-tab-hover: #e2e8f0;
+  --vdd-close-btn-hover-bg: rgba(255, 255, 255, 0.12);
+  --vdd-close-btn-hover-color: #ffffff;
+  --vdd-close-btn-color: #858b99;
+  --vdd-close-btn-active-color: #e2e8f0;
+  /* Tab focus states */
+  --vdd-tab-indicator-focused: var(--vdd-accent-color, #38bdf8);
+  --vdd-tab-indicator-unfocused: rgba(255, 255, 255, 0.3);
+  --vdd-tab-bg-active-focused: var(--vdd-bg-panel);
+  --vdd-tab-bg-active-unfocused: rgba(20, 23, 34, 0.55);
+  --vdd-tab-text-active-focused: var(--vdd-text-tab-active, #ffffff);
+  --vdd-tab-text-active-unfocused: rgba(255, 255, 255, 0.65);
+  --vdd-resizer-bg: rgba(255, 255, 255, 0.08);
+  --vdd-custom-btn-bg: rgba(255, 255, 255, 0.03);
+  --vdd-custom-btn-border: rgba(255, 255, 255, 0.05);
+  --vdd-custom-btn-hover-bg: rgba(255, 255, 255, 0.12);
+  --vdd-custom-btn-hover-color: #ffffff;
+  /* Taskbar theme variables */
+  --vdd-taskbar-bg: rgba(0, 0, 0, 0.75);
+  --vdd-taskbar-border: rgba(255, 255, 255, 0.1);
+  --vdd-taskbar-nav-color: rgba(255, 255, 255, 0.5);
+  --vdd-taskbar-item-bg: rgba(15, 23, 42, 0.6);
+  --vdd-taskbar-item-hover-bg: rgba(15, 23, 42, 0.8);
+  --vdd-taskbar-item-border: rgba(255, 255, 255, 0.08);
+  --vdd-taskbar-item-text: var(--vdd-accent-color, #38bdf8);
+  /* Scrollbar theme variables */
+  --vdd-scrollbar-thumb: rgba(255, 255, 255, 0.1);
+  --vdd-scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
+  --vdd-scrollbar-track: rgba(255, 255, 255, 0.01);
+  /* Mockup Panel inner theme variables */
+  --vdd-panel-card-bg: rgba(0, 0, 0, 0.2);
+  --vdd-panel-card-border: rgba(255, 255, 255, 0.1);
+  --vdd-panel-text: var(--vdd-text-primary);
+  --vdd-panel-title-color: var(--vdd-accent-color, #38bdf8);
+  /* ── Panel Overlay — Toolbar ── */
+  --vdd-panel-toolbar-padding: 8px;
+  --vdd-panel-toolbar-gap: 4px;
+  --vdd-panel-toolbar-btn-size: 32px;
+  --vdd-panel-toolbar-btn-radius: 6px;
+  --vdd-panel-toolbar-fg: rgba(255, 255, 255, 0.65);
+  --vdd-panel-toolbar-fg-hover: rgba(255, 255, 255, 0.95);
+  --vdd-panel-toolbar-btn-hover-bg: var(--vdd-toolbar-btn-hover-bg, rgba(255, 255, 255, 0.08));
+  --vdd-panel-toolbar-btn-active-bg: var(--vdd-toolbar-btn-radio-active-bg, rgba(56, 189, 248, 0.14));
+  --vdd-panel-toolbar-btn-active-color: var(--vdd-tab-icon-active, #38bdf8);
+  --vdd-panel-toolbar-separator-color: var(--vdd-toolbar-separator-color, rgba(255, 255, 255, 0.09));
+  /* ── Panel Overlay — Floating Window ── */
+  --vdd-panel-float-bg: rgba(22, 24, 34, 0.92);
+  --vdd-panel-float-border: rgba(255, 255, 255, 0.1);
+  --vdd-panel-float-radius: 8px;
+  --vdd-panel-float-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --vdd-panel-float-shadow-active: 0 8px 28px rgba(0, 0, 0, 0.55);
+  --vdd-panel-float-header-bg: var(--vdd-window-header-bg, rgba(0, 0, 0, 0.25));
+  --vdd-panel-float-header-bg-active: var(--vdd-window-header-bg, rgba(0, 0, 0, 0.25));
+  --vdd-panel-float-title-color: var(--vdd-window-text, #f8f9fa);
+  --vdd-panel-float-title-color-active: var(--vdd-window-text, #f8f9fa);
+}
+
+/* Every element the library renders carries an vdd- prefixed class (see
+   CLAUDE.md's prefix convention) — this targets exactly those elements
+   directly, never their descendants, so a consumer's own content nested
+   inside (tab renderContent, panel/modal body content) is never touched.
+   Without this, several rules combining padding with a fixed/percentage
+   min-height/max-height/height (e.g. .vdd-side-panel-header,
+   .vdd-toolbar-strip) render at a size that depends on whatever box-sizing
+   the host page happens to set globally — MUI's CssBaseline and Bootstrap's
+   reboot both reset it via a bare `*` selector, but a plain page with no
+   such reset leaves the browser default (content-box) in effect, so the
+   exact same CSS renders at a visibly different size purely depending on
+   which app it's dropped into. Deliberately no !important: this selector's
+   specificity (0,1,0) already beats an accidental bare `*` reset (both
+   examples above are (0,0,0)) unconditionally, regardless of stylesheet
+   load order, while still losing — via source order at the resulting tie —
+   to a consumer's own deliberate, equally-specific override of a specific
+   vdd- class, which normally loads after this stylesheet. */
+[class*="vdd-"] {
+  box-sizing: border-box;
+}
+
+/*
+ * The library does not style the host page.
+ *
+ * react-dockable-desktop sets `height: 100%; overflow: hidden` on `html, body, #root`,
+ * because a percentage-height chain needs a real height all the way up. That works, but it
+ * reaches outside the library's own DOM and silently changes the page of any app that
+ * embeds a workspace in part of a view. vdd asks the application to give the workspace a
+ * height instead, warns in development when it has none, and offers this opt-in helper.
+ *
+ * See docs/PARITY.md section 4, divergence D8.
+ */
+.vdd-fill-viewport {
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Cosmetic properties are scoped to the library's own root element only — never
+   the consumer's page, html/body, or their own mount div. */
+.vdd-workspace {
+  background-color: var(--vdd-bg-primary);
+  color: var(--vdd-text-primary);
+  font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Workspace Panel Container */
+.vdd-workspace-panel {
+  background-color: var(--vdd-bg-panel);
+  border: 1px solid var(--vdd-border-panel);
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tab Headers Bar */
+.vdd-workspace-tab-bar {
+  background-color: var(--vdd-bg-tab-bar);
+  border-bottom: 1px solid var(--vdd-border-panel);
+  padding: 0 4px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Tab Headers Container */
+/* rdd rendered scroll buttons in a tab bar that overflowed (`.rdd-tab-scroll-btn`).
+   vdd's tab bar is a scroll container with no buttons — recorded as divergence D15 — so
+   those rules matched nothing and were removed in M13. The taskbar's own overflow buttons
+   are `.vdd-taskbar-nav-btn`, which are emitted and styled. */
+
+.vdd-tab-headers-container {
+  display: flex;
+  align-items: flex-end;
+  height: 100%;
+  padding-top: 4px;
+  padding-left: 6px;
+  position: relative;
+  z-index: 26; /* above resizer ::before (22) and resizer hover (25) — tabs always win */
+  margin-bottom: -1px;
+  flex-grow: 1;
+  overflow-x: auto;
+}
+
+/* Tab bar scroll arrow buttons — appear when tabs overflow */
+
+
+
+/* Premium Tab styling (VS Code Style) */
+.vdd-workspace-tab {
+  position: relative;
+  background-color: var(--vdd-bg-tab-inactive) !important; /* VS Code dark background for inactive tabs */
+  color: var(--vdd-text-tab-inactive) !important; /* Clear readable gray */
+  border: none !important;
+  border-right: 1px solid var(--vdd-border-panel) !important; /* crisp separator */
+  padding: 0 6px 0 14px !important;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  border-radius: 0 !important; /* Square edges */
+  margin-right: 0 !important; /* No gaps between tabs */
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  height: 35px; /* VS Code standard height */
+  box-sizing: border-box;
+  flex-shrink: 1;
+  min-width: 80px; /* compress before scrolling kicks in */
+  transition: background-color 0.1s ease, color 0.1s ease;
+}
+
+.vdd-workspace-tab > .vdd-text-truncate {
+  margin-right: 12px;
+}
+
+/* Remove original after element separator */
+.vdd-workspace-tab:not(.vdd-active):not(:last-child)::after {
+  display: none !important;
+}
+
+.vdd-workspace-tab:hover {
+  background-color: var(--vdd-bg-tab-hover) !important;
+  color: var(--vdd-text-tab-hover) !important;
+}
+
+/* Active tab (focused) */
+.vdd-workspace-tab.vdd-active.vdd-workspace-tab-active-focused {
+  background-color: var(--vdd-tab-bg-active-focused) !important;
+  color: var(--vdd-tab-text-active-focused) !important;
+  font-weight: 500;
+  border-right: 1px solid var(--vdd-border-panel) !important;
+  z-index: 2;
+}
+
+.vdd-workspace-tab.vdd-active.vdd-workspace-tab-active-focused::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--vdd-tab-indicator-focused) !important;
+  border-radius: 0 !important;
+  box-shadow: 0 1px 4px var(--vdd-accent-glow);
+}
+
+/* Active tab (unfocused/inactive group) */
+.vdd-workspace-tab.vdd-active.vdd-workspace-tab-active-unfocused {
+  background-color: var(--vdd-tab-bg-active-unfocused) !important;
+  color: var(--vdd-tab-text-active-unfocused) !important;
+  font-weight: 500;
+  border-right: 1px solid var(--vdd-border-panel) !important;
+  z-index: 2;
+}
+
+.vdd-workspace-tab.vdd-active.vdd-workspace-tab-active-unfocused::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--vdd-tab-indicator-unfocused) !important;
+  border-radius: 0 !important;
+}
+
+.vdd-workspace-tab-inactive {
+  color: var(--vdd-close-btn-color) !important;
+}
+
+.vdd-workspace-tab-inactive:hover {
+  color: var(--vdd-text-tab-hover) !important;
+}
+
+/* Tab close button (VS Code style visibility) */
+.vdd-close-tab-x {
+  opacity: 0; /* hidden by default on inactive tabs, allows hover/active overrides */
+  transition: opacity 0.12s ease, background-color 0.12s ease, color 0.12s ease;
+  margin-left: 8px;
+  border-radius: 3px;
+  color: var(--vdd-close-btn-color) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Always show close icon on active tab */
+.vdd-workspace-tab.vdd-active .vdd-close-tab-x {
+  opacity: 0.75 !important;
+  color: var(--vdd-close-btn-active-color) !important;
+}
+
+/* Show close icon on hover of any tab */
+.vdd-workspace-tab:hover .vdd-close-tab-x {
+  opacity: 0.75 !important;
+  color: var(--vdd-close-btn-active-color) !important;
+}
+
+/* Hover style on the close icon itself (VS Code dark rounded background) */
+.vdd-close-tab-x:hover {
+  opacity: 1 !important;
+  background-color: var(--vdd-close-btn-hover-bg) !important;
+  color: var(--vdd-close-btn-hover-color) !important;
+}
+
+/* Drag resizer split bars */
+.vdd-resizer-bar {
+  background-color: var(--vdd-border-panel, rgba(255, 255, 255, 0.08)) !important;
+  transition: background-color 0.15s ease, transform 0.15s ease !important;
+  position: relative;
+  z-index: 21;
+}
+
+/* Invisible 8px hit-box overlay to make grabbing easy */
+.vdd-resizer-bar::before {
+  content: '';
+  position: absolute;
+  z-index: 22;
+}
+
+/* Grab hit-box for columns (cursor: col-resize) */
+.vdd-resizer-bar[style*="cursor: col-resize"]::before {
+  top: 0;
+  bottom: 0;
+  left: -3px;
+  width: 8px;
+  height: 100%;
+}
+
+/* Grab hit-box for rows (cursor: row-resize) — extends upward only (into safe content area),
+   never downward into the tab bar of the panel below */
+.vdd-resizer-bar[style*="cursor: row-resize"]::before {
+  left: 0;
+  right: 0;
+  top: -8px;
+  height: 9px;
+  width: 100%;
+}
+
+/* Highlight state (on hover or active drag) */
+.vdd-resizer-bar:hover,
+.vdd-resizer-bar.vdd-active {
+  background-color: color-mix(in srgb, var(--vdd-accent-color) 35%, transparent) !important;
+  box-shadow: none !important;
+  z-index: 25 !important;
+}
+
+.vdd-resizer-bar[style*="cursor: col-resize"]:hover,
+.vdd-resizer-bar[style*="cursor: col-resize"].vdd-active {
+  transform: scaleX(2);
+}
+
+.vdd-resizer-bar[style*="cursor: row-resize"]:hover,
+.vdd-resizer-bar[style*="cursor: row-resize"].vdd-active {
+  transform: scaleY(2);
+}
+
+/* Global body cursor overrides during active resize drag to prevent cursor flickering */
+body.vdd-resizing-active {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+body.vdd-resizing-row-active,
+body.vdd-resizing-row-active * {
+  cursor: row-resize !important;
+}
+body.vdd-resizing-col-active,
+body.vdd-resizing-col-active * {
+  cursor: col-resize !important;
+}
+
+/* Control buttons inside tabs/windows */
+.vdd-custom-tab-btn {
+  background: var(--vdd-custom-btn-bg);
+  border: 1px solid var(--vdd-custom-btn-border);
+  color: var(--vdd-text-secondary);
+  font-size: 9px;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0;
+  line-height: 1;
+}
+
+.vdd-custom-tab-btn:hover {
+  background-color: var(--vdd-custom-btn-hover-bg);
+  color: var(--vdd-custom-btn-hover-color);
+  border-color: var(--vdd-custom-btn-border);
+  transform: scale(1.05);
+}
+
+/* Taskbar Sibling Footer Styling */
+/* ── autohide mode: absolute overlay, collapses to peek strip ── */
+/*
+ * The taskbar sits above the workspace content.
+ *
+ * rdd set `zIndex: 100` inline on its footer; ported here because it is load-bearing, not
+ * decorative. Without it the autohide overlay is covered by whatever the grid puts at the
+ * bottom edge — a split divider's invisible 8px hit-box was enough to swallow every
+ * `pointerenter`, so the peek strip could not be hovered at all. Found by the M7 browser
+ * gate; the same class of omission as the structural flex styles in M4.
+ *
+ * Below floating windows on purpose: those stack from `--vdd-z-base` (1000), matching rdd.
+ */
+.vdd-taskbar-footer-container {
+  position: relative;
+  z-index: 100;
+}
+
+.vdd-taskbar-footer-container.vdd-taskbar-mode-autohide {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  transform: translateY(calc(100% - 8px));
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.vdd-taskbar-footer-container.vdd-taskbar-mode-autohide.vdd-taskbar-expanded {
+  transform: translateY(0);
+}
+
+.vdd-taskbar-peek-handle {
+  position: absolute;
+  top: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--vdd-accent-color, #38bdf8);
+  opacity: 0.5;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.vdd-taskbar-footer-container.vdd-taskbar-mode-autohide.vdd-taskbar-expanded .vdd-taskbar-peek-handle {
+  opacity: 0;
+}
+
+@media (pointer: coarse) {
+  .vdd-taskbar-footer-container.vdd-taskbar-mode-autohide {
+    transform: translateY(calc(100% - 12px));
+  }
+}
+
+.vdd-taskbar-footer-container {
+  background-color: var(--vdd-taskbar-bg) !important;
+  border-top: 1px solid var(--vdd-border-panel) !important;
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  flex-shrink: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1rem;
+}
+
+.vdd-taskbar-nav-btn {
+  color: var(--vdd-taskbar-nav-color) !important;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: monospace;
+  padding: 0;
+  text-decoration: none;
+  font-size: 0.875rem;
+  line-height: 1;
+}
+
+.vdd-taskbar-nav-btn:hover {
+  color: var(--vdd-accent-color) !important;
+}
+
+/* macOS/Win11 Glassmorphic Taskbar */
+.vdd-taskbar-glassmorphic-item {
+  background: var(--vdd-taskbar-item-bg) !important;
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  border: 1px solid var(--vdd-taskbar-item-border) !important;
+  color: var(--vdd-taskbar-item-text) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.vdd-taskbar-glassmorphic-item:hover {
+  background: var(--vdd-taskbar-item-hover-bg) !important;
+  border-color: var(--vdd-accent-color, #38bdf8) !important;
+  box-shadow: 0 6px 16px rgba(56, 189, 248, 0.15);
+}
+
+/* Minimalist Taskbar Icon-Only & Premium Tooltip Rules */
+.vdd-taskbar-item-icon {
+  font-size: 22px !important;
+  line-height: 1 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vdd-taskbar-item-icon svg,
+.vdd-taskbar-item-icon img {
+  width: 22px !important;
+  height: 22px !important;
+  max-width: 22px !important;
+  max-height: 22px !important;
+  object-fit: contain;
+  display: block;
+}
+
+@keyframes vdd-tooltip-fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-90%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-100%);
+  }
+}
+
+/*
+ * The hover preview stacks above everything in the workspace.
+ *
+ * rdd set `zIndex: 999999` inline on this element, so the ported stylesheet had no z-index at
+ * all and the preview came out at `auto`: a split divider painted over it, and the pointer
+ * could never reach the preview to click it. Expressed against `--vdd-z-base` like the rest
+ * of the library's chrome, so `zIndexBase` moves it with everything else.
+ *
+ * This is the third value rdd carried inline rather than in CSS (after the structural flex
+ * styles and the taskbar's own z-index) — all three were load-bearing, and all three were
+ * found by a browser gate rather than by reading.
+ */
+.vdd-taskbar-item-tooltip {
+  z-index: calc(var(--vdd-z-base, 1000) + 8000);
+  background: var(--vdd-bg-panel, #1e1e1e) !important;
+  color: var(--vdd-text-primary, #ffffff) !important;
+  padding: 8px !important;
+  border-radius: 6px;
+  font-size: 11px !important;
+  font-family: 'Outfit', 'Inter', system-ui, sans-serif;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--vdd-taskbar-item-border, rgba(255, 255, 255, 0.1)) !important;
+  animation: vdd-tooltip-fade-in 0.15s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Invisible bridge so mouse transitions smoothly to tooltip */
+.vdd-taskbar-item-tooltip::before {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  height: 12px;
+  background: transparent;
+}
+
+.vdd-taskbar-item-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: var(--vdd-bg-panel, #1e1e1e) transparent transparent transparent;
+}
+
+/* Live preview thumbnail styles.
+   rdd additionally shipped `.vdd-taskbar-item-preview-host .luciad canvas` rules, hard-coding
+   a specific third-party mapping library's class name into a framework-agnostic stylesheet.
+   Dropped — an application can style its own content inside the preview host itself.
+   See docs/PARITY.md, divergence D10. */
+/*
+ * The thumbnail frame is clickable; its *contents* are not.
+ *
+ * rdd sets `pointer-events: none` on the frame itself, so a click anywhere over the
+ * thumbnail — which is most of the preview — passes through the tooltip entirely and does
+ * nothing. Only its little header row responds. Here the frame accepts the click (and the
+ * tooltip's handler restores the panel) while everything inside stays inert, so the live
+ * panel in the preview can never be interacted with by accident.
+ * See docs/PARITY.md divergence D11.
+ */
+.vdd-taskbar-item-preview-frame {
+  border-radius: 4px;
+  overflow: hidden;
+  background: #000000;
+  border: 1px solid var(--vdd-taskbar-item-border, rgba(255, 255, 255, 0.15));
+  position: relative;
+  margin-top: 4px;
+  user-select: none !important;
+}
+
+.vdd-taskbar-item-preview-host,
+.vdd-taskbar-item-preview-letter {
+  pointer-events: none !important;
+}
+
+.vdd-taskbar-item-preview-host {
+  transform-origin: top left;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.vdd-taskbar-item-preview-host * {
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+
+
+.vdd-tooltip-close-x {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  background: transparent !important;
+  border: none !important;
+  color: var(--vdd-close-btn-color, var(--vdd-text-secondary, #888888)) !important;
+  cursor: pointer;
+  transition: opacity 0.12s ease, background-color 0.12s ease, color 0.12s ease;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.75;
+}
+
+.vdd-tooltip-close-x:hover {
+  background: var(--vdd-close-btn-hover-bg) !important;
+  color: var(--vdd-close-btn-hover-color) !important;
+  opacity: 1 !important;
+}
+.vdd-scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+/* Cross-browser scrollbar styling (Firefox standard) — scoped to the library's
+   own workspace subtree, never the consumer's page. .vdd-sidebar-drawer-body is
+   included explicitly alongside it: <Sidebar> mounts as a sibling of
+   <WindowManager>, not a descendant of .vdd-workspace, so it needs its own
+   entry here to pick up the same treatment — keep both in sync if this block
+   ever changes. */
+.vdd-workspace *,
+.vdd-sidebar-drawer-body {
+  scrollbar-width: thin;
+  scrollbar-color: var(--vdd-scrollbar-thumb) var(--vdd-scrollbar-track);
+}
+
+/* WebKit (Chrome, Safari, Edge) scrollbar styling */
+.vdd-workspace ::-webkit-scrollbar,
+.vdd-sidebar-drawer-body::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.vdd-workspace ::-webkit-scrollbar-track,
+.vdd-sidebar-drawer-body::-webkit-scrollbar-track {
+  background: var(--vdd-scrollbar-track);
+}
+.vdd-workspace ::-webkit-scrollbar-thumb,
+.vdd-sidebar-drawer-body::-webkit-scrollbar-thumb {
+  background: var(--vdd-scrollbar-thumb);
+  border-radius: 4px;
+}
+.vdd-workspace ::-webkit-scrollbar-thumb:hover,
+.vdd-sidebar-drawer-body::-webkit-scrollbar-thumb:hover {
+  background: var(--vdd-scrollbar-thumb-hover);
+}
+
+.vdd-floating-window {
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  border: 1px solid var(--vdd-window-border);
+  box-shadow: var(--vdd-window-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  background-color: var(--vdd-window-bg);
+  overflow: hidden;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.vdd-floating-window.vdd-window-focused {
+  box-shadow: var(--vdd-window-shadow-focused), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  border-color: var(--vdd-window-border-focused);
+}
+
+/* Dim only titlebar when window is unfocused to keep panel content opaque */
+.vdd-floating-window:not(.vdd-window-focused) .vdd-floating-window-titlebar {
+  opacity: 0.65;
+  transition: opacity 0.2s ease;
+}
+
+/* The class the component actually renders is `vdd-maximized`. rdd's equivalent rule said
+   `.maximized`, so it never matched and a maximized window kept its rounded corners, border
+   and drop shadow while filling the whole workspace. See docs/PARITY.md, divergence D9. */
+.vdd-floating-window.vdd-maximized {
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+}
+
+
+.vdd-floating-window-titlebar {
+  padding: 8px 14px;
+  background-color: var(--vdd-window-header-bg);
+  border-bottom: 1px solid var(--vdd-window-border);
+  min-height: 38px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.vdd-floating-window-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--vdd-window-text);
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-inline-end: 0.5rem;
+}
+
+.vdd-cursor-move {
+  cursor: grab;
+}
+.vdd-cursor-move:active {
+  cursor: grabbing;
+}
+
+/* ==========================================================================
+   CONTEXT MENU (.vdd-context-menu)
+   ========================================================================== */
+
+/* rdd wrapped its built-in menu icons in `.rdd-menu-icon` for the icon column's sizing.
+   vdd renders them inside `.vdd-context-menu__icon`, which is shared with the toolbar
+   flyout's rows, so the separate wrapper rule matched nothing. Removed in M13. */
+
+.vdd-context-menu {
+  position: fixed;
+  z-index: calc(var(--vdd-z-base, 1000) + 8500);
+  background: var(--vdd-sidebar-bg, #1e2024);
+  border: 1px solid var(--vdd-sidebar-border, rgba(255, 255, 255, 0.08));
+  border-radius: 6px;
+  padding: 4px 0;
+  min-width: 220px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-size: 13px;
+  animation: vdd-context-menu-in 0.1s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+}
+
+@keyframes vdd-context-menu-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.vdd-context-menu--submenu {
+  z-index: calc(var(--vdd-z-base, 1000) + 8501);
+}
+
+.vdd-context-menu__separator {
+  height: 1px;
+  background: var(--vdd-sidebar-border, rgba(255, 255, 255, 0.08));
+  margin: 4px 8px;
+  border: none;
+}
+
+.vdd-context-menu__item {
+  display: flex;
+  align-items: center;
+  width: calc(100% - 8px);
+  margin: 0 4px;
+  padding: 5px 8px;
+  gap: 8px;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: var(--vdd-sidebar-text-title, #cccccc);
+  cursor: pointer;
+  text-align: start;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+  box-sizing: border-box;
+  font-size: inherit;
+  font-family: inherit;
+}
+
+.vdd-context-menu__item:hover:not(:disabled):not(.vdd-context-menu__item--disabled) {
+  background-color: var(--vdd-toolbar-btn-hover-bg, rgba(255, 255, 255, 0.07));
+  color: var(--vdd-sidebar-text-title, #f8f9fa);
+}
+
+.vdd-context-menu__item:disabled,
+.vdd-context-menu__item--disabled {
+  opacity: 0.38;
+  cursor: default;
+  pointer-events: none;
+}
+
+.vdd-context-menu__item--has-submenu.vdd-context-menu__item--submenu-open {
+  background-color: var(--vdd-toolbar-btn-radio-active-bg, rgba(9, 71, 113, 0.35));
+}
+
+.vdd-context-menu__icon {
+  width: 16px;
+  min-width: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: inherit;
+  opacity: 0.85;
+}
+
+.vdd-context-menu__label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vdd-context-menu__chevron {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding-left: 12px;
+  font-size: 14px;
+  line-height: 1;
+  opacity: 0.6;
+}
+
+[dir="rtl"] .vdd-context-menu__chevron {
+  margin-left: 0;
+  margin-right: auto;
+  padding-left: 0;
+  padding-right: 12px;
+  transform: scaleX(-1);
+}
+
+[dir="rtl"] .vdd-context-menu__checkbox {
+  margin-left: 0;
+  margin-right: auto;
+  padding-left: 0;
+  padding-right: 12px;
+}
+
+.vdd-context-menu__checkbox {
+  width: 14px;
+  min-width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  margin-left: auto;
+  padding-left: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--vdd-tab-icon-active, #38bdf8);
+  box-sizing: content-box;
+  opacity: 0.6;
+}
+
+.vdd-context-menu__checkbox--checked {
+  opacity: 1;
+}
+
+/* Drag split target drop zone overlays */
+.vdd-dock-drop-zone-overlay {
+  position: absolute;
+  inset: 0;
+  /* Must outrank .vdd-workspace-edge-trigger (+8999) and .vdd-corner-zone (+9000) —
+     a leaf's cross commonly falls within the outer edge band or a corner region,
+     and the more specific per-leaf target should win the hover/drop hit-test there. */
+  z-index: calc(var(--vdd-z-base, 1000) + 9001);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+  border-radius: 4px;
+}
+
+/* Translucent overlay preview highlighting the grid section about to split */
+.vdd-dock-preview-highlight {
+  position: absolute;
+  background-color: rgba(56, 189, 248, 0.2) !important; /* neon cyan overlay */
+  border: 1.5px dashed var(--vdd-accent-color) !important;
+  transition: all 0.1s ease-out;
+  pointer-events: none;
+  z-index: 90;
+}
+
+/* Central cross layout container */
+.vdd-dock-target-cross {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  pointer-events: auto;
+}
+
+/* Visual split target buttons (top, bottom, left, right, center) */
+.vdd-dock-target-box {
+  position: absolute;
+  background-color: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: copy;
+  transition: all 0.12s ease-in-out;
+  pointer-events: auto;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  color: var(--vdd-text-secondary);
+}
+
+/* State-driven (activeDropZone), not :hover-driven — :hover never reliably
+   updates during an active drag in Safari, and doesn't exist on touch at all. */
+.vdd-dock-target-box--active {
+  background-color: var(--vdd-accent-color) !important;
+  border-color: #ffffff !important;
+  color: #090b11 !important;
+  transform: scale(1.12);
+  box-shadow: 0 0 12px var(--vdd-accent-color);
+}
+
+/* Specific split target layouts */
+.vdd-dock-target-left {
+  left: 0;
+  top: 45px;
+  width: 40px;
+  height: 50px;
+}
+.vdd-dock-target-right {
+  right: 0;
+  top: 45px;
+  width: 40px;
+  height: 50px;
+}
+.vdd-dock-target-top {
+  left: 45px;
+  top: 0;
+  width: 50px;
+  height: 40px;
+}
+.vdd-dock-target-bottom {
+  left: 45px;
+  bottom: 0;
+  width: 50px;
+  height: 40px;
+}
+.vdd-dock-target-center {
+  left: 45px;
+  top: 45px;
+  width: 50px;
+  height: 50px;
+  background-color: rgba(30, 41, 59, 0.95);
+  color: var(--vdd-accent-color);
+}
+
+/* Drag hover indicators: glowing insertion line */
+.vdd-workspace-tab.vdd-drag-hover-left {
+  box-shadow: -3px 0 0 0 var(--vdd-accent-color, #38bdf8),
+              -10px 0 10px -2px var(--vdd-accent-glow, rgba(56,189,248,0.35));
+}
+.vdd-workspace-tab.vdd-drag-hover-right {
+  box-shadow: 3px 0 0 0 var(--vdd-accent-color, #38bdf8),
+              10px 0 10px -2px var(--vdd-accent-glow, rgba(56,189,248,0.35));
+}
+
+/* Close button for empty LeafGroups inside header */
+.vdd-header-close-empty-group {
+  opacity: 0 !important;
+  transition: opacity 0.12s ease, background-color 0.12s ease, color 0.12s ease !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-inline-end: 0.5rem;
+}
+
+.vdd-workspace-panel:hover .vdd-header-close-empty-group {
+  opacity: 0.75 !important;
+}
+
+.vdd-header-close-empty-group:hover {
+  opacity: 1 !important;
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+}
+
+/* Grabbing cursor style during active dragging */
+.vdd-dragging-active,
+.vdd-dragging-active * {
+  cursor: grabbing !important;
+}
+body.vdd-dragging-active {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+
+/* --- Theme Variables for Sidebar and Tabs --- */
+[data-color-scheme="dark"] {
+  --vdd-sidebar-bg: #1e2024;
+  --vdd-sidebar-tabs-bg: #141619;
+  --vdd-sidebar-border: rgba(255, 255, 255, 0.08);
+  --vdd-sidebar-card-bg: rgba(255, 255, 255, 0.03);
+  --vdd-sidebar-card-border: rgba(255, 255, 255, 0.08);
+  --vdd-sidebar-card-active-bg: rgba(56, 189, 248, 0.06);
+  --vdd-sidebar-card-active-border: rgba(56, 189, 248, 0.3);
+  --vdd-sidebar-text-title: #f8f9fa;
+  --vdd-sidebar-text-muted: #8a90a0;
+  --vdd-sidebar-badge-bg: #2d3139;
+  --vdd-sidebar-badge-text: #b0b5c0;
+  --vdd-sidebar-btn-front-border: #38bdf8;
+  --vdd-sidebar-btn-front-text: #38bdf8;
+  --vdd-sidebar-btn-front-bg: transparent;
+  --vdd-sidebar-btn-front-hover-bg: rgba(56, 189, 248, 0.1);
+  --vdd-tab-icon-active: #38bdf8;
+  --vdd-tab-icon-inactive: #9ea4b0;
+  --vdd-tab-btn-active-bg: #1e2024; /* Seamless merge look */
+  --vdd-sidebar-btn-hover-bg: rgba(255, 255, 255, 0.05);
+  --vdd-sidebar-card-hover-border: rgba(56, 189, 248, 0.25);
+  --vdd-sidebar-card-hover-bg: rgba(255, 255, 255, 0.04);
+  --vdd-sidebar-card-active-shadow: rgba(56, 189, 248, 0.08);
+  --vdd-sidebar-drawer-header-bg: rgba(0, 0, 0, 0.12);
+  --vdd-toolbar-btn-hover-bg: rgba(255, 255, 255, 0.06);
+  --vdd-toolbar-btn-radio-active-bg: rgba(56, 189, 248, 0.14);
+  --vdd-toolbar-btn-toggle-active-bg: rgba(56, 189, 248, 0.08);
+  --vdd-toolbar-separator-color: rgba(255, 255, 255, 0.09);
+  /* Sidebar active-tab design tokens */
+  --vdd-tab-btn-active-width: 100%;
+  --vdd-tab-btn-active-radius: 0px;
+  --vdd-tab-btn-active-shadow: none;
+  --vdd-tab-btn-active-glow: none;
+  --vdd-tab-accent-bar-width: 3px;
+  /* Toolbar active-button design tokens */
+  --vdd-toolbar-btn-active-shadow: none;
+  --vdd-toolbar-btn-active-glow: none;
+  --vdd-toolbar-accent-bar-width: 3px;
+}
+
+[data-color-scheme="light"] {
+  --vdd-bg-primary: #f8f9fa;
+  --vdd-bg-workspace: #f1f5f9;
+  --vdd-bg-panel: #ffffff;
+  --vdd-bg-tab-bar: #e9ecef;
+  --vdd-text-primary: #212529;
+  --vdd-text-secondary: #6c757d;
+  --vdd-border-color: rgba(0, 0, 0, 0.08);
+
+  --vdd-sidebar-bg: #f8f9fa;
+  --vdd-sidebar-tabs-bg: #e9ecef;
+  --vdd-sidebar-border: rgba(0, 0, 0, 0.08);
+  --vdd-sidebar-card-bg: #ffffff;
+  --vdd-sidebar-card-border: rgba(0, 0, 0, 0.08);
+  --vdd-sidebar-card-active-bg: rgba(0, 102, 204, 0.05);
+  --vdd-sidebar-card-active-border: rgba(0, 102, 204, 0.3);
+  --vdd-sidebar-text-title: #212529;
+  --vdd-sidebar-text-muted: #6c757d;
+  --vdd-sidebar-badge-bg: #e9ecef;
+  --vdd-sidebar-badge-text: #495057;
+  --vdd-sidebar-btn-front-border: #0066cc;
+  --vdd-sidebar-btn-front-text: #0066cc;
+  --vdd-sidebar-btn-front-bg: transparent;
+  --vdd-sidebar-btn-front-hover-bg: rgba(0, 102, 204, 0.08);
+  --vdd-tab-icon-active: #0066cc;
+  --vdd-tab-icon-inactive: #555c66;
+  --vdd-tab-btn-active-bg: #f8f9fa; /* Seamless merge look */
+  --vdd-sidebar-btn-hover-bg: rgba(0, 0, 0, 0.05);
+  --vdd-sidebar-card-hover-border: rgba(0, 102, 204, 0.3);
+  --vdd-sidebar-card-hover-bg: rgba(0, 0, 0, 0.03);
+  --vdd-sidebar-card-active-shadow: rgba(0, 102, 204, 0.08);
+  --vdd-sidebar-drawer-header-bg: rgba(0, 0, 0, 0.04);
+  --vdd-toolbar-btn-hover-bg: rgba(0, 0, 0, 0.05);
+  --vdd-toolbar-btn-radio-active-bg: rgba(0, 102, 204, 0.1);
+  --vdd-toolbar-btn-toggle-active-bg: rgba(0, 102, 204, 0.06);
+  --vdd-toolbar-separator-color: rgba(0, 0, 0, 0.1);
+  /* Light skin window overrides */
+  --vdd-window-bg: rgba(243, 244, 246, var(--vdd-window-opacity, 0.9));
+  --vdd-window-border: rgba(0, 0, 0, 0.08);
+  --vdd-window-border-focused: rgba(0, 0, 0, 0.28);
+  --vdd-window-header-bg: rgba(0, 0, 0, 0.04);
+  --vdd-window-text: #212529;
+  --vdd-window-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+  --vdd-window-shadow-focused: 0 16px 36px rgba(0, 0, 0, 0.12);
+  /* Light skin modal overrides */
+  --vdd-modal-curtain-bg: rgba(0, 0, 0, 0.5);
+  --vdd-modal-bg: rgba(255, 255, 255, 0.97);
+  --vdd-modal-border: rgba(0, 0, 0, 0.1);
+  --vdd-modal-header-bg: rgba(0, 0, 0, 0.04);
+  --vdd-modal-header-border: rgba(0, 0, 0, 0.08);
+  --vdd-modal-close-hover-color: #212529;
+  /* Light skin side panel overrides */
+  --vdd-side-panel-bg: rgba(255, 255, 255, 0.97);
+  --vdd-side-panel-border: rgba(0, 0, 0, 0.1);
+  --vdd-side-panel-header-bg: rgba(0, 0, 0, 0.04);
+  --vdd-side-panel-header-border: rgba(0, 0, 0, 0.08);
+  --vdd-side-panel-close-hover-color: #212529;
+  /* Light skin grid/docked panel overrides */
+  --vdd-border-panel: rgba(0, 0, 0, 0.08);
+  --vdd-bg-tab-inactive: #e9ecef;
+  --vdd-text-tab-inactive: #495057;
+  --vdd-text-tab-active: #212529;
+  /* Light skin tab and control button hover colors */
+  --vdd-bg-tab-hover: #dee2e6;
+  --vdd-text-tab-hover: #212529;
+  --vdd-close-btn-hover-bg: rgba(0, 0, 0, 0.08);
+  --vdd-close-btn-hover-color: #212529;
+  --vdd-close-btn-color: #6c757d;
+  --vdd-close-btn-active-color: #212529;
+  --vdd-tab-indicator-focused: #0066cc;
+  --vdd-tab-indicator-unfocused: rgba(0, 0, 0, 0.25);
+  --vdd-tab-bg-active-focused: var(--vdd-bg-panel);
+  --vdd-tab-bg-active-unfocused: rgba(220, 224, 230, 0.65);
+  --vdd-tab-text-active-focused: #212529;
+  --vdd-tab-text-active-unfocused: #6c757d;
+  --vdd-resizer-bg: rgba(0, 0, 0, 0.08);
+  --vdd-custom-btn-bg: rgba(0, 0, 0, 0.03);
+  --vdd-custom-btn-border: rgba(0, 0, 0, 0.08);
+  --vdd-custom-btn-hover-bg: rgba(0, 0, 0, 0.08);
+  --vdd-custom-btn-hover-color: #212529;
+  /* Light skin taskbar theme variables */
+  --vdd-taskbar-bg: rgba(248, 249, 250, 0.85);
+  --vdd-taskbar-border: rgba(0, 0, 0, 0.08);
+  --vdd-taskbar-nav-color: rgba(0, 0, 0, 0.5);
+  --vdd-taskbar-item-bg: rgba(255, 255, 255, 0.65);
+  --vdd-taskbar-item-hover-bg: rgba(255, 255, 255, 0.85);
+  --vdd-taskbar-item-border: rgba(0, 0, 0, 0.08);
+  --vdd-taskbar-item-text: #0066cc;
+  /* Light skin scrollbar theme variables */
+  --vdd-scrollbar-thumb: rgba(0, 0, 0, 0.15);
+  --vdd-scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
+  --vdd-scrollbar-track: rgba(0, 0, 0, 0.02);
+  /* Light skin mockup panel inner theme variables */
+  --vdd-panel-card-bg: rgba(0, 0, 0, 0.03);
+  --vdd-panel-card-border: rgba(0, 0, 0, 0.08);
+  --vdd-panel-text: #212529;
+  --vdd-panel-title-color: #0066cc;
+  /* ── Panel Overlay — Toolbar (light) ── */
+  --vdd-panel-toolbar-fg: rgba(0, 0, 0, 0.55);
+  --vdd-panel-toolbar-fg-hover: rgba(0, 0, 0, 0.85);
+  --vdd-panel-toolbar-btn-hover-bg: rgba(0, 0, 0, 0.08);
+  --vdd-panel-toolbar-separator-color: rgba(0, 0, 0, 0.1);
+  /* ── Panel Overlay — Floating Window (light) ── */
+  --vdd-panel-float-bg: rgba(255, 255, 255, 0.96);
+  --vdd-panel-float-border: rgba(0, 0, 0, 0.1);
+  --vdd-panel-float-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --vdd-panel-float-shadow-active: 0 8px 28px rgba(0, 0, 0, 0.2);
+}
+
+/* ==========================================================================
+   MULTI-THEME PRESETS (SKINS) DEFINITIONS
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   SKIN 1: VS Code (Default Variables matching :root)
+   -------------------------------------------------------------------------- */
+[data-workspace-skin="vscode"] {
+  /* Inherits everything from :root */
+}
+
+/* --------------------------------------------------------------------------
+   SKIN 2: macOS / Glassmorphic Preset
+   -------------------------------------------------------------------------- */
+[data-workspace-skin="macos"] {
+  --vdd-bg-workspace: #1a1a24;
+  --vdd-bg-panel: rgba(30, 30, 40, 0.45);
+  --vdd-bg-tab-bar: rgba(18, 18, 24, 0.3);
+  --vdd-window-bg: rgba(25, 25, 35, var(--vdd-window-opacity, 0.7));
+  --vdd-window-border: rgba(255, 255, 255, 0.1);
+  --vdd-window-header-bg: rgba(0, 0, 0, 0.15);
+  --vdd-accent-color: #38bdf8;
+  --vdd-accent-glow: rgba(56, 189, 248, 0.25);
+  --vdd-border-panel: rgba(255, 255, 255, 0.08);
+  --vdd-bg-tab-inactive: transparent;
+  --vdd-text-tab-inactive: #94a3b8;
+  --vdd-text-tab-active: #ffffff;
+  --vdd-window-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  --vdd-window-shadow-focused: 0 24px 50px rgba(56, 189, 248, 0.15);
+  --vdd-panel-card-bg: rgba(255, 255, 255, 0.03);
+  --vdd-panel-card-border: rgba(255, 255, 255, 0.08);
+}
+
+[data-workspace-skin="macos"][data-color-scheme="light"] {
+  --vdd-bg-primary: #f3f4f6;
+  --vdd-bg-workspace: #e5e7eb;
+  --vdd-bg-panel: rgba(255, 255, 255, 0.7);
+  --vdd-bg-tab-bar: rgba(229, 231, 235, 0.5);
+  --vdd-window-bg: rgba(255, 255, 255, var(--vdd-window-opacity, 0.85));
+  --vdd-window-border: rgba(0, 0, 0, 0.12);
+  --vdd-window-header-bg: rgba(243, 244, 246, 0.5);
+  --vdd-accent-color: #0066cc;
+  --vdd-accent-glow: rgba(0, 102, 204, 0.15);
+  --vdd-border-panel: rgba(0, 0, 0, 0.1);
+  --vdd-bg-tab-inactive: transparent;
+  --vdd-text-tab-inactive: #4b5563;
+  --vdd-text-tab-active: #111827;
+  --vdd-window-text: #111827;
+  --vdd-window-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  --vdd-window-shadow-focused: 0 16px 36px rgba(0, 102, 204, 0.18);
+  --vdd-panel-card-bg: rgba(0, 0, 0, 0.04);
+  --vdd-panel-card-border: rgba(0, 0, 0, 0.08);
+  --vdd-panel-text: #111827;
+  --vdd-panel-title-color: #0066cc;
+  --vdd-close-btn-color: #4b5563;
+  --vdd-close-btn-active-color: #111827;
+}
+
+/* macOS structural adjustments */
+[data-workspace-skin="macos"] .vdd-floating-window {
+  border-radius: 12px;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-color: var(--vdd-window-border);
+}
+[data-workspace-skin="macos"] .vdd-floating-window-titlebar {
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+[data-workspace-skin="macos"] .vdd-workspace-panel {
+  border-radius: 8px;
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+}
+[data-workspace-skin="macos"] .vdd-workspace-tab {
+  border-radius: 6px !important;
+  margin: 4px 4px 4px 4px !important;
+  height: 28px !important;
+  border: 1px solid var(--vdd-border-panel) !important;
+}
+[data-workspace-skin="macos"] .vdd-workspace-tab.vdd-active {
+  background-color: var(--vdd-bg-workspace) !important;
+}
+[data-workspace-skin="macos"] .vdd-workspace-tab.vdd-active::before {
+  display: none !important; /* Hide VS Code top line */
+}
+
+/* macOS Circle dots controls styling */
+[data-workspace-skin="macos"] .vdd-custom-tab-btn {
+  border-radius: 50% !important;
+  width: 12px !important;
+  height: 12px !important;
+  background: var(--vdd-custom-btn-bg) !important;
+  border: none !important;
+  color: transparent !important;
+  font-size: 0 !important;
+  overflow: hidden;
+  margin: 0 2px;
+}
+[data-workspace-skin="macos"] .vdd-floating-window-titlebar {
+  flex-direction: row-reverse !important;
+  position: relative !important;
+}
+[data-workspace-skin="macos"] .vdd-floating-window-titlebar .vdd-floating-window-title {
+  pointer-events: none !important;
+  margin: 0 !important;
+  margin-inline-start: 0.5rem !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+  justify-content: flex-end !important;
+}
+[data-workspace-skin="macos"] .vdd-floating-window-titlebar .vdd-floating-window-title > * {
+  pointer-events: auto;
+}
+[data-workspace-skin="macos"] .vdd-floating-window-titlebar .vdd-titlebar-actions {
+  flex-direction: row-reverse !important;
+}
+[data-workspace-skin="macos"] .vdd-custom-tab-btn svg {
+  display: none !important;
+}
+[data-workspace-skin="macos"] .vdd-btn-close-tab {
+  background-color: #ff5f56 !important; /* Red (Close) */
+}
+[data-workspace-skin="macos"] .vdd-btn-minimize-tab {
+  background-color: #ffbd2e !important; /* Yellow (Minimize) */
+}
+[data-workspace-skin="macos"] .vdd-btn-maximize-tab {
+  background-color: #27c93f !important; /* Green (Maximize) */
+}
+
+/* Panel Icon Styling and Alignment */
+.vdd-workspace-tab-icon,
+.vdd-window-title-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  vertical-align: middle;
+  line-height: 1;
+  margin-inline-end: 4px !important; /* Forces the gap between the icon and the text title */
+}
+
+.vdd-workspace-tab-icon svg,
+.vdd-workspace-tab-icon img,
+.vdd-window-title-icon svg,
+.vdd-window-title-icon img {
+  width: 14px !important;
+  height: 14px !important;
+  max-width: 14px !important;
+  max-height: 14px !important;
+  object-fit: contain;
+  display: block;
+}
+
+[data-workspace-skin="macos"] .vdd-custom-tab-btn:hover {
+  filter: brightness(0.85);
+  transform: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   SKIN 3: Chrome / Browser-Style Preset
+   -------------------------------------------------------------------------- */
+[data-workspace-skin="chrome"] {
+  --vdd-bg-workspace: #202124;
+  --vdd-bg-panel: #292a2d;
+  --vdd-bg-tab-bar: #202124;
+  --vdd-window-bg: rgba(41, 42, 45, var(--vdd-window-opacity, 1.0));
+  --vdd-window-border: #3c4043;
+  --vdd-window-header-bg: #202124;
+  --vdd-accent-color: #8ab4f8;
+  --vdd-accent-glow: rgba(138, 180, 248, 0.15);
+  --vdd-border-panel: #3c4043;
+  --vdd-bg-tab-inactive: #202124;
+  --vdd-text-tab-inactive: #9aa0a6;
+  --vdd-text-tab-active: #ffffff;
+  --vdd-panel-card-bg: #202124;
+  --vdd-panel-card-border: #3c4043;
+  --vdd-window-text: #ffffff;
+  --vdd-panel-text: #e8eaed;
+  --vdd-tab-icon-active: #8ab4f8;
+  --vdd-toolbar-btn-radio-active-bg: rgba(138, 180, 248, 0.14);
+  --vdd-toolbar-btn-toggle-active-bg: rgba(138, 180, 248, 0.08);
+}
+
+[data-workspace-skin="chrome"][data-color-scheme="light"] {
+  --vdd-bg-workspace: #dee1e6;
+  --vdd-bg-panel: #ffffff;
+  --vdd-bg-tab-bar: #dee1e6;
+  --vdd-window-bg: rgba(255, 255, 255, var(--vdd-window-opacity, 1.0));
+  --vdd-window-border: #cbd5e1;
+  --vdd-window-header-bg: #dee1e6;
+  --vdd-accent-color: #1a73e8;
+  --vdd-accent-glow: rgba(26, 115, 232, 0.15);
+  --vdd-border-panel: #dadce0;
+  --vdd-bg-tab-inactive: #dee1e6;
+  --vdd-text-tab-inactive: #474747;
+  --vdd-text-tab-active: #1f1f1f;
+  --vdd-panel-card-bg: #f1f3f4;
+  --vdd-panel-card-border: #dadce0;
+  --vdd-window-text: #1f1f1f;
+  --vdd-panel-text: #1f1f1f;
+  --vdd-panel-title-color: #1a73e8;
+  --vdd-close-btn-color: #474747;
+  --vdd-close-btn-active-color: #1f1f1f;
+  --vdd-tab-icon-active: #1a73e8;
+  --vdd-toolbar-btn-radio-active-bg: rgba(26, 115, 232, 0.12);
+  --vdd-toolbar-btn-toggle-active-bg: rgba(26, 115, 232, 0.07);
+}
+
+/* Chrome tab angled geometry shapes */
+[data-workspace-skin="chrome"] .vdd-workspace-tab {
+  clip-path: polygon(10px 0%, calc(100% - 10px) 0%, 100% 100%, 0% 100%);
+  padding: 0 18px !important;
+  margin-right: -4px !important;
+  border-right: none !important;
+}
+[data-workspace-skin="chrome"] .vdd-workspace-tab.vdd-active {
+  z-index: 5;
+}
+[data-workspace-skin="chrome"] .vdd-workspace-tab.vdd-active::before {
+  display: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   SKIN 4: Fluent Slate Preset
+   -------------------------------------------------------------------------- */
+[data-workspace-skin="slate"] {
+  --vdd-bg-workspace: #0f172a;
+  --vdd-bg-panel: #1e293b;
+  --vdd-bg-tab-bar: #0f172a;
+  --vdd-window-bg: rgba(30, 41, 59, var(--vdd-window-opacity, 1.0));
+  --vdd-window-border: #334155;
+  --vdd-window-header-bg: #1e293b;
+  --vdd-accent-color: #38bdf8;
+  --vdd-accent-glow: rgba(56, 189, 248, 0.15);
+  --vdd-border-panel: #334155;
+  --vdd-bg-tab-inactive: #1e293b;
+  --vdd-text-tab-inactive: #64748b;
+  --vdd-text-tab-active: #f8fafc;
+  --vdd-panel-card-bg: #0f172a;
+  --vdd-panel-card-border: #334155;
+  --vdd-window-text: #f8fafc;
+  --vdd-panel-text: #f8fafc;
+}
+
+[data-workspace-skin="slate"][data-color-scheme="light"] {
+  --vdd-bg-workspace: #f1f5f9;
+  --vdd-bg-panel: #ffffff;
+  --vdd-bg-tab-bar: #f1f5f9;
+  --vdd-window-bg: rgba(255, 255, 255, var(--vdd-window-opacity, 1.0));
+  --vdd-window-border: #cbd5e1;
+  --vdd-window-header-bg: #f8fafc;
+  --vdd-accent-color: #0078d4;
+  --vdd-accent-glow: rgba(0, 120, 212, 0.15);
+  --vdd-border-panel: #e2e8f0;
+  --vdd-bg-tab-inactive: #f8fafc;
+  --vdd-text-tab-inactive: #475569;
+  --vdd-text-tab-active: #0f172a;
+  --vdd-panel-card-bg: #f8fafc;
+  --vdd-panel-card-border: #cbd5e1;
+  --vdd-window-text: #0f172a;
+  --vdd-panel-text: #0f172a;
+  --vdd-panel-title-color: #0078d4;
+  --vdd-close-btn-color: #475569;
+  --vdd-close-btn-active-color: #0f172a;
+  --vdd-tab-icon-active: #0078d4;
+  --vdd-toolbar-btn-radio-active-bg: rgba(0, 120, 212, 0.10);
+  --vdd-toolbar-btn-toggle-active-bg: rgba(0, 120, 212, 0.06);
+}
+
+[data-workspace-skin="slate"] .vdd-workspace-tab.vdd-active::before {
+  top: auto !important;
+  bottom: 0 !important;
+  height: 3px !important;
+}
+
+/* --------------------------------------------------------------------------
+   SKIN 5: Nordic Frost Preset (Nord Theme)
+   -------------------------------------------------------------------------- */
+[data-workspace-skin="nord"] {
+  --vdd-bg-workspace: #2e3440;
+  --vdd-bg-panel: #3b4252;
+  --vdd-bg-tab-bar: #2e3440;
+  --vdd-window-bg: rgba(59, 66, 82, var(--vdd-window-opacity, 1.0));
+  --vdd-window-border: #434c5e;
+  --vdd-window-header-bg: #2e3440;
+  --vdd-accent-color: #88c0d0;
+  --vdd-accent-glow: rgba(136, 192, 208, 0.2);
+  --vdd-border-panel: #434c5e;
+  --vdd-bg-tab-inactive: #2e3440;
+  --vdd-text-tab-inactive: #d8dee9;
+  --vdd-text-tab-active: #eceff4;
+  --vdd-panel-card-bg: #2e3440;
+  --vdd-panel-card-border: #4c566a;
+  --vdd-close-btn-color: #d8dee9;
+  --vdd-close-btn-active-color: #88c0d0;
+  --vdd-scrollbar-thumb: rgba(136, 192, 208, 0.25);
+  --vdd-scrollbar-thumb-hover: rgba(136, 192, 208, 0.4);
+  --vdd-window-text: #eceff4;
+  --vdd-panel-text: #eceff4;
+  --vdd-tab-icon-active: #88c0d0;
+  --vdd-toolbar-btn-radio-active-bg: rgba(136, 192, 208, 0.14);
+  --vdd-toolbar-btn-toggle-active-bg: rgba(136, 192, 208, 0.08);
+}
+
+[data-workspace-skin="nord"][data-color-scheme="light"] {
+  --vdd-bg-workspace: #e5e9f0;
+  --vdd-bg-panel: #eceff4;
+  --vdd-bg-tab-bar: #e5e9f0;
+  --vdd-window-bg: rgba(236, 239, 244, var(--vdd-window-opacity, 1.0));
+  --vdd-window-border: #d8dee9;
+  --vdd-window-header-bg: #e5e9f0;
+  --vdd-accent-color: #5e81ac;
+  --vdd-accent-glow: rgba(94, 129, 172, 0.15);
+  --vdd-border-panel: #d8dee9;
+  --vdd-bg-tab-inactive: #e5e9f0;
+  --vdd-text-tab-inactive: #4c566a;
+  --vdd-text-tab-active: #2e3440;
+  --vdd-panel-card-bg: #e5e9f0;
+  --vdd-panel-card-border: #d8dee9;
+  --vdd-close-btn-color: #4c566a;
+  --vdd-close-btn-active-color: #5e81ac;
+  --vdd-scrollbar-thumb: rgba(94, 129, 172, 0.2);
+  --vdd-scrollbar-thumb-hover: rgba(94, 129, 172, 0.35);
+  --vdd-window-text: #2e3440;
+  --vdd-panel-text: #2e3440;
+  --vdd-panel-title-color: #5e81ac;
+  --vdd-tab-icon-active: #5e81ac;
+  --vdd-toolbar-btn-radio-active-bg: rgba(94, 129, 172, 0.12);
+  --vdd-toolbar-btn-toggle-active-bg: rgba(94, 129, 172, 0.07);
+}
+
+/* --------------------------------------------------------------------------
+   SKIN 6: Midnight Obsidian Preset (Vercel Style)
+   -------------------------------------------------------------------------- */
+[data-workspace-skin="obsidian"] {
+  --vdd-bg-workspace: #000000;
+  --vdd-bg-panel: #0a0a0a;
+  --vdd-bg-tab-bar: #000000;
+  --vdd-window-bg: rgba(10, 10, 10, var(--vdd-window-opacity, 1.0));
+  --vdd-window-border: #1a1a1a;
+  --vdd-window-border-focused: #333333;
+  --vdd-window-header-bg: #000000;
+  --vdd-accent-color: #ffffff;
+  --vdd-accent-glow: rgba(255, 255, 255, 0.08);
+  --vdd-border-panel: #1a1a1a;
+  --vdd-bg-tab-inactive: #000000;
+  --vdd-text-tab-inactive: #737373;
+  --vdd-text-tab-active: #ffffff;
+  --vdd-panel-card-bg: #030303;
+  --vdd-panel-card-border: #1a1a1a;
+  --vdd-close-btn-color: #737373;
+  --vdd-close-btn-active-color: #ffffff;
+  --vdd-scrollbar-thumb: rgba(255, 255, 255, 0.15);
+  --vdd-scrollbar-thumb-hover: rgba(255, 255, 255, 0.35);
+  --vdd-window-text: #ffffff;
+  --vdd-panel-text: #ffffff;
+  --vdd-tab-icon-active: #ffffff;
+  --vdd-toolbar-btn-radio-active-bg: rgba(255, 255, 255, 0.10);
+  --vdd-toolbar-btn-toggle-active-bg: rgba(255, 255, 255, 0.06);
+}
+
+[data-workspace-skin="obsidian"][data-color-scheme="light"] {
+  --vdd-bg-workspace: #ffffff;
+  --vdd-bg-panel: #fafafa;
+  --vdd-bg-tab-bar: #ffffff;
+  --vdd-window-bg: rgba(250, 250, 250, var(--vdd-window-opacity, 1.0));
+  --vdd-window-border: #e5e5e5;
+  --vdd-window-border-focused: #a3a3a3;
+  --vdd-window-header-bg: #ffffff;
+  --vdd-accent-color: #000000;
+  --vdd-accent-glow: rgba(0, 0, 0, 0.05);
+  --vdd-border-panel: #eaeaea;
+  --vdd-bg-tab-inactive: #ffffff;
+  --vdd-text-tab-inactive: #737373;
+  --vdd-text-tab-active: #000000;
+  --vdd-panel-card-bg: #ffffff;
+  --vdd-panel-card-border: #e5e5e5;
+  --vdd-close-btn-color: #737373;
+  --vdd-close-btn-active-color: #000000;
+  --vdd-scrollbar-thumb: rgba(0, 0, 0, 0.1);
+  --vdd-scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
+  --vdd-window-text: #000000;
+  --vdd-panel-text: #000000;
+  --vdd-panel-title-color: #000000;
+  --vdd-tab-icon-active: #000000;
+  --vdd-toolbar-btn-radio-active-bg: rgba(0, 0, 0, 0.10);
+  --vdd-toolbar-btn-toggle-active-bg: rgba(0, 0, 0, 0.06);
+}
+
+/* Obsidian custom borderless panel elevations */
+[data-workspace-skin="obsidian"] .vdd-floating-window {
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 1px rgba(255, 255, 255, 0.2) !important;
+  border-radius: 6px;
+}
+[data-workspace-skin="obsidian"] .vdd-floating-window.vdd-window-focused {
+  box-shadow: 0 24px 50px rgba(255, 255, 255, 0.06), 0 0 1px rgba(255, 255, 255, 0.4) !important;
+}
+[data-workspace-skin="obsidian"][data-color-scheme="light"] .vdd-floating-window {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08), 0 0 1px rgba(0, 0, 0, 0.1) !important;
+}
+[data-workspace-skin="obsidian"][data-color-scheme="light"] .vdd-floating-window.vdd-window-focused {
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.14), 0 0 1px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* --------------------------------------------------------------------------
+   SKIN 7: Tokyo Night Preset
+   -------------------------------------------------------------------------- */
+[data-workspace-skin="tokyo"] {
+  --vdd-bg-workspace: #1a1b26;
+  --vdd-bg-panel: #24283c;
+  --vdd-bg-tab-bar: #1f2335;
+  --vdd-window-bg: rgba(36, 40, 60, var(--vdd-window-opacity, 1.0));
+  --vdd-window-border: #383e5a;
+  --vdd-window-border-focused: #7aa2f7;
+  --vdd-window-header-bg: #1f2335;
+  --vdd-accent-color: #bb9af7;
+  --vdd-accent-glow: rgba(187, 154, 247, 0.25);
+  --vdd-border-panel: #383e5a;
+  --vdd-bg-tab-inactive: #1f2335;
+  --vdd-text-tab-inactive: #787c99;
+  --vdd-text-tab-active: #c0caf5;
+  --vdd-panel-card-bg: #1a1b26;
+  --vdd-panel-card-border: #383e5a;
+  --vdd-close-btn-color: #787c99;
+  --vdd-close-btn-active-color: #7aa2f7;
+  --vdd-scrollbar-thumb: rgba(122, 162, 247, 0.25);
+  --vdd-scrollbar-thumb-hover: rgba(187, 154, 247, 0.4);
+  --vdd-window-text: #c0caf5;
+  --vdd-panel-text: #c0caf5;
+  --vdd-tab-icon-active: #7aa2f7;
+  --vdd-toolbar-btn-radio-active-bg: rgba(122, 162, 247, 0.14);
+  --vdd-toolbar-btn-toggle-active-bg: rgba(122, 162, 247, 0.08);
+}
+
+[data-workspace-skin="tokyo"][data-color-scheme="light"] {
+  --vdd-bg-workspace: #e1e2e7;
+  --vdd-bg-panel: #f2f4f8;
+  --vdd-bg-tab-bar: #d5d6db;
+  --vdd-window-bg: rgba(242, 244, 248, var(--vdd-window-opacity, 1.0));
+  --vdd-window-border: #b4b5b9;
+  --vdd-window-border-focused: #385af6;
+  --vdd-window-header-bg: #d5d6db;
+  --vdd-accent-color: #9854f1;
+  --vdd-accent-glow: rgba(152, 84, 241, 0.15);
+  --vdd-border-panel: #b4b5b9;
+  --vdd-bg-tab-inactive: #d5d6db;
+  --vdd-text-tab-inactive: #565a6e;
+  --vdd-text-tab-active: #383e56;
+  --vdd-panel-card-bg: #e1e2e7;
+  --vdd-panel-card-border: #b4b5b9;
+  --vdd-close-btn-color: #565a6e;
+  --vdd-close-btn-active-color: #385af6;
+  --vdd-scrollbar-thumb: rgba(56, 90, 246, 0.2);
+  --vdd-scrollbar-thumb-hover: rgba(152, 84, 241, 0.35);
+  --vdd-window-text: #383e56;
+  --vdd-panel-text: #383e56;
+  --vdd-panel-title-color: #9854f1;
+  --vdd-tab-icon-active: #385af6;
+  --vdd-toolbar-btn-radio-active-bg: rgba(56, 90, 246, 0.12);
+  --vdd-toolbar-btn-toggle-active-bg: rgba(56, 90, 246, 0.07);
+}
+
+/* ==========================================================================
+   PER-SKIN ACTIVE TAB & TOOLBAR DESIGN LANGUAGE
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   vscode — Accent Bar (2 px bar, fully transparent fill — faithful to VS Code)
+   -------------------------------------------------------------------------- */
+[data-workspace-skin="vscode"] {
+  --vdd-tab-btn-active-bg: transparent;
+  --vdd-tab-accent-bar-width: 2px;
+  --vdd-toolbar-btn-radio-active-bg: transparent;
+  --vdd-toolbar-accent-bar-width: 2px;
+}
+[data-workspace-skin="vscode"] .vdd-sidebar-tab-btn.vdd-active {
+  border-top: 1px solid transparent !important;
+  border-bottom: 1px solid transparent !important;
+}
+
+/* --------------------------------------------------------------------------
+   chrome — Tab Shape (sidebar bridge, toolbar accent-tinted)
+   -------------------------------------------------------------------------- */
+[data-workspace-skin="chrome"] {
+  --vdd-tab-btn-active-bg: var(--vdd-sidebar-bg);
+  --vdd-tab-accent-bar-width: 0px;
+  --vdd-toolbar-accent-bar-width: 2px;
+}
+[data-workspace-skin="chrome"] .vdd-sidebar-tabs-strip.vdd-left .vdd-sidebar-tab-btn.vdd-active {
+  border-radius: 0 10px 10px 0 !important;
+  border-left: none !important;
+}
+[data-workspace-skin="chrome"] .vdd-sidebar-tabs-strip.vdd-right .vdd-sidebar-tab-btn.vdd-active {
+  border-radius: 10px 0 0 10px !important;
+  border-right: none !important;
+  border-top: 1px solid var(--vdd-sidebar-border) !important;
+  border-bottom: 1px solid var(--vdd-sidebar-border) !important;
+}
+
+/* --------------------------------------------------------------------------
+   slate — Fluent Pill (floating capsule, accent-tinted)
+   -------------------------------------------------------------------------- */
+[data-workspace-skin="slate"] {
+  --vdd-tab-btn-active-bg: rgba(96, 165, 250, 0.14);
+  --vdd-tab-btn-active-width: 36px;
+  --vdd-tab-btn-active-radius: 8px;
+  --vdd-tab-accent-bar-width: 0px;
+  --vdd-toolbar-btn-radio-active-bg: rgba(96, 165, 250, 0.14);
+  --vdd-toolbar-accent-bar-width: 0px;
+}
+[data-workspace-skin="slate"] .vdd-sidebar-tab-btn.vdd-active {
+  border-top: 1px solid transparent !important;
+  border-bottom: 1px solid transparent !important;
+  margin: 0 !important;
+}
+[data-workspace-skin="slate"] .vdd-toolbar-strip .vdd-toolbar-btn-radio.vdd-active,
+[data-workspace-skin="slate"] .vdd-toolbar-strip .vdd-toolbar-btn-group.vdd-active {
+  border-radius: 8px !important;
+}
+[data-workspace-skin="slate"][data-color-scheme="light"] {
+  --vdd-tab-btn-active-bg: rgba(0, 120, 212, 0.12);
+  --vdd-toolbar-btn-radio-active-bg: rgba(0, 120, 212, 0.12);
+}
+
+/* --------------------------------------------------------------------------
+   nord — Nordic Line (zero fill, zero bar, 16×2 px accent line via ::after)
+   -------------------------------------------------------------------------- */
+[data-workspace-skin="nord"] {
+  --vdd-tab-btn-active-bg: transparent;
+  --vdd-tab-btn-active-width: 44px;
+  --vdd-tab-btn-active-radius: 6px;
+  --vdd-tab-accent-bar-width: 0px;
+  --vdd-toolbar-btn-radio-active-bg: transparent;
+  --vdd-toolbar-accent-bar-width: 0px;
+}
+[data-workspace-skin="nord"] .vdd-sidebar-tab-btn.vdd-active {
+  border-top: 1px solid transparent !important;
+  border-bottom: 1px solid transparent !important;
+  border-left: none !important;
+  border-right: none !important;
+}
+[data-workspace-skin="nord"] .vdd-sidebar-tab-btn.vdd-active::after {
+  content: '';
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16px;
+  height: 2px;
+  border-radius: 1px;
+  background-color: var(--vdd-tab-icon-active);
+}
+[data-workspace-skin="nord"] .vdd-toolbar-strip .vdd-toolbar-btn-radio.vdd-active,
+[data-workspace-skin="nord"] .vdd-toolbar-strip .vdd-toolbar-btn-group.vdd-active {
+  border-left: none !important;
+  border-right: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+}
+[data-workspace-skin="nord"] .vdd-toolbar-strip.vdd-left  .vdd-toolbar-btn-radio.vdd-active::after,
+[data-workspace-skin="nord"] .vdd-toolbar-strip.vdd-left  .vdd-toolbar-btn-group.vdd-active::after,
+[data-workspace-skin="nord"] .vdd-toolbar-strip.vdd-right .vdd-toolbar-btn-radio.vdd-active::after,
+[data-workspace-skin="nord"] .vdd-toolbar-strip.vdd-right .vdd-toolbar-btn-group.vdd-active::after,
+[data-workspace-skin="nord"] .vdd-toolbar-strip.vdd-top   .vdd-toolbar-btn-radio.vdd-active::after,
+[data-workspace-skin="nord"] .vdd-toolbar-strip.vdd-top   .vdd-toolbar-btn-group.vdd-active::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 2px;
+  border-radius: 1px;
+  background-color: var(--vdd-tab-icon-active);
+}
+[data-workspace-skin="nord"] .vdd-toolbar-strip.vdd-bottom .vdd-toolbar-btn-radio.vdd-active::after,
+[data-workspace-skin="nord"] .vdd-toolbar-strip.vdd-bottom .vdd-toolbar-btn-group.vdd-active::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 2px;
+  border-radius: 1px;
+  background-color: var(--vdd-tab-icon-active);
+}
+
+/* --------------------------------------------------------------------------
+   obsidian — Deep Glow (near-black fill, 2 px bar, inner glow, icon shadow)
+   -------------------------------------------------------------------------- */
+[data-workspace-skin="obsidian"] {
+  --vdd-tab-btn-active-bg: rgba(255, 255, 255, 0.03);
+  --vdd-tab-btn-active-shadow: inset 0 0 12px rgba(255, 255, 255, 0.06);
+  --vdd-tab-btn-active-glow: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
+  --vdd-tab-accent-bar-width: 2px;
+  --vdd-toolbar-btn-radio-active-bg: rgba(255, 255, 255, 0.03);
+  --vdd-toolbar-btn-active-shadow: inset 0 0 12px rgba(255, 255, 255, 0.06);
+  --vdd-toolbar-btn-active-glow: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
+  --vdd-toolbar-accent-bar-width: 2px;
+}
+[data-workspace-skin="obsidian"] .vdd-sidebar-tabs-strip.vdd-left .vdd-sidebar-tab-btn.vdd-active {
+  box-shadow: var(--vdd-tab-btn-active-shadow), inset 3px 0 8px rgba(255, 255, 255, 0.08) !important;
+}
+[data-workspace-skin="obsidian"] .vdd-sidebar-tabs-strip.vdd-right .vdd-sidebar-tab-btn.vdd-active {
+  box-shadow: var(--vdd-tab-btn-active-shadow), inset -3px 0 8px rgba(255, 255, 255, 0.08) !important;
+}
+[data-workspace-skin="obsidian"] .vdd-toolbar-strip.vdd-left .vdd-toolbar-btn-radio.vdd-active,
+[data-workspace-skin="obsidian"] .vdd-toolbar-strip.vdd-left .vdd-toolbar-btn-group.vdd-active {
+  box-shadow: var(--vdd-toolbar-btn-active-shadow), inset 3px 0 8px rgba(255, 255, 255, 0.08) !important;
+}
+[data-workspace-skin="obsidian"] .vdd-toolbar-strip.vdd-right .vdd-toolbar-btn-radio.vdd-active,
+[data-workspace-skin="obsidian"] .vdd-toolbar-strip.vdd-right .vdd-toolbar-btn-group.vdd-active {
+  box-shadow: var(--vdd-toolbar-btn-active-shadow), inset -3px 0 8px rgba(255, 255, 255, 0.08) !important;
+}
+[data-workspace-skin="obsidian"] .vdd-toolbar-strip.vdd-top .vdd-toolbar-btn-radio.vdd-active,
+[data-workspace-skin="obsidian"] .vdd-toolbar-strip.vdd-top .vdd-toolbar-btn-group.vdd-active {
+  box-shadow: var(--vdd-toolbar-btn-active-shadow), inset 0 -3px 8px rgba(255, 255, 255, 0.08) !important;
+}
+[data-workspace-skin="obsidian"] .vdd-toolbar-strip.vdd-bottom .vdd-toolbar-btn-radio.vdd-active,
+[data-workspace-skin="obsidian"] .vdd-toolbar-strip.vdd-bottom .vdd-toolbar-btn-group.vdd-active {
+  box-shadow: var(--vdd-toolbar-btn-active-shadow), inset 0 3px 8px rgba(255, 255, 255, 0.08) !important;
+}
+[data-workspace-skin="obsidian"][data-color-scheme="light"] {
+  --vdd-tab-btn-active-shadow: inset 0 0 12px rgba(0, 0, 0, 0.06);
+  --vdd-tab-btn-active-glow: drop-shadow(0 0 4px rgba(0, 0, 0, 0.4));
+  --vdd-toolbar-btn-active-shadow: inset 0 0 12px rgba(0, 0, 0, 0.06);
+  --vdd-toolbar-btn-active-glow: drop-shadow(0 0 4px rgba(0, 0, 0, 0.4));
+}
+
+/* --------------------------------------------------------------------------
+   tokyo — Neon Pulse (accent-blue tint, vivid neon glow)
+   -------------------------------------------------------------------------- */
+[data-workspace-skin="tokyo"] {
+  --vdd-tab-btn-active-bg: rgba(122, 162, 247, 0.10);
+  --vdd-tab-btn-active-shadow: inset 0 0 16px rgba(122, 162, 247, 0.12);
+  --vdd-tab-btn-active-glow: drop-shadow(0 0 6px rgba(122, 162, 247, 0.65));
+  --vdd-tab-accent-bar-width: 2px;
+  --vdd-toolbar-btn-radio-active-bg: rgba(122, 162, 247, 0.10);
+  --vdd-toolbar-btn-active-shadow: inset 0 0 16px rgba(122, 162, 247, 0.12);
+  --vdd-toolbar-btn-active-glow: drop-shadow(0 0 6px rgba(122, 162, 247, 0.65));
+  --vdd-toolbar-accent-bar-width: 2px;
+}
+[data-workspace-skin="tokyo"] .vdd-sidebar-tabs-strip.vdd-left .vdd-sidebar-tab-btn.vdd-active {
+  box-shadow: var(--vdd-tab-btn-active-shadow), inset 3px 0 12px rgba(122, 162, 247, 0.18) !important;
+}
+[data-workspace-skin="tokyo"] .vdd-sidebar-tabs-strip.vdd-right .vdd-sidebar-tab-btn.vdd-active {
+  box-shadow: var(--vdd-tab-btn-active-shadow), inset -3px 0 12px rgba(122, 162, 247, 0.18) !important;
+}
+[data-workspace-skin="tokyo"] .vdd-toolbar-strip.vdd-left .vdd-toolbar-btn-radio.vdd-active,
+[data-workspace-skin="tokyo"] .vdd-toolbar-strip.vdd-left .vdd-toolbar-btn-group.vdd-active {
+  box-shadow: var(--vdd-toolbar-btn-active-shadow), inset 3px 0 12px rgba(122, 162, 247, 0.18) !important;
+}
+[data-workspace-skin="tokyo"] .vdd-toolbar-strip.vdd-right .vdd-toolbar-btn-radio.vdd-active,
+[data-workspace-skin="tokyo"] .vdd-toolbar-strip.vdd-right .vdd-toolbar-btn-group.vdd-active {
+  box-shadow: var(--vdd-toolbar-btn-active-shadow), inset -3px 0 12px rgba(122, 162, 247, 0.18) !important;
+}
+[data-workspace-skin="tokyo"] .vdd-toolbar-strip.vdd-top .vdd-toolbar-btn-radio.vdd-active,
+[data-workspace-skin="tokyo"] .vdd-toolbar-strip.vdd-top .vdd-toolbar-btn-group.vdd-active {
+  box-shadow: var(--vdd-toolbar-btn-active-shadow), inset 0 -3px 12px rgba(122, 162, 247, 0.18) !important;
+}
+[data-workspace-skin="tokyo"] .vdd-toolbar-strip.vdd-bottom .vdd-toolbar-btn-radio.vdd-active,
+[data-workspace-skin="tokyo"] .vdd-toolbar-strip.vdd-bottom .vdd-toolbar-btn-group.vdd-active {
+  box-shadow: var(--vdd-toolbar-btn-active-shadow), inset 0 3px 12px rgba(122, 162, 247, 0.18) !important;
+}
+
+/* --------------------------------------------------------------------------
+   macos — Glass Chip (full-round floating chip, accent fill + white ring)
+   Inspired by macOS app icon strip conventions: Xcode, Logic Pro, System Settings.
+   A contained chip that floats inside the strip — not an edge-connecting bridge.
+   -------------------------------------------------------------------------- */
+[data-workspace-skin="macos"] {
+  --vdd-tab-btn-active-bg: rgba(56, 189, 248, 0.2);
+  --vdd-tab-btn-active-width: 36px;
+  --vdd-tab-btn-active-radius: 10px;
+  --vdd-tab-btn-active-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+  --vdd-tab-accent-bar-width: 0px;
+  --vdd-toolbar-btn-radio-active-bg: rgba(56, 189, 248, 0.2);
+  --vdd-toolbar-btn-active-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+  --vdd-toolbar-accent-bar-width: 0px;
+}
+[data-workspace-skin="macos"] .vdd-sidebar-tab-btn.vdd-active {
+  border-top: 1px solid transparent !important;
+  border-bottom: 1px solid transparent !important;
+  margin: 0 !important;
+}
+[data-workspace-skin="macos"] .vdd-toolbar-strip .vdd-toolbar-btn-radio.vdd-active,
+[data-workspace-skin="macos"] .vdd-toolbar-strip .vdd-toolbar-btn-group.vdd-active {
+  border-radius: 10px !important;
+}
+[data-workspace-skin="macos"][data-color-scheme="light"] {
+  --vdd-tab-btn-active-bg: rgba(0, 102, 204, 0.16);
+  --vdd-tab-btn-active-shadow: inset 0 0 0 1px rgba(0, 102, 204, 0.3);
+  --vdd-toolbar-btn-radio-active-bg: rgba(0, 102, 204, 0.16);
+  --vdd-toolbar-btn-active-shadow: inset 0 0 0 1px rgba(0, 102, 204, 0.3);
+}
+
+/* ─── Sidebar structure ──────────────────────────────────────────────────────
+   rdd carried every rule below as an inline `style={{…}}` object on the JSX,
+   which is why its stylesheet had no sidebar layout at all: the sizes and the
+   flex behaviour lived in the component file. Anything inline is unreachable to
+   a consumer without `!important`, and invisible to a stylesheet review — the
+   class of omission catalogued as docs/PARITY.md divergence D12. Only the
+   values that genuinely vary per render stay inline in vdd: the strip's own
+   width (it animates between 56px and 0), the drawer's flex-basis/min/max, and
+   each pane's display. */
+
+/* The row that holds strip, drawer, resizer and the workspace itself. */
+.vdd-sidebar-layout {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Collapse wrapper around the strip. The animated width is set inline; this
+   clips the 56px strip inside it while that width is on its way to 0. */
+.vdd-sidebar-strip-outer {
+  height: 100%;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* The consumer's own content — the workspace, normally.
+
+   flex-basis: 0 rather than the `auto` a bare `flex-grow: 1` would leave in
+   place: with `auto`, a flex item's hypothetical size is its content's
+   max-content width, and `min-width: 0` lowers only the shrink floor, not that
+   starting size. So a wide panel inside would inflate this wrapper and steal
+   width from the drawer beside it, moving the drawer according to what happens
+   to be rendered in the workspace. At 0 the width is purely flex-grow's share
+   of the free space. */
+.vdd-sidebar-main {
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* The drawer animates its flex-basis, not its width: in a flex row, `width` has
+   no effect once flex-basis is set. */
+.vdd-sidebar-content-drawer {
+  flex-grow: 0;
+  flex-shrink: 1;
+  overflow: hidden;
+  transition:
+    flex-basis 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    min-width 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    max-width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* One pane per mounted tab; all but the open one are display: none, set inline.
+   Column so a tab's header sits above its scrolling body. */
+.vdd-sidebar-drawer-pane {
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+/* --- Modern Sidebar and Tabs UI Theme Customizations --- */
+.vdd-sidebar-content-drawer {
+  background-color: var(--vdd-sidebar-bg) !important;
+  color: var(--vdd-sidebar-text-title) !important;
+  height: 100%;
+}
+
+/* Position-specific drawer border and shadow alignment */
+.vdd-sidebar-content-drawer.vdd-left {
+  border-right: 1px solid var(--vdd-sidebar-border) !important;
+  border-left: none !important;
+  box-shadow: 4px 0 16px rgba(0, 0, 0, 0.12);
+}
+.vdd-sidebar-content-drawer.vdd-right {
+  border-left: 1px solid var(--vdd-sidebar-border) !important;
+  border-right: none !important;
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.12);
+}
+
+.vdd-sidebar-tabs-strip {
+  background-color: var(--vdd-sidebar-tabs-bg) !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 38px; /* Perfectly aligned to match the 38px height of the drawer header bar — only
+                         relevant when a tab is the first item; see the modifier rule below. */
+  padding-bottom: 12px;
+  flex-shrink: 0;
+  z-index: 5;
+}
+
+/* When a headerAction is present, it owns its own top/bottom spacing (see
+   .vdd-sidebar-header-area below) — the strip's own alignment padding no longer applies. */
+.vdd-sidebar-tabs-strip.vdd-sidebar-tabs-strip--has-header-action {
+  padding-top: 0;
+}
+
+/* When a footerAction is present, it owns its own bottom spacing (see .vdd-sidebar-footer-area
+   below) — the strip's own bottom padding no longer applies. */
+.vdd-sidebar-tabs-strip.vdd-sidebar-tabs-strip--has-footer-action {
+  padding-bottom: 0;
+}
+
+/* Wraps `headerAction` — independent of .vdd-sidebar-tabs-list's own gap, so a consumer can
+   tune spacing/effective height around their button(s) (default, custom-rendered, or a mix with
+   real tabs) without touching inter-tab spacing. Layout-only values, so no light/dark variant is
+   needed. Column + gap so multiple entries stack — visually identical to before for the single-
+   entry case. */
+.vdd-sidebar-header-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  /* Floor matching .vdd-sidebar-tab-btn's own intrinsic 44px — without it, a lone active tab
+     (width: var(--vdd-tab-btn-active-width, 100%)) has no stable sibling to size this shrink-to-fit
+     container against, so its 100% resolves against nothing and collapses to its icon's size. */
+  min-width: 44px;
+  padding-top: var(--vdd-sidebar-header-area-padding-top, 8px);
+  padding-bottom: var(--vdd-sidebar-header-area-padding-bottom, 8px);
+}
+
+/* Mirror of .vdd-sidebar-header-area for `footerAction` — pinned to the bottom of the strip via
+   .vdd-sidebar-tabs-list's flex: 1 below. */
+.vdd-sidebar-footer-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 44px;
+  padding-top: var(--vdd-sidebar-footer-area-padding-top, 8px);
+  padding-bottom: var(--vdd-sidebar-footer-area-padding-bottom, 8px);
+}
+
+/* Wraps the tabs only — owns the gap that used to live on .vdd-sidebar-tabs-strip itself.
+   flex: 1 absorbs remaining space so a following .vdd-sidebar-footer-area is pushed to the
+   bottom of the strip regardless of tab count. */
+.vdd-sidebar-tabs-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+/* Position-specific tab strip border alignment */
+.vdd-sidebar-tabs-strip.vdd-left {
+  border-right: 1px solid var(--vdd-sidebar-border) !important;
+  border-left: none !important;
+}
+.vdd-sidebar-tabs-strip.vdd-right {
+  border-left: 1px solid var(--vdd-sidebar-border) !important;
+  border-right: none !important;
+}
+
+/* Sidebar Header */
+.vdd-sidebar-header-title {
+  font-family: monospace;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--vdd-sidebar-text-title);
+  font-size: 0.85rem;
+}
+
+/* Tab Button with real tabbed integration */
+.vdd-sidebar-tab-btn {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent !important;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--vdd-tab-icon-inactive);
+  position: relative;
+  transition: color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
+  cursor: pointer;
+  outline: none !important;
+}
+
+/* Micro-interactions & hover tactile feedback for inactive buttons */
+.vdd-sidebar-tab-btn:not(.vdd-active):hover {
+  color: var(--vdd-sidebar-text-title);
+  background-color: var(--vdd-sidebar-btn-hover-bg) !important;
+  transform: scale(1.05);
+}
+
+.vdd-sidebar-tab-btn.vdd-active {
+  width: var(--vdd-tab-btn-active-width, 100%) !important;
+  color: var(--vdd-tab-icon-active) !important;
+  background-color: var(--vdd-tab-btn-active-bg) !important;
+  border-top: 1px solid var(--vdd-sidebar-border) !important;
+  border-bottom: 1px solid var(--vdd-sidebar-border) !important;
+  border-radius: var(--vdd-tab-btn-active-radius, 0px) !important;
+  box-shadow: var(--vdd-tab-btn-active-shadow, none);
+  filter: var(--vdd-tab-btn-active-glow, none);
+  z-index: 6;
+  transition: color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Position-specific active button border & margin alignments */
+.vdd-sidebar-tabs-strip.vdd-left .vdd-sidebar-tab-btn.vdd-active {
+  border-left: var(--vdd-tab-accent-bar-width, 3px) solid var(--vdd-tab-icon-active) !important;
+  border-right: none !important;
+  margin-right: -2px !important;
+  margin-left: 0 !important;
+}
+.vdd-sidebar-tabs-strip.vdd-right .vdd-sidebar-tab-btn.vdd-active {
+  border-left: none !important;
+  border-right: var(--vdd-tab-accent-bar-width, 3px) solid var(--vdd-tab-icon-active) !important;
+  margin-left: -2px !important;
+  margin-right: 0 !important;
+}
+
+
+/* Animations are on by default. `animations={false}` on <WindowManager /> adds
+   `vdd-no-animations` to the workspace root and mirrors it onto <html> (so
+   portaled elements — ContextMenu, Toast, Toolbar's flyout — are covered too).
+   Scoped to only the library's own elements ([class*="vdd-"]) via the new
+   unified prefix — this never touches the consumer's own transitions/animations
+   elsewhere on the page, in either state. */
+.vdd-no-animations [class*="vdd-"],
+.vdd-no-animations [class*="vdd-"]::before,
+.vdd-no-animations [class*="vdd-"]::after,
+html.vdd-no-animations [class*="vdd-"],
+html.vdd-no-animations [class*="vdd-"]::before,
+html.vdd-no-animations [class*="vdd-"]::after {
+  transition: none !important;
+  animation: none !important;
+}
+
+
+
+@keyframes vdd-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes vdd-scale-up {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Stacked Modal Classes */
+.vdd-modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: calc(var(--vdd-z-base, 1000) + 9000);
+  animation: vdd-fade-in 0.18s ease-out;
+}
+
+.vdd-modal-curtain {
+  position: absolute;
+  inset: 0;
+  background-color: var(--vdd-modal-curtain-bg);
+  backdrop-filter: blur(6px);
+}
+
+.vdd-modal-window {
+  position: relative;
+  background: var(--vdd-modal-bg);
+  border: 1px solid var(--vdd-modal-border);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  color: var(--vdd-text-primary);
+  max-width: 90%;
+  max-height: 90vh;
+  animation: vdd-scale-up 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden;
+}
+
+.vdd-modal-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--vdd-modal-header-border);
+  background-color: var(--vdd-modal-header-bg);
+}
+
+.vdd-modal-icon {
+  margin-right: 10px;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+}
+
+.vdd-modal-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+  flex-grow: 1;
+}
+
+.vdd-modal-close-button {
+  background: transparent;
+  border: none;
+  color: var(--vdd-text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.vdd-modal-close-button:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--vdd-modal-close-hover-color);
+}
+
+.vdd-modal-body {
+  padding: 0;
+  overflow-y: auto;
+  max-height: calc(90vh - 70px);
+}
+
+/* Modal Sizes */
+.vdd-modal-size-small { 
+  width: 420px; 
+}
+.vdd-modal-size-medium { 
+  width: 560px; 
+}
+.vdd-modal-size-large { 
+  width: 800px; 
+}
+.vdd-modal-size-fullscreen {
+  width: 98vw;
+  height: 96vh;
+}
+.vdd-modal-size-auto { 
+  width: auto; 
+  min-width: 300px; 
+}
+
+/* Side Drawer Panels */
+/* position: fixed (not absolute) is deliberate: it anchors the panel to the
+   viewport directly, matching .vdd-modal-overlay's own position: fixed. A
+   position: absolute panel resolves its containing block against whatever
+   position: relative/absolute ancestor the consumer happens to have between
+   it and the document (per the documented "mount as a sibling of
+   WindowManager" pattern) — and while off-screen mid-slide-in (a pure
+   transform, not a visibility change), it then contributes real scrollable
+   overflow to THAT ancestor, which the browser auto-scrolls on focus and then
+   continuously re-clamps in lockstep with the animation, visibly dragging the
+   ancestor's entire content (the whole workspace) left/right and back over
+   the whole animation — not window/document, so no amount of watching
+   window.scrollX/scrollY (an earlier fix here, since reverted) can catch or
+   correct it. position: fixed removes the panel from that ancestor's overflow
+   calculation entirely, the same way it already does for modals. */
+.vdd-side-panel {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 400px;
+  background: var(--vdd-side-panel-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-right: 1px solid var(--vdd-side-panel-border);
+  z-index: calc(var(--vdd-z-base, 1000) + 8000);
+  box-shadow: 10px 0 30px rgba(0, 0, 0, 0.4);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.vdd-side-panel-right {
+  right: 0;
+  border-right: none;
+  border-left: 1px solid var(--vdd-side-panel-border);
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.4);
+}
+
+.vdd-side-panel-left {
+  left: 0;
+}
+
+.vdd-side-panel-window {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+.vdd-side-panel-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--vdd-side-panel-header-border);
+  background-color: var(--vdd-side-panel-header-bg);
+  min-height: 44px;
+}
+
+.vdd-side-panel-icon {
+  margin-right: 10px;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+}
+
+.vdd-side-panel-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0;
+  flex-grow: 1;
+  color: var(--vdd-text-primary);
+}
+
+.vdd-side-panel-close-button {
+  background: transparent;
+  border: none;
+  color: var(--vdd-text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.vdd-side-panel-close-button:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--vdd-side-panel-close-hover-color);
+}
+
+.vdd-side-panel-body {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.vdd-side-panel-left.vdd-side-panel-visible {
+  animation: vdd-slide-in-left 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vdd-side-panel-right.vdd-side-panel-visible {
+  animation: vdd-slide-in-right 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes vdd-slide-in-left {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes vdd-slide-in-right {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+/* Outer Workspace Edge Drop Zones */
+.vdd-workspace-edge-trigger {
+  position: absolute;
+  z-index: calc(var(--vdd-z-base, 1000) + 8999);
+  background-color: rgba(0, 123, 255, 0.01);
+  transition: background-color 0.2s;
+}
+
+.vdd-workspace-edge-trigger:hover {
+  background-color: rgba(0, 123, 255, 0.12);
+}
+
+.vdd-edge-trigger-left {
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 24px;
+}
+
+.vdd-edge-trigger-right {
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 24px;
+}
+
+.vdd-edge-trigger-top {
+  top: 0;
+  left: 24px;
+  right: 24px;
+  height: 10px; /* thin strip — keeps clear of tab bar (38px tall) */
+}
+
+.vdd-edge-trigger-bottom {
+  bottom: 0;
+  left: 24px;
+  right: 24px;
+  height: 24px;
+}
+
+.vdd-workspace-edge-preview {
+  position: absolute;
+  z-index: calc(var(--vdd-z-base, 1000) + 8998);
+  background-color: rgba(0, 123, 255, 0.2);
+  border: 2px dashed #007bff;
+  pointer-events: none;
+  animation: vdd-fade-in 0.15s ease-out;
+}
+
+/* Workspace corner anchor drop zones */
+.vdd-corner-zone {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border: 2px dashed var(--vdd-accent-color, #38bdf8);
+  border-radius: 8px;
+  background: rgba(56, 189, 248, 0.06);
+  pointer-events: auto;
+  z-index: calc(var(--vdd-z-base, 1000) + 9000);
+  opacity: 0.55;
+  transition: opacity 0.15s ease, background 0.15s ease, border-style 0.15s ease;
+}
+.vdd-corner-zone--top-left     { top: 0;    left: 0;  }
+.vdd-corner-zone--top-right    { top: 0;    right: 0; }
+.vdd-corner-zone--bottom-left  { bottom: 0; left: 0;  }
+.vdd-corner-zone--bottom-right { bottom: 0; right: 0; }
+.vdd-corner-zone--hovered {
+  opacity: 1;
+  background: rgba(56, 189, 248, 0.18);
+  border-style: solid;
+}
+
+[dir="rtl"] .vdd-corner-zone--top-right    { right: auto; left: 0;  }
+[dir="rtl"] .vdd-corner-zone--top-left     { left: auto;  right: 0; }
+[dir="rtl"] .vdd-corner-zone--bottom-right { right: auto; left: 0;  }
+[dir="rtl"] .vdd-corner-zone--bottom-left  { left: auto;  right: 0; }
+
+/* ==========================================
+   RTL (Right-to-Left) Support
+   ========================================== */
+
+[dir="rtl"] .vdd-workspace-tab {
+  border-right: none !important;
+  border-left: 1px solid var(--vdd-border-panel) !important;
+  padding: 0 14px 0 6px !important;
+}
+
+[dir="rtl"] .vdd-workspace-tab.vdd-drag-hover-left {
+  box-shadow: 3px 0 0 0 var(--vdd-accent-color, #38bdf8),
+              10px 0 10px -2px var(--vdd-accent-glow, rgba(56,189,248,0.35));
+}
+[dir="rtl"] .vdd-workspace-tab.vdd-drag-hover-right {
+  box-shadow: -3px 0 0 0 var(--vdd-accent-color, #38bdf8),
+              -10px 0 10px -2px var(--vdd-accent-glow, rgba(56,189,248,0.35));
+}
+
+[dir="rtl"] .vdd-workspace-tab > .vdd-text-truncate {
+  margin-right: 0 !important;
+  margin-left: 12px !important;
+}
+
+[dir="rtl"] .vdd-workspace-tab-icon {
+  margin-right: 0 !important;
+  margin-left: 6px !important;
+}
+
+[dir="rtl"] .vdd-tab-header-actions {
+  margin-left: 0 !important;
+  margin-right: auto !important;
+}
+
+[dir="rtl"] .vdd-close-tab-x {
+  margin-left: 0 !important;
+  margin-right: auto !important;
+}
+
+/* Floating window title bar RTL — inherited direction:rtl on the titlebar flex container
+   moves buttons (last in DOM) to the LEFT and title (first in DOM) to the RIGHT.
+   No explicit row-reverse needed; only prevent the button group from reordering internally. */
+[dir="rtl"] .vdd-titlebar-actions { flex-direction: row; }
+
+/* Side Panels transitions slide-in direction */
+[dir="rtl"] .vdd-side-panel-left {
+  left: auto !important;
+  right: 0 !important;
+  transform: translateX(100%) !important;
+}
+[dir="rtl"] .vdd-side-panel-left.vdd-side-panel-visible {
+  transform: translateX(0) !important;
+  border-right: none !important;
+  border-left: 1px solid var(--vdd-border-panel, #3c3c3c) !important;
+}
+
+[dir="rtl"] .vdd-side-panel-right {
+  right: auto !important;
+  left: 0 !important;
+  transform: translateX(-100%) !important;
+}
+[dir="rtl"] .vdd-side-panel-right.vdd-side-panel-visible {
+  transform: translateX(0) !important;
+  border-left: none !important;
+  border-right: 1px solid var(--vdd-border-panel, #3c3c3c) !important;
+}
+
+/* Minimize Taskbar adjustments */
+[dir="rtl"] .vdd-taskbar-footer-container {
+  flex-direction: row-reverse !important;
+}
+[dir="rtl"] .vdd-taskbar-item-icon {
+  margin-right: 0 !important;
+  margin-left: 4px !important;
+}
+
+/* macOS Skin - RTL floating window titlebar overrides
+   Dots must stay on the LEFT in both LTR and RTL (real macOS behavior).
+   In RTL context flex-direction:row flows items right-to-left, so
+   DOM [title][buttons] → title at RIGHT, buttons at LEFT. */
+[dir="rtl"] [data-workspace-skin="macos"] .vdd-floating-window-titlebar {
+  flex-direction: row !important;
+}
+/* Title: pack icon+text toward the visual right (flex-start = right in RTL) */
+[dir="rtl"] [data-workspace-skin="macos"] .vdd-floating-window-titlebar .vdd-floating-window-title {
+  justify-content: flex-start !important;
+}
+/* Button group: keep dots in correct visual order (Red → Yellow → Green, close at far left).
+   direction:rtl (inherited) + flex-direction:row = right-to-left → DOM first item (more) at right,
+   last item (close) at left. */
+[dir="rtl"] [data-workspace-skin="macos"] .vdd-floating-window-titlebar .vdd-titlebar-actions {
+  flex-direction: row !important;
+}
+
+/* Mirror close-button margins for macOS tabs under RTL */
+[dir="rtl"][data-workspace-skin="macos"] .vdd-close-tab-x {
+  margin-left: 0 !important;
+  margin-right: 2px !important;
+}
+
+/* ── Sidebar strips — separator border, accent indicator, drawer shadow ──
+   direction: rtl (inherited from workspace root) reverses the flex row so
+   `vdd-left` strips move visually to the RIGHT and `vdd-right` strips to the LEFT.
+   All physical border-left/border-right and box-shadow directions must swap. */
+
+[dir="rtl"] .vdd-sidebar-tabs-strip.vdd-left {
+  border-left: 1px solid var(--vdd-sidebar-border) !important;
+  border-right: none !important;
+}
+[dir="rtl"] .vdd-sidebar-tabs-strip.vdd-right {
+  border-right: 1px solid var(--vdd-sidebar-border) !important;
+  border-left: none !important;
+}
+
+[dir="rtl"] .vdd-sidebar-tabs-strip.vdd-left .vdd-sidebar-tab-btn.vdd-active {
+  border-left: none !important;
+  border-right: var(--vdd-tab-accent-bar-width, 3px) solid var(--vdd-tab-icon-active) !important;
+  margin-left: -2px !important;
+  margin-right: 0 !important;
+}
+[dir="rtl"] .vdd-sidebar-tabs-strip.vdd-right .vdd-sidebar-tab-btn.vdd-active {
+  border-right: none !important;
+  border-left: var(--vdd-tab-accent-bar-width, 3px) solid var(--vdd-tab-icon-active) !important;
+  margin-right: -2px !important;
+  margin-left: 0 !important;
+}
+
+[dir="rtl"] .vdd-sidebar-content-drawer.vdd-left {
+  border-left: 1px solid var(--vdd-sidebar-border) !important;
+  border-right: none !important;
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.12);
+}
+[dir="rtl"] .vdd-sidebar-content-drawer.vdd-right {
+  border-right: 1px solid var(--vdd-sidebar-border) !important;
+  border-left: none !important;
+  box-shadow: 4px 0 16px rgba(0, 0, 0, 0.12);
+}
+
+/* obsidian & tokyo — flip the inset glow X offset sign */
+[dir="rtl"] [data-workspace-skin="obsidian"] .vdd-sidebar-tabs-strip.vdd-left .vdd-sidebar-tab-btn.vdd-active {
+  box-shadow: var(--vdd-tab-btn-active-shadow), inset -3px 0 8px rgba(255, 255, 255, 0.08) !important;
+}
+[dir="rtl"] [data-workspace-skin="obsidian"] .vdd-sidebar-tabs-strip.vdd-right .vdd-sidebar-tab-btn.vdd-active {
+  box-shadow: var(--vdd-tab-btn-active-shadow), inset 3px 0 8px rgba(255, 255, 255, 0.08) !important;
+}
+[dir="rtl"] [data-workspace-skin="tokyo"] .vdd-sidebar-tabs-strip.vdd-left .vdd-sidebar-tab-btn.vdd-active {
+  box-shadow: var(--vdd-tab-btn-active-shadow), inset -3px 0 12px rgba(122, 162, 247, 0.18) !important;
+}
+[dir="rtl"] [data-workspace-skin="tokyo"] .vdd-sidebar-tabs-strip.vdd-right .vdd-sidebar-tab-btn.vdd-active {
+  box-shadow: var(--vdd-tab-btn-active-shadow), inset 3px 0 12px rgba(122, 162, 247, 0.18) !important;
+}
+
+/* chrome — swap the capsule border-radius when strips change sides */
+[dir="rtl"] [data-workspace-skin="chrome"] .vdd-sidebar-tabs-strip.vdd-left .vdd-sidebar-tab-btn.vdd-active {
+  border-radius: 10px 0 0 10px !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+[dir="rtl"] [data-workspace-skin="chrome"] .vdd-sidebar-tabs-strip.vdd-right .vdd-sidebar-tab-btn.vdd-active {
+  border-radius: 0 10px 10px 0 !important;
+  margin-right: 0 !important;
+  margin-left: 0 !important;
+}
+
+/* ==========================================================================
+   FRAMEWORK-AGNOSTIC UTILITY CLASSES
+   (replaces Bootstrap utility class dependencies)
+   ========================================================================== */
+
+/* Text truncation (equivalent to Bootstrap .vdd-text-truncate) */
+.vdd-text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Floating window titlebar button group */
+.vdd-titlebar-actions {
+  display: flex;
+  align-items: center;
+}
+
+
+/* Tab header custom actions slot */
+.vdd-tab-header-actions {
+  margin-inline-start: auto;
+  display: flex;
+  align-items: center;
+  margin-inline-end: 0.25rem;
+  gap: var(--vdd-header-button-gap, 4px);
+}
+
+/* Panel body (tab content area / floating window content area) */
+.vdd-panel-body {
+  flex-grow: 1;
+  width: 100%;
+  height: 100%;
+}
+
+/* Empty workspace section placeholder text */
+.vdd-empty-leaf-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: monospace;
+  font-size: 0.875rem;
+  color: var(--vdd-text-secondary, #94a3b8);
+}
+
+
+/* Unregistered component error panel */
+.vdd-unregistered-panel {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: #dc3545;
+  font-family: monospace;
+  padding: 1rem;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+/* Taskbar scrollable items row */
+.vdd-taskbar-items-container {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+  overflow-x: auto;
+  align-items: center;
+  margin: 0 0.5rem;
+  padding: 2px 4px;
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+  max-width: 800px;
+}
+
+.vdd-taskbar-items-container::-webkit-scrollbar {
+  display: none;
+}
+
+/* Tooltip header row (title + close button) */
+.vdd-tooltip-header-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 0.75rem;
+  padding: 0 0.25rem;
+}
+
+/* Drag ghost tab preview (floating label while dragging) */
+.vdd-drag-ghost-tab {
+  position: fixed;
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid var(--vdd-accent-color, #38bdf8);
+  border-left: 3px solid var(--vdd-accent-color, #38bdf8);
+  border-radius: 4px;
+  color: var(--vdd-accent-color, #38bdf8);
+  font-family: monospace;
+  padding: 0.375rem 1rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* ConfirmationForm component styles */
+.vdd-confirmation-form-body {
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.vdd-confirmation-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.625rem;
+  font-size: 0.875rem;
+  border-radius: 0.375rem;
+}
+
+.vdd-confirmation-alert-danger {
+  background: rgba(220, 53, 69, 0.15);
+  border: 1px solid rgba(220, 53, 69, 0.3);
+  color: #f87171;
+}
+
+.vdd-confirmation-alert-info {
+  background: rgba(13, 202, 240, 0.15);
+  border: 1px solid rgba(13, 202, 240, 0.3);
+  color: #67e8f9;
+}
+
+.vdd-confirmation-alert-warning {
+  background: rgba(255, 193, 7, 0.15);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  color: #fbbf24;
+}
+
+.vdd-confirmation-alert-success {
+  background: rgba(25, 135, 84, 0.15);
+  border: 1px solid rgba(25, 135, 84, 0.3);
+  color: #4ade80;
+}
+
+/* The message body. rdd set these three values inline on the JSX, together with an <hr>
+   that existed only to draw a separator — so a consumer could restyle neither (D12). The
+   separator is this element's own border-bottom, which is one element instead of two and
+   leaves the spacing to the flex gap above. */
+.vdd-confirmation-message {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: inherit;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--vdd-sidebar-border, rgba(255, 255, 255, 0.08));
+}
+
+.vdd-confirmation-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* Sidebar drawer header */
+.vdd-sidebar-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--vdd-sidebar-border, rgba(255, 255, 255, 0.08));
+  padding: 0 0.75rem;
+  flex-shrink: 0;
+  background: var(--vdd-sidebar-drawer-header-bg);
+  min-height: 38px;
+}
+
+/* Optional close button (showCloseButton) — an extra way to collapse the sidebar besides
+   clicking the active tab's own icon again. */
+.vdd-sidebar-drawer-close-button {
+  background: transparent;
+  border: none;
+  color: var(--vdd-sidebar-text-muted, var(--vdd-text-secondary));
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.vdd-sidebar-drawer-close-button:hover {
+  background-color: var(--vdd-sidebar-btn-hover-bg);
+  color: var(--vdd-sidebar-text-title);
+}
+
+/* Sidebar drawer content body */
+.vdd-sidebar-drawer-body {
+  flex-grow: 1;
+  overflow: auto;
+}
+
+/* ==========================================================================
+   TOOLBAR STRIP
+   ========================================================================== */
+
+.vdd-toolbar-strip {
+  background-color: var(--vdd-sidebar-tabs-bg);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  z-index: 5;
+}
+
+.vdd-toolbar-strip.vdd-left,
+.vdd-toolbar-strip.vdd-right {
+  flex-direction: column;
+  width: 48px;
+  height: 100%;
+  padding: 8px 0;
+  gap: 4px;
+  overflow: hidden;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.vdd-toolbar-strip.vdd-top,
+.vdd-toolbar-strip.vdd-bottom {
+  flex-direction: row;
+  width: 100%;
+  height: 48px;
+  padding: 0 8px;
+  gap: 4px;
+  overflow: hidden;
+  transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (pointer: coarse) {
+  .vdd-toolbar-strip.vdd-left, .vdd-toolbar-strip.vdd-right { width: 56px; }
+  .vdd-toolbar-strip.vdd-top, .vdd-toolbar-strip.vdd-bottom { height: 56px; }
+}
+
+.vdd-toolbar-strip.vdd-left  { border-right:  1px solid var(--vdd-sidebar-border); }
+.vdd-toolbar-strip.vdd-right { border-left:   1px solid var(--vdd-sidebar-border); }
+.vdd-toolbar-strip.vdd-top   { border-bottom: 1px solid var(--vdd-sidebar-border); }
+.vdd-toolbar-strip.vdd-bottom{ border-top:    1px solid var(--vdd-sidebar-border); }
+
+/* Base button */
+.vdd-toolbar-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--vdd-tab-icon-inactive);
+  cursor: pointer;
+  flex-shrink: 0;
+  outline: none !important;
+  position: relative;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.vdd-toolbar-btn:hover:not(:disabled) {
+  background-color: var(--vdd-toolbar-btn-hover-bg);
+  color: var(--vdd-sidebar-text-title);
+}
+
+.vdd-toolbar-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Radio active — accent bar on the outer edge */
+.vdd-toolbar-btn-radio.vdd-active {
+  color: var(--vdd-tab-icon-active);
+  background-color: var(--vdd-toolbar-btn-radio-active-bg);
+  box-shadow: var(--vdd-toolbar-btn-active-shadow, none);
+  filter: var(--vdd-toolbar-btn-active-glow, none);
+  transition: color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.vdd-toolbar-strip.vdd-left   .vdd-toolbar-btn-radio.vdd-active { border-left:   var(--vdd-toolbar-accent-bar-width, 3px) solid var(--vdd-tab-icon-active); border-radius: 0 6px 6px 0; }
+.vdd-toolbar-strip.vdd-right  .vdd-toolbar-btn-radio.vdd-active { border-right:  var(--vdd-toolbar-accent-bar-width, 3px) solid var(--vdd-tab-icon-active); border-radius: 6px 0 0 6px; }
+.vdd-toolbar-strip.vdd-top    .vdd-toolbar-btn-radio.vdd-active { border-bottom: var(--vdd-toolbar-accent-bar-width, 3px) solid var(--vdd-tab-icon-active); border-radius: 6px 6px 0 0; }
+.vdd-toolbar-strip.vdd-bottom .vdd-toolbar-btn-radio.vdd-active { border-top:    var(--vdd-toolbar-accent-bar-width, 3px) solid var(--vdd-tab-icon-active); border-radius: 0 0 6px 6px; }
+
+/* Toggle active — lighter tint, no directional border */
+.vdd-toolbar-btn-toggle.vdd-active {
+  color: var(--vdd-tab-icon-active);
+  background-color: var(--vdd-toolbar-btn-toggle-active-bg);
+}
+
+/* Group button — corner triangle indicator shows a sub-tool family */
+.vdd-toolbar-btn-group {
+  position: relative;
+}
+
+.vdd-toolbar-btn-group::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 0;
+  height: 0;
+  border: 3.5px solid transparent;
+  border-top-color: currentColor;
+  border-right-color: currentColor;
+  opacity: 0.55;
+}
+
+/* Group active state — same directional accent as radio */
+.vdd-toolbar-btn-group.vdd-active {
+  color: var(--vdd-tab-icon-active);
+  background-color: var(--vdd-toolbar-btn-radio-active-bg);
+  box-shadow: var(--vdd-toolbar-btn-active-shadow, none);
+  filter: var(--vdd-toolbar-btn-active-glow, none);
+  transition: color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.vdd-toolbar-strip.vdd-left   .vdd-toolbar-btn-group.vdd-active { border-left:   var(--vdd-toolbar-accent-bar-width, 3px) solid var(--vdd-tab-icon-active); border-radius: 0 6px 6px 0; }
+.vdd-toolbar-strip.vdd-right  .vdd-toolbar-btn-group.vdd-active { border-right:  var(--vdd-toolbar-accent-bar-width, 3px) solid var(--vdd-tab-icon-active); border-radius: 6px 0 0 6px; }
+.vdd-toolbar-strip.vdd-top    .vdd-toolbar-btn-group.vdd-active { border-bottom: var(--vdd-toolbar-accent-bar-width, 3px) solid var(--vdd-tab-icon-active); border-radius: 6px 6px 0 0; }
+.vdd-toolbar-strip.vdd-bottom .vdd-toolbar-btn-group.vdd-active { border-top:    var(--vdd-toolbar-accent-bar-width, 3px) solid var(--vdd-tab-icon-active); border-radius: 0 0 6px 6px; }
+
+/* Separators */
+.vdd-toolbar-strip.vdd-left .vdd-toolbar-separator,
+.vdd-toolbar-strip.vdd-right .vdd-toolbar-separator {
+  width: 24px;
+  height: 1px;
+  background-color: var(--vdd-toolbar-separator-color);
+  flex-shrink: 0;
+  margin: 4px 0;
+  align-self: center;
+}
+
+.vdd-toolbar-strip.vdd-top .vdd-toolbar-separator,
+.vdd-toolbar-strip.vdd-bottom .vdd-toolbar-separator {
+  height: 24px;
+  width: 1px;
+  background-color: var(--vdd-toolbar-separator-color);
+  flex-shrink: 0;
+  margin: 0 4px;
+  align-self: center;
+}
+
+/* Touch targets on coarse-pointer devices */
+@media (pointer: coarse) {
+  .vdd-toolbar-btn { width: 44px; height: 44px; }
+}
+
+/* ==========================================================================
+   TOOLBAR GROUP FLYOUT
+   ========================================================================== */
+
+.vdd-toolbar-group-flyout {
+  position: fixed;
+  z-index: calc(var(--vdd-z-base, 1000) + 7000);
+  background: var(--vdd-sidebar-bg, var(--vdd-bg-panel));
+  border: 1px solid var(--vdd-sidebar-border);
+  border-radius: 8px;
+  padding: 4px;
+  min-width: 168px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.15);
+  animation: vdd-toolbar-flyout-in 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes vdd-toolbar-flyout-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Animation origin matches the edge closest to the toolbar button */
+.vdd-toolbar-group-flyout.vdd-left   { transform-origin: top left; }
+.vdd-toolbar-group-flyout.vdd-right  { transform-origin: top right; }
+.vdd-toolbar-group-flyout.vdd-top    { transform-origin: top left; }
+.vdd-toolbar-group-flyout.vdd-bottom { transform-origin: bottom left; }
+/* RTL: physical sides swap, so animation origin flips horizontally */
+[dir="rtl"] .vdd-toolbar-group-flyout.vdd-left   { transform-origin: top right; }
+[dir="rtl"] .vdd-toolbar-group-flyout.vdd-right  { transform-origin: top left; }
+[dir="rtl"] .vdd-toolbar-group-flyout.vdd-top    { transform-origin: top right; }
+[dir="rtl"] .vdd-toolbar-group-flyout.vdd-bottom { transform-origin: bottom right; }
+
+[dir="rtl"] .vdd-toolbar-group-flyout-label {
+  text-align: right;
+}
+
+.vdd-toolbar-group-flyout-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--vdd-sidebar-text-title, var(--vdd-text-primary));
+  cursor: pointer;
+  width: 100%;
+  text-align: start;
+  font-size: 0.8125rem;
+  font-family: inherit;
+  flex-shrink: 0;
+  transition: background-color 0.1s ease, color 0.1s ease;
+}
+
+.vdd-toolbar-group-flyout-item:hover:not(:disabled) {
+  background-color: var(--vdd-toolbar-btn-hover-bg);
+  color: var(--vdd-sidebar-text-title, var(--vdd-text-primary));
+}
+
+.vdd-toolbar-group-flyout-item:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.vdd-toolbar-group-flyout-item.vdd-active {
+  color: var(--vdd-tab-icon-active);
+  background-color: var(--vdd-toolbar-btn-radio-active-bg);
+}
+
+.vdd-toolbar-group-flyout-icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.vdd-toolbar-group-flyout-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vdd-toolbar-group-flyout-shortcut {
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  color: var(--vdd-text-secondary);
+  opacity: 0.7;
+}
+
+.vdd-toolbar-group-flyout-sep {
+  height: 1px;
+  background: var(--vdd-toolbar-separator-color);
+  margin: 3px 4px;
+  flex-shrink: 0;
+}
+
+
+/* Button base — used in ConfirmationForm and similar dialogs */
+.vdd-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: monospace;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  user-select: none;
+  line-height: 1.2;
+}
+
+.vdd-btn-sm {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.vdd-btn-outline {
+  background: transparent;
+  border: 1px solid var(--vdd-text-secondary, #6c757d);
+  color: var(--vdd-text-secondary, #6c757d);
+}
+
+.vdd-btn-outline:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--vdd-text-primary, #f1f5f9);
+  color: var(--vdd-text-primary, #f1f5f9);
+}
+
+[data-color-scheme="light"] .vdd-btn-outline {
+  border-color: #6c757d;
+  color: #6c757d;
+}
+
+[data-color-scheme="light"] .vdd-btn-outline:hover {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: #495057;
+  color: #495057;
+}
+
+.vdd-btn-primary {
+  background: var(--vdd-accent-color, #38bdf8);
+  border: 1px solid var(--vdd-accent-color, #38bdf8);
+  color: #090b11;
+}
+
+.vdd-btn-primary:hover {
+  filter: brightness(1.1);
+}
+
+[data-color-scheme="light"] .vdd-btn-primary {
+  color: #ffffff;
+}
+
+/* ============================================================
+   TOUCH SUPPORT (Phase 1C, 2A–B, 3B, 4A, 4C)
+   ============================================================ */
+
+/* Phase 1C: touch-action — suppress scroll on drag handles,
+   allow horizontal pan on tab bar */
+.vdd-workspace-tab              { touch-action: none; }
+.vdd-floating-window-titlebar   { touch-action: none; }
+.vdd-resizer-bar                { touch-action: none; }
+.vdd-resize-handle              { touch-action: none; }
+
+/* Phase 2A: Expand resizer hit area to 44px on touch devices */
+@media (pointer: coarse) {
+  .vdd-resizer-bar[style*="cursor: col-resize"]::before {
+    left: -20px;
+    width: 44px;
+  }
+  .vdd-resizer-bar[style*="cursor: row-resize"]::before {
+    top: -32px;
+    height: 33px; /* 32px upward into safe content area, 0px downward into tab bar */
+  }
+}
+
+/* Phase 3B: 8-direction resize handles on floating windows */
+.vdd-resize-handle {
+  position: absolute;
+  z-index: 30;
+}
+
+/*
+ * Resize handles sit fully INSIDE their window.
+ *
+ * rdd positions every handle at `-4px`, straddling the edge for an 8px grab area — but the
+ * elements that carry them (`.rdd-floating-window`, `.rdd-panel-float`) are `overflow:
+ * hidden`, which clips the outer half away. Measured in Chrome: an 8px edge handle leaves
+ * ~4px hittable, a 16px corner handle leaves ~12px, and at the extreme corner the window's
+ * own `border-radius` means *nothing* is hit at all — the click falls straight through to
+ * the grid behind, so a corner drag does nothing.
+ *
+ * Insetting to 0 makes the whole nominal area hittable. The trade is that you cannot grab
+ * from just outside the window; in exchange, every pixel of the handle works, which it did
+ * not before. See docs/PARITY.md divergence D5.
+ */
+
+/* Edge handles */
+.vdd-resize-n  { top: 0;    left: 16px;   right: 16px;  height: 8px;  cursor: n-resize; }
+.vdd-resize-s  { bottom: 0; left: 16px;   right: 16px;  height: 8px;  cursor: s-resize; }
+.vdd-resize-e  { right: 0;  top: 16px;    bottom: 16px; width:  8px;  cursor: e-resize; }
+.vdd-resize-w  { left: 0;   top: 16px;    bottom: 16px; width:  8px;  cursor: w-resize; }
+
+/* Corner handles */
+.vdd-resize-ne { top: 0;    right: 0;  width: 16px; height: 16px; cursor: ne-resize; }
+.vdd-resize-se { bottom: 0; right: 0;  width: 16px; height: 16px; cursor: se-resize; }
+.vdd-resize-sw { bottom: 0; left: 0;   width: 16px; height: 16px; cursor: sw-resize; }
+.vdd-resize-nw { top: 0;    left: 0;   width: 16px; height: 16px; cursor: nw-resize; }
+
+/* SE corner subtle visual indicator (preserve existing look) */
+.vdd-resize-se::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.2) 50%);
+}
+
+/*
+ * Touch: larger hit areas — still fully inside the box.
+ *
+ * rdd enlarges these to 12px but positions them at -6px, so `overflow: hidden` clips half of
+ * the enlargement away: the intent is 12px and the reality is 6px, on exactly the devices
+ * that need a *bigger* target. The enlargement is kept and the insets are zeroed, so the
+ * whole 12px is grabbable. Same reasoning as the handle note above; see PARITY.md D5.
+ */
+@media (pointer: coarse) {
+  .vdd-resize-ne, .vdd-resize-se, .vdd-resize-sw, .vdd-resize-nw {
+    width: 28px;
+    height: 28px;
+  }
+  .vdd-resize-n, .vdd-resize-s {
+    left: 28px;
+    right: 28px;
+    height: 12px;
+    top: 0;
+  }
+  .vdd-resize-s { top: auto; bottom: 0; }
+  .vdd-resize-e, .vdd-resize-w {
+    top: 28px;
+    bottom: 28px;
+    width: 12px;
+    right: 0;
+  }
+  .vdd-resize-w { right: auto; left: 0; }
+}
+
+/* Phase 2B: Adaptive density for coarse-pointer (touch) devices */
+@media (pointer: coarse) {
+  /* Taller tabs for touch targets */
+  .vdd-workspace-tab {
+    min-height: 44px !important;
+    height: 44px !important;
+    padding: 0 12px 0 14px !important;
+  }
+
+  /* Always-visible close button (no hover-to-reveal) */
+  .vdd-workspace-tab .vdd-close-tab-x {
+    opacity: 0.8 !important;
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  /* Larger titlebar action buttons */
+  .vdd-custom-tab-btn {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  /* Taller taskbar items */
+  .vdd-taskbar-glassmorphic-item {
+    width: 48px !important;
+    height: 48px !important;
+  }
+
+  /* Wider tab min-width on touch */
+  .vdd-workspace-tab { min-width: 88px; }
+
+  /* Wider scroll arrows on touch */
+
+  /* Keep top edge trigger thin even on touch — avoids collision with tab bar */
+  .vdd-edge-trigger-top { height: 14px; }
+}
+
+/* Phase 4A: Long-press active animation (visual feedback during 300ms hold) */
+.vdd-long-press-active {
+  animation: vdd-long-press-pulse 0.25s ease-out forwards;
+  transform-origin: center;
+}
+
+@keyframes vdd-long-press-pulse {
+  0%   { transform: scale(1);    box-shadow: 0 0 0 0 var(--vdd-accent-glow, rgba(56,189,248,0.3)); }
+  60%  { transform: scale(1.04); box-shadow: 0 0 0 6px var(--vdd-accent-glow, rgba(56,189,248,0.15)); }
+  100% { transform: scale(1.02); box-shadow: 0 0 0 4px var(--vdd-accent-glow, rgba(56,189,248,0.1)); }
+}
+
+/* Phase 4C: Tab bar horizontal scroll (handled by existing .vdd-tab-headers-container overflow-x: auto) */
+/* Note: touch-action and -webkit-overflow-scrolling intentionally omitted — they cause iOS Safari
+   to fire pointercancel before the 300ms long-press timer can activate tab drag */
+.vdd-tab-headers-container::-webkit-scrollbar { display: none; }
+
+/* ==========================================================================
+   PANEL OVERLAY — Per-skin token overrides
+   ========================================================================== */
+
+[data-workspace-skin="vscode"] {
+  --vdd-panel-toolbar-btn-hover-bg: rgba(255, 255, 255, 0.12);
+}
+
+[data-workspace-skin="macos"] {
+  --vdd-panel-toolbar-btn-hover-bg: rgba(255, 255, 255, 0.18);
+}
+
+[data-workspace-skin="slate"] {
+  --vdd-panel-toolbar-btn-active-color: #60a5fa;
+  --vdd-panel-toolbar-btn-active-bg: rgba(96, 165, 250, 0.15);
+}
+
+[data-workspace-skin="nord"] {
+  --vdd-panel-toolbar-btn-active-color: #88c0d0;
+  --vdd-panel-toolbar-btn-active-bg: rgba(136, 192, 208, 0.15);
+}
+
+[data-workspace-skin="obsidian"] {
+  --vdd-panel-toolbar-btn-active-color: #a78bfa;
+  --vdd-panel-toolbar-btn-active-bg: rgba(167, 139, 250, 0.15);
+}
+
+[data-workspace-skin="tokyo"] {
+  --vdd-panel-toolbar-btn-active-color: #7aa2f7;
+  --vdd-panel-toolbar-btn-active-bg: rgba(122, 162, 247, 0.15);
+}
+
+/* ==========================================================================
+   PANEL OVERLAY — PanelToolbar + PanelFloatingWindow
+   ========================================================================== */
+
+/* ── Root container ── */
+.vdd-panel-overlay-root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── Toolbar container ── */
+.vdd-panel-toolbar {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: var(--vdd-panel-toolbar-gap, 4px);
+  padding: var(--vdd-panel-toolbar-padding, 8px);
+  box-sizing: border-box;
+}
+
+.vdd-panel-toolbar--top,
+.vdd-panel-toolbar--bottom {
+  flex-direction: row;
+}
+
+.vdd-panel-toolbar--left,
+.vdd-panel-toolbar--right {
+  flex-direction: column;
+}
+
+/* Restore pointer-events on every direct child */
+.vdd-panel-toolbar > * {
+  pointer-events: auto;
+}
+
+/* ── Toolbar button (shared by ToolbarButton + ToolbarToggle) ── */
+.vdd-panel-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--vdd-panel-toolbar-btn-size, 32px);
+  height: var(--vdd-panel-toolbar-btn-size, 32px);
+  flex-shrink: 0;
+  border-radius: var(--vdd-panel-toolbar-btn-radius, 6px);
+  border: none;
+  background: transparent;
+  color: var(--vdd-panel-toolbar-fg, rgba(255, 255, 255, 0.65));
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.12s ease, color 0.12s ease, transform 0.1s ease, border-color 0.12s ease;
+}
+
+.vdd-panel-toolbar-btn:hover:not(:disabled) {
+  background: var(--vdd-panel-toolbar-btn-hover-bg, rgba(255, 255, 255, 0.15));
+  color: var(--vdd-panel-toolbar-fg-hover, rgba(255, 255, 255, 0.95));
+  transform: scale(1.07);
+}
+
+.vdd-panel-toolbar-btn:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.vdd-panel-toolbar-btn--active {
+  background: var(--vdd-panel-toolbar-btn-active-bg, rgba(56, 189, 248, 0.14));
+  color: var(--vdd-panel-toolbar-btn-active-color, #38bdf8);
+}
+
+.vdd-panel-toolbar-btn--active:hover:not(:disabled) {
+  background: var(--vdd-panel-toolbar-btn-active-bg, rgba(56, 189, 248, 0.22));
+}
+
+.vdd-panel-toolbar-btn:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+/* ── Toolbar strip variants ── */
+.vdd-panel-toolbar[data-variant="frosted"] {
+  background: rgba(15, 20, 30, 0.55);
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+}
+.vdd-panel-toolbar[data-variant="solid"] {
+  background: var(--vdd-bg-tab-bar, #0d0f16);
+}
+[data-color-scheme="light"] .vdd-panel-toolbar[data-variant="frosted"] {
+  background: rgba(233, 236, 239, 0.72);
+}
+.vdd-panel-toolbar--top[data-variant="frosted"],
+.vdd-panel-toolbar--top[data-variant="solid"] {
+  border-bottom: 1px solid var(--vdd-panel-toolbar-separator-color, rgba(255, 255, 255, 0.09));
+}
+.vdd-panel-toolbar--bottom[data-variant="frosted"],
+.vdd-panel-toolbar--bottom[data-variant="solid"] {
+  border-top: 1px solid var(--vdd-panel-toolbar-separator-color, rgba(255, 255, 255, 0.09));
+}
+.vdd-panel-toolbar--left[data-variant="frosted"],
+.vdd-panel-toolbar--left[data-variant="solid"] {
+  border-right: 1px solid var(--vdd-panel-toolbar-separator-color, rgba(255, 255, 255, 0.09));
+}
+.vdd-panel-toolbar--right[data-variant="frosted"],
+.vdd-panel-toolbar--right[data-variant="solid"] {
+  border-left: 1px solid var(--vdd-panel-toolbar-separator-color, rgba(255, 255, 255, 0.09));
+}
+
+/* ── Button variants — toolbar-level default ── */
+
+/* soft */
+.vdd-panel-toolbar[data-btn-variant="soft"] .vdd-panel-toolbar-btn,
+.vdd-panel-toolbar-btn[data-variant="soft"] {
+  background: rgba(255, 255, 255, 0.06);
+}
+.vdd-panel-toolbar[data-btn-variant="soft"] .vdd-panel-toolbar-btn:hover:not(:disabled),
+.vdd-panel-toolbar-btn[data-variant="soft"]:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+}
+[data-color-scheme="light"] .vdd-panel-toolbar[data-btn-variant="soft"] .vdd-panel-toolbar-btn,
+[data-color-scheme="light"] .vdd-panel-toolbar-btn[data-variant="soft"] {
+  background: rgba(0, 0, 0, 0.04);
+}
+[data-color-scheme="light"] .vdd-panel-toolbar[data-btn-variant="soft"] .vdd-panel-toolbar-btn:hover:not(:disabled),
+[data-color-scheme="light"] .vdd-panel-toolbar-btn[data-variant="soft"]:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* outlined */
+.vdd-panel-toolbar[data-btn-variant="outlined"] .vdd-panel-toolbar-btn,
+.vdd-panel-toolbar-btn[data-variant="outlined"] {
+  border: 1px solid var(--vdd-panel-toolbar-separator-color, rgba(255, 255, 255, 0.18));
+}
+.vdd-panel-toolbar[data-btn-variant="outlined"] .vdd-panel-toolbar-btn:hover:not(:disabled),
+.vdd-panel-toolbar-btn[data-variant="outlined"]:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.38);
+}
+[data-color-scheme="light"] .vdd-panel-toolbar[data-btn-variant="outlined"] .vdd-panel-toolbar-btn:hover:not(:disabled),
+[data-color-scheme="light"] .vdd-panel-toolbar-btn[data-variant="outlined"]:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.25);
+}
+
+/* filled */
+.vdd-panel-toolbar[data-btn-variant="filled"] .vdd-panel-toolbar-btn,
+.vdd-panel-toolbar-btn[data-variant="filled"] {
+  background: var(--vdd-panel-toolbar-btn-active-bg, rgba(56, 189, 248, 0.2));
+  color: var(--vdd-panel-toolbar-btn-active-color, #38bdf8);
+  border: 1px solid var(--vdd-panel-toolbar-btn-active-color, #38bdf8);
+}
+.vdd-panel-toolbar[data-btn-variant="filled"] .vdd-panel-toolbar-btn:hover:not(:disabled),
+.vdd-panel-toolbar-btn[data-variant="filled"]:hover:not(:disabled) {
+  background: var(--vdd-panel-toolbar-btn-active-color, #38bdf8);
+  color: #000;
+  border-color: transparent;
+}
+
+/* ── Separator ── */
+.vdd-panel-toolbar__sep {
+  flex-shrink: 0;
+  background: var(--vdd-panel-toolbar-separator-color, rgba(255, 255, 255, 0.09));
+  align-self: center;
+}
+
+.vdd-panel-toolbar--top .vdd-panel-toolbar__sep,
+.vdd-panel-toolbar--bottom .vdd-panel-toolbar__sep {
+  width: 1px;
+  height: 18px;
+}
+
+.vdd-panel-toolbar--left .vdd-panel-toolbar__sep,
+.vdd-panel-toolbar--right .vdd-panel-toolbar__sep {
+  height: 1px;
+  width: 18px;
+}
+
+/* ── Spacer — pushes subsequent items to the opposite end ── */
+.vdd-panel-toolbar__spacer {
+  flex: 1;
+  pointer-events: none;
+}
+
+/* ── ToolbarItem wrapper (restores pointer-events for custom controls) ── */
+.vdd-panel-toolbar__item {
+  display: inline-flex;
+  align-items: center;
+  pointer-events: auto;
+}
+
+/* ── ToolbarCenter — absolutely centered, independent of left/right widths ── */
+.vdd-panel-toolbar__center {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: var(--vdd-panel-toolbar-gap, 4px);
+  pointer-events: none;
+}
+.vdd-panel-toolbar__center > * {
+  pointer-events: auto;
+}
+/* Horizontal toolbars: center horizontally */
+.vdd-panel-toolbar--top .vdd-panel-toolbar__center,
+.vdd-panel-toolbar--bottom .vdd-panel-toolbar__center {
+  flex-direction: row;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+/* Vertical toolbars: center vertically */
+.vdd-panel-toolbar--left .vdd-panel-toolbar__center,
+.vdd-panel-toolbar--right .vdd-panel-toolbar__center {
+  flex-direction: column;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* ── ToolbarSearchInput ── */
+.vdd-panel-toolbar-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.vdd-panel-toolbar-search__input {
+  height: var(--vdd-panel-toolbar-btn-size, 28px);
+  width: 200px;
+  border: 1px solid var(--vdd-panel-toolbar-separator-color, rgba(255, 255, 255, 0.15));
+  border-radius: var(--vdd-panel-toolbar-btn-radius, 6px);
+  background: rgba(0, 0, 0, 0.18);
+  color: inherit;
+  padding: 0 8px;
+  font-size: 12px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.vdd-panel-toolbar-search__input::placeholder {
+  opacity: 0.45;
+}
+
+.vdd-panel-toolbar-search__input:focus {
+  border-color: var(--vdd-panel-toolbar-btn-active-color, #38bdf8);
+}
+
+.vdd-panel-toolbar-search__dropdown {
+  /* Shifts with --vdd-z-base like every other chrome overlay; above the context menu
+     (+8500/+8501) since it's opened from a toolbar that can sit under one. */
+  z-index: calc(var(--vdd-z-base, 1000) + 8502);
+  background: var(--vdd-panel-float-bg, rgba(22, 24, 34, 0.95));
+  border: 1px solid var(--vdd-panel-float-border, rgba(255, 255, 255, 0.1));
+  border-radius: var(--vdd-panel-float-radius, 8px);
+  box-shadow: var(--vdd-panel-float-shadow-active, 0 8px 28px rgba(0, 0, 0, 0.55));
+  overflow: hidden;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.vdd-panel-toolbar-search__group {
+  padding: 6px 12px 2px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.45;
+}
+
+.vdd-panel-toolbar-search__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 12px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.vdd-panel-toolbar-search__item:hover {
+  background: var(--vdd-panel-toolbar-btn-hover-bg, rgba(255, 255, 255, 0.08));
+}
+
+.vdd-panel-toolbar-search__item-icon { flex-shrink: 0; opacity: 0.7; }
+.vdd-panel-toolbar-search__item-label { flex: 1; }
+.vdd-panel-toolbar-search__item-desc { opacity: 0.45; font-size: 11px; }
+
+/* ── Floating window ── */
+.vdd-panel-float {
+  position: absolute;
+  min-width: 120px;
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--vdd-panel-float-radius, 8px);
+  background: var(--vdd-panel-float-bg, rgba(22, 24, 34, 0.92));
+  border: 1px solid var(--vdd-panel-float-border, rgba(255, 255, 255, 0.1));
+  box-shadow: var(--vdd-panel-float-shadow, 0 4px 16px rgba(0, 0, 0, 0.35));
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+}
+
+.vdd-panel-float--active {
+  box-shadow: var(--vdd-panel-float-shadow-active, 0 8px 28px rgba(0, 0, 0, 0.55));
+}
+
+.vdd-panel-float__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  height: 28px;
+  flex-shrink: 0;
+  background: var(--vdd-panel-float-header-bg, rgba(255, 255, 255, 0.04));
+  cursor: grab;
+  user-select: none;
+}
+
+.vdd-panel-float__header:active {
+  cursor: grabbing;
+}
+
+.vdd-panel-float--active .vdd-panel-float__header {
+  background: var(--vdd-panel-float-header-bg-active, rgba(56, 189, 248, 0.08));
+}
+
+.vdd-panel-float__title {
+  flex: 1;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--vdd-panel-float-title-color, rgba(255, 255, 255, 0.6));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vdd-panel-float--active .vdd-panel-float__title {
+  color: var(--vdd-panel-float-title-color-active, rgba(255, 255, 255, 0.9));
+}
+
+.vdd-panel-float__icon {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  color: var(--vdd-panel-float-title-color, rgba(255, 255, 255, 0.6));
+}
+.vdd-panel-float--active .vdd-panel-float__icon {
+  opacity: 1;
+  color: var(--vdd-panel-float-title-color-active, rgba(255, 255, 255, 0.9));
+}
+
+.vdd-panel-float__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  background: var(--vdd-custom-btn-bg, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--vdd-custom-btn-border, rgba(255, 255, 255, 0.05));
+  color: var(--vdd-text-secondary, #94a3b8);
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 0;
+  line-height: 1;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.vdd-panel-float__close:hover {
+  background-color: var(--vdd-custom-btn-hover-bg, rgba(255, 255, 255, 0.12));
+  color: var(--vdd-custom-btn-hover-color, #ffffff);
+  border-color: var(--vdd-custom-btn-border, rgba(255, 255, 255, 0.05));
+  transform: scale(1.05);
+}
+
+.vdd-panel-float__body {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+}
+
+/* A `.vdd-panel-float__resize` rule lived here in rdd and was dead: nothing rendered that
+   class in either library — the widget's handles are `.vdd-resize-handle.vdd-resize-<dir>`,
+   which have their own rules. Removed in M13, when the class/rule correspondence sweep found
+   it. A rule that matches nothing looks exactly like styling and does nothing at all. */
+
+/* ── Docking drop zones (visible while dragging a floating window) ── */
+/* Armed for resize-to-stretch: the clamps already hold the widget exactly where a stretched axis
+   would sit, so releasing now locks it there. The outline is the cue that it *will* lock — without
+   it the gesture is invisible and undiscoverable. Same dashed accent vocabulary as the drop zones
+   below. */
+.vdd-panel-float--snapping {
+  outline: 2px dashed var(--vdd-accent-color, #38bdf8);
+  outline-offset: -2px;
+}
+
+.vdd-panel-float-dropzone {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border: 2px dashed var(--vdd-accent-color, #38bdf8);
+  border-radius: 8px;
+  background: rgba(56, 189, 248, 0.06);
+  pointer-events: none;
+  z-index: 200;
+  opacity: 0.55;
+  transition: opacity 0.15s ease, background 0.15s ease, border-style 0.15s ease;
+}
+
+.vdd-panel-float-dropzone--hovered {
+  opacity: 1;
+  background: rgba(56, 189, 248, 0.18);
+  border-style: solid;
+}
+
+.vdd-panel-float-dropzone--top-left     { top:    8px; left:  8px; }
+.vdd-panel-float-dropzone--top-right    { top:    8px; right: 8px; }
+.vdd-panel-float-dropzone--bottom-left  { bottom: 8px; left:  8px; }
+.vdd-panel-float-dropzone--bottom-right { bottom: 8px; right: 8px; }
+
+[dir="rtl"] .vdd-panel-float-dropzone--top-right    { right: auto; left:  8px; }
+[dir="rtl"] .vdd-panel-float-dropzone--top-left     { left:  auto; right: 8px; }
+[dir="rtl"] .vdd-panel-float-dropzone--bottom-right { right: auto; left:  8px; }
+[dir="rtl"] .vdd-panel-float-dropzone--bottom-left  { left:  auto; right: 8px; }
+
+[dir="rtl"] .vdd-panel-float__title  { text-align: right; }
+
+/* ── Toast ── */
+
+/* Color tokens — match confirmation-alert-* palette exactly */
+:root {
+  --vdd-toast-info-color:    #67e8f9;
+  --vdd-toast-success-color: #4ade80;
+  --vdd-toast-warning-color: #fbbf24;
+  --vdd-toast-error-color:   #f87171;
+  --vdd-toast-bg:            #2a2d32;
+  --vdd-toast-border:        rgba(255, 255, 255, 0.14);
+}
+[data-color-scheme="light"] {
+  --vdd-toast-info-color:    #0369a1;
+  --vdd-toast-success-color: #15803d;
+  --vdd-toast-warning-color: #b45309;
+  --vdd-toast-error-color:   #b91c1c;
+  --vdd-toast-bg:            #ffffff;
+  --vdd-toast-border:        rgba(0, 0, 0, 0.14);
+}
+
+/* Position containers */
+.vdd-toast-container {
+  position: fixed; z-index: calc(var(--vdd-z-base, 1000) + 9100);
+  display: flex; gap: 8px; padding: 16px;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+.vdd-toast-container--top-right    { top: var(--vdd-toast-offset-top, 0px); right: 0; flex-direction: column; }
+.vdd-toast-container--top-left     { top: var(--vdd-toast-offset-top, 0px); left:  0; flex-direction: column; }
+.vdd-toast-container--bottom-right { bottom: var(--vdd-toast-offset-bottom, 0px); right: 0; flex-direction: column-reverse; }
+.vdd-toast-container--bottom-left  { bottom: var(--vdd-toast-offset-bottom, 0px); left:  0; flex-direction: column-reverse; }
+/* newestOnTop override inverts the column direction */
+.vdd-toast-container--newest-top.vdd-toast-container--bottom-right,
+.vdd-toast-container--newest-top.vdd-toast-container--bottom-left  { flex-direction: column; }
+.vdd-toast-container--newest-bottom.vdd-toast-container--top-right,
+.vdd-toast-container--newest-bottom.vdd-toast-container--top-left  { flex-direction: column-reverse; }
+
+/* Individual toast — base card */
+.vdd-toast {
+  pointer-events: all; position: relative; overflow: hidden;
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 20px 14px; border-radius: 6px;
+  background: var(--vdd-toast-bg, #2a2d32);
+  border: 1px solid var(--vdd-toast-border, rgba(255,255,255,0.14)); border-inline-start-width: 3px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.4), 0 2px 8px rgba(0,0,0,.2);
+  color: var(--vdd-sidebar-text-title, #cccccc);
+  font-size: 13.5px; line-height: 1.4; width: 100%;
+  transition: opacity 200ms ease, transform 200ms ease,
+              max-height 300ms ease, padding 300ms ease, margin 300ms ease;
+}
+/* Reserve space for the absolute-positioned close button */
+.vdd-toast:has(.vdd-toast__close) { padding-inline-end: 32px; }
+
+/* Type-specific: solid background, accent inline-start border only */
+.vdd-toast--info    { border-inline-start-color: var(--vdd-toast-info-color); }
+.vdd-toast--success { border-inline-start-color: var(--vdd-toast-success-color); }
+.vdd-toast--warning { border-inline-start-color: var(--vdd-toast-warning-color); }
+.vdd-toast--error   { border-inline-start-color: var(--vdd-toast-error-color); }
+
+/* Entry animation classes toggled by JS on next frame */
+.vdd-toast--entering        { opacity: 0; transform: translateX(110%); }
+.vdd-toast--entering-left   { opacity: 0; transform: translateX(-110%); }
+.vdd-toast--fade-entering   { opacity: 0; transform: translateX(0); }
+.vdd-toast--visible         { opacity: 1; transform: translateX(0); }
+/* Exit: fade out + height collapse for gravity slide effect */
+.vdd-toast--exiting {
+  opacity: 0; max-height: 0 !important;
+  padding-top: 0; padding-bottom: 0; margin: 0;
+}
+
+/* Icon */
+.vdd-toast__icon { flex-shrink: 0; width: 16px; height: 16px; margin-top: 1px; }
+.vdd-toast--info    .vdd-toast__icon { color: var(--vdd-toast-info-color); }
+.vdd-toast--success .vdd-toast__icon { color: var(--vdd-toast-success-color); }
+.vdd-toast--warning .vdd-toast__icon { color: var(--vdd-toast-warning-color); }
+.vdd-toast--error   .vdd-toast__icon { color: var(--vdd-toast-error-color); }
+
+/* Body & close button */
+.vdd-toast__body { flex: 1; min-width: 0; word-break: break-word; }
+.vdd-toast__close {
+  position: absolute; top: 8px; inset-inline-end: 10px;
+  background: none; border: none; cursor: pointer;
+  opacity: .5; padding: 2px; color: inherit; line-height: 1;
+}
+.vdd-toast__close:hover { opacity: 1; }
+
+/* Progress bar */
+.vdd-toast__progress {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+  transform-origin: left; animation: vdd-toast-shrink linear forwards;
+}
+.vdd-toast--paused .vdd-toast__progress { animation-play-state: paused; }
+.vdd-toast--info    .vdd-toast__progress { background: var(--vdd-toast-info-color); }
+.vdd-toast--success .vdd-toast__progress { background: var(--vdd-toast-success-color); }
+.vdd-toast--warning .vdd-toast__progress { background: var(--vdd-toast-warning-color); }
+.vdd-toast--error   .vdd-toast__progress { background: var(--vdd-toast-error-color); }
+
+@keyframes vdd-toast-shrink { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+/* Toast RTL: flip icon/body order and progress bar collapse direction */
+[dir="rtl"] .vdd-toast           { flex-direction: row-reverse; }
+[dir="rtl"] .vdd-toast__progress { transform-origin: right; }
+
+/* ==========================================================================
+   Structure added by the Vue port
+   ==========================================================================
+   The persistence port and its slots. These carry no cosmetics — they exist so
+   panel DOM can be moved between hosts without Vue observing it. See
+   src/core/panelDom.ts and docs/decisions/0002-zero-unmount-via-teleport.md. */
+
+/*
+ * Structure the React library carried as inline JSX styles.
+ *
+ * rdd set `display:flex`, `flexDirection:column`, `height:100%` and friends inline on its
+ * workspace, grid and panel elements. Ported here as CSS instead: the percentage-height
+ * chain has to be unbroken from the workspace down to a leaf's body, or every descendant
+ * collapses — a split divider in a row ends up 0px tall and cannot be grabbed at all, which
+ * is exactly what the M4 browser gate caught.
+ */
+.vdd-workspace {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  /* Dragging a tab or a divider must not select text across the workspace. Panel *content*
+     is exempt below, so a panel can still contain selectable text. */
+  user-select: none;
+}
+
+.vdd-panel-content {
+  user-select: text;
+}
+
+.vdd-workspace-panel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.vdd-panel-body {
+  flex-grow: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.vdd-workspace-viewport {
+  flex-grow: 1;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Every open panel is rendered inside this, once, for as long as it is open. It has no box
+   of its own: each panel's content is teleported out of here into its own cache element. */
+.vdd-panel-port {
+  display: contents;
+}
+
+/* The off-screen store a panel waits in while minimised, or before its first host. */
+.vdd-panel-store {
+  display: none !important;
+}
+
+/* A host: the box a panel's element is moved into. */
+.vdd-panel-slot {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* The element that is moved. One per panel, for the panel's whole lifetime. */
+.vdd-panel-mount,
+.vdd-panel-content {
+  width: 100%;
+  height: 100%;
+}
+
+.vdd-workspace-branch {
+  width: 100%;
+  height: 100%;
+}
+
+/* A floating window is a flex column: title bar, then a body that takes the rest. rdd set
+   this inline; see the note above. */
+.vdd-floating-window {
+  display: flex;
+  flex-direction: column;
+}
+
+/* The letter tile shown for a panel that opts out of a live preview. */
+.vdd-taskbar-item-preview-letter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--vdd-panel-title-color, var(--vdd-panel-text));
+  background: rgba(108, 117, 125, 0.15);
+  border: 1px dashed var(--vdd-taskbar-item-border);
+  user-select: none;
+}
+
+.vdd-floating-window-body {
+  flex-grow: 1;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  /* A new stacking context, so panel content cannot escape its own window. */
+  isolation: isolate;
+}

@@ -1,0 +1,103 @@
+{
+  "passed": true,
+  "failures": [],
+  "record": [
+    {
+      "dir": "ltr",
+      "case": "centre of R",
+      "leaf": "R",
+      "active": "drag"
+    },
+    {
+      "dir": "ltr",
+      "case": "bottom of R",
+      "leaf": "group-split-1789509604898-685",
+      "tree": 194
+    },
+    {
+      "dir": "ltr",
+      "case": "edge left",
+      "side": "first"
+    },
+    {
+      "dir": "ltr",
+      "case": "corner bottom-right",
+      "anchor": "bottom-right"
+    },
+    {
+      "dir": "ltr",
+      "case": "free float",
+      "anchor": null
+    },
+    {
+      "dir": "ltr",
+      "case": "reorder",
+      "before": [
+        "keepL",
+        "drag",
+        "third"
+      ],
+      "after": [
+        "keepL",
+        "third",
+        "drag"
+      ]
+    },
+    {
+      "dir": "rtl",
+      "case": "centre of R",
+      "leaf": "R",
+      "active": "drag"
+    },
+    {
+      "dir": "rtl",
+      "case": "bottom of R",
+      "leaf": "group-split-1789509611637-581",
+      "tree": 194
+    },
+    {
+      "dir": "rtl",
+      "case": "edge left",
+      "side": "second"
+    },
+    {
+      "dir": "rtl",
+      "case": "corner bottom-right",
+      "anchor": "bottom-left"
+    },
+    {
+      "dir": "rtl",
+      "case": "free float",
+      "anchor": null
+    },
+    {
+      "dir": "rtl",
+      "case": "reorder",
+      "before": [
+        "keepL",
+        "drag",
+        "third"
+      ],
+      "after": [
+        "keepL",
+        "third",
+        "drag"
+      ]
+    },
+    {
+      "dir": "touch",
+      "case": "tap does not drag",
+      "leaf": "L"
+    },
+    {
+      "dir": "touch",
+      "case": "long press arms",
+      "armed": true
+    },
+    {
+      "dir": "touch",
+      "case": "long press drag",
+      "leaf": "R"
+    }
+  ]
+}

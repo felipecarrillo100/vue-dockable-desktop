@@ -1,0 +1,68 @@
+{
+  "milestone": "M14",
+  "passed": true,
+  "at": "2026-09-16T05:46:46.480Z",
+  "tests": {
+    "total": 719,
+    "passed": 719,
+    "failed": 0,
+    "files": 32
+  },
+  "steps": [
+    {
+      "name": "types",
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "lint",
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "tests",
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "build",
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "counts",
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "css-prefix",
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "api-surface",
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "docs-api",
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "demo:build",
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "M14",
+      "ok": true,
+      "status": 0
+    },
+    {
+      "name": "M14 browser",
+      "ok": true,
+      "status": 0
+    }
+  ]
+}
