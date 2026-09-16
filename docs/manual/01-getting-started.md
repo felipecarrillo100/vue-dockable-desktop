@@ -35,13 +35,21 @@ createApp(App).use(workspace).mount('#app')
 > it at startup and logs an explicit message in development.
 
 `createWorkspace()` returns a Vue plugin, the same shape as `createPinia()` or
-`createRouter()`. `app.use()` registers the components globally and makes `useWorkspace()`
-available everywhere.
+`createRouter()`. `app.use()` makes `useWorkspace()` available everywhere — in components,
+and through the `workspace` object itself outside them.
+
+It does **not** register the components globally: you import the ones you use, so a build
+that never mentions `<VddToasts>` does not carry it. That is the one place vdd asks for a
+line the React version did not need.
 
 ## Render it
 
 ```vue
 <!-- App.vue -->
+<script setup lang="ts">
+import { VddDesktop, VddModals, VddSidePanels, VddToasts } from 'vue-dockable-desktop'
+</script>
+
 <template>
   <div class="app">
     <VddDesktop />

@@ -4,10 +4,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-Nothing has been published to npm yet, so everything below is still unreleased. This section
-becomes `## [0.1.0]` with its date on the first publish.
+Every release states which `react-dockable-desktop` release it corresponds to, as a
+**Parity** line. The two libraries version independently — a shared number would break the
+first time either needed a breaking change the other did not — so this is where the
+correspondence lives, alongside the feature-by-feature map in [docs/PARITY.md](docs/PARITY.md).
 
 ## [Unreleased]
+
+## [1.0.0] — 2026-09-16
+
+**Parity: react-dockable-desktop 6.3.0.**
+
+First release. 1.0.0 rather than 0.x because the API is not speculative: it is a deliberate
+port of an API that has been through six majors of real use, and it is pinned by
+`api-surface.json`, so it cannot drift by accident.
 
 ### Added
 

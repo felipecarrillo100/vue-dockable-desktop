@@ -24,6 +24,14 @@ const esm = readFileSync('dist/index.js', 'utf8')
 must(!/createElementBlock|reactivity/.test(esm) || /from ?["']vue["']/.test(esm) || esm.length < 5000,
   'dist/index.js looks like it bundled Vue instead of importing it')
 
+// The version is published twice — in package.json and as a runtime export — and an
+// application that logs `version` to a bug report is trusting the second one. Nothing kept
+// them in step until this rule: bumping for the 1.0.0 release is what showed that the
+// exported string could be left behind with no test and no gate noticing.
+const exportedVersion = readFileSync('src/index.ts', 'utf8').match(/export const version = '([^']+)'/)?.[1]
+must(exportedVersion === pkg.version,
+  `src/index.ts exports version '${exportedVersion}' but package.json says '${pkg.version}'`)
+
 // Peer range per ADR 0015
 must(pkg.peerDependencies?.vue === '^3.4.0', `peerDependencies.vue is ${pkg.peerDependencies?.vue}, expected ^3.4.0`)
 
