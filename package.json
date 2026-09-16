@@ -4,6 +4,14 @@
   "description": "A window manager and dockable layout engine for Vue 3. Fluid grid splits, tabbed groups, floating resizable windows, zero-unmount state preservation, context menus, and internationalisation.",
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/felipecarrillo100/vue-dockable-desktop.git"
+  },
+  "homepage": "https://github.com/felipecarrillo100/vue-dockable-desktop#readme",
+  "bugs": {
+    "url": "https://github.com/felipecarrillo100/vue-dockable-desktop/issues"
+  },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",

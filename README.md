@@ -4,13 +4,20 @@ A window manager and dockable layout engine for **Vue 3**. Fluid grid splits, ta
 groups, floating resizable windows, zero-unmount state preservation, side panels and
 modals, toasts, context menus, per-panel overlays, and internationalisation.
 
+**[Live demo](https://felipecarrillo100.github.io/vue-dockable-desktop/demo/)** &nbsp;|&nbsp;
+**[Users manual](docs/manual/)** &nbsp;|&nbsp;
+**[Design decisions](docs/decisions/)** &nbsp;|&nbsp;
+**[Parity with the React version](docs/PARITY.md)**
+
 Written as a native Vue library — plugins, composables, `v-model`, slots — not as a
 transliteration of its React sibling. It reads and writes the **same serialised layout
 format** as [`react-dockable-desktop`](https://github.com/felipecarrillo100/react-dockable-desktop),
 so a layout saved by either library loads in the other.
 
 > **Status: 0.1.0, pre-release.** The public API is gated (`api-surface.json`) and covered
-> by 719 tests, but it has not been published to npm yet.
+> by 719 tests. It is not on npm yet — it will be published as
+> [`vue-dockable-desktop`](https://www.npmjs.com/package/vue-dockable-desktop), the same
+> name as this repository.
 
 ## Install
 
@@ -19,6 +26,10 @@ npm install vue-dockable-desktop
 ```
 
 Requires Vue 3.4+. No other runtime dependencies.
+
+The [npm package](https://www.npmjs.com/package/vue-dockable-desktop) is not published yet,
+so that command will not resolve until the first release; until then, clone the repository
+and run the [demo](#documentation) or `npm run build` to produce `dist/`.
 
 ## Quick start
 
@@ -90,6 +101,7 @@ localStorage.setItem('layout', ws.saveLayout())
 
 | | |
 |---|---|
+| [Live demo](https://felipecarrillo100.github.io/vue-dockable-desktop/demo/) | Every capability in one application — published from `demo/` by GitHub Pages on each push to `main` |
 | [`docs/manual/`](docs/manual/) | Users manual — 13 chapters, start with [Getting started](docs/manual/01-getting-started.md) |
 | [`docs/decisions/`](docs/decisions/) | ADRs — why the Vue design diverges from the React one |
 | [`docs/PARITY.md`](docs/PARITY.md) | Feature-by-feature parity with `react-dockable-desktop`, and the 15 deliberate divergences |
@@ -129,6 +141,17 @@ npm run gate:sweep      # coverage + non-vacuity sweep
 `npm run gate -- M<n>` runs types, lint, tests, build, test counts, the CSS-prefix and
 API-surface checks, the docs/API cross-check, the demo build, the milestone's own rules,
 and a real-Chrome browser gate. Gates are never edited to make a run pass.
+
+## Continuous integration
+
+Two workflows, both on Node 22 (vitest 5 will not run on Node 20):
+
+- [`.github/workflows/gate.yml`](.github/workflows/gate.yml) runs `npm run gate -- M14` on
+  every push and pull request, browser gate included — the runner image already ships
+  Chrome — and keeps the gate's evidence as a build artifact.
+- [`.github/workflows/pages.yml`](.github/workflows/pages.yml) builds the demo and publishes
+  it to GitHub Pages on each push to `main`: the landing page at the site root, the demo
+  under `/demo/`. The demo's `base` is relative, so no deployment path is baked into the build.
 
 ## License
 

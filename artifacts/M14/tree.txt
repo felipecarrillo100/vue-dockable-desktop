@@ -1,8 +1,8 @@
 b1d85c09eb4e2eccb6ff2fa6a762df0c7531ff26  docs/IMPLEMENTATION_PLAN.md
 ba405152d4c0b30768323c48c62c213c8b417225  docs/PARITY.md
-b8013f7096a230413fa286dbecfcdf38b9fa182a  docs/PROGRESS.md
+b83a5a17c544c1819c63afc91d08ed55c5576098  docs/PROGRESS.md
 855d26f75b7c1da6a9d0c25322f060d46ef5c341  docs/README.md
-3b79b93a541b5e55ed86f67c27bf865028a028e0  docs/ROADMAP.md
+1e3e0896bbf56e7abcb619e9dcdd047b8cb877a2  docs/ROADMAP.md
 3fbb23a0e1bc423f8841e87cc2140b2cd6674d7e  docs/decisions/0001-vue-native-rewrite.md
 b009ec455a62ddec8f6678f8d30440ab94a2b0b6  docs/decisions/0002-zero-unmount-via-teleport.md
 c5a6f5bf322b87a8bdd17ded2def13b9bbf10cc4  docs/decisions/0003-reactive-store.md

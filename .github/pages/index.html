@@ -1,0 +1,121 @@
+<!doctype html>
+<!--
+  The Pages landing page, deployed to the site root by .github/workflows/pages.yml.
+
+  Deliberately one self-contained file with no assets and no build step: the root of the
+  site exists only so the demo has somewhere to be linked from, and so the URL shape stays
+  the same if a generated documentation site is added here later.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>vue-dockable-desktop</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231b2027'/%3E%3Crect x='5' y='7' width='9' height='18' rx='2' fill='%233fa46a'/%3E%3Crect x='16' y='7' width='11' height='8' rx='2' fill='%237f8b99'/%3E%3Crect x='16' y='17' width='11' height='8' rx='2' fill='%234a5563'/%3E%3C/svg%3E">
+    <meta name="description" content="A window manager and dockable layout engine for Vue 3 — split docking, floating windows, and zero-unmount state preservation.">
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f6f7f9;
+        --panel: #ffffff;
+        --ink: #1b1f24;
+        --muted: #5b6672;
+        --line: #e2e6ea;
+        --accent: #2f855a;
+        --accent-ink: #ffffff;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #14181d;
+          --panel: #1b2027;
+          --ink: #e8ecf1;
+          --muted: #98a3b0;
+          --line: #2b323b;
+          --accent: #3fa46a;
+          --accent-ink: #0d1117;
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
+      main { max-width: 52rem; margin: 0 auto; padding: 4rem 1.25rem 3rem; }
+      h1 { margin: 0 0 .35rem; font-size: clamp(1.9rem, 5vw, 2.6rem); letter-spacing: -.02em; }
+      .tag { margin: 0 0 2rem; color: var(--muted); font-size: 1.05rem; }
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.25rem;
+      }
+      .cta {
+        display: inline-block;
+        background: var(--accent);
+        color: var(--accent-ink);
+        text-decoration: none;
+        font-weight: 600;
+        padding: .7rem 1.4rem;
+        border-radius: 8px;
+      }
+      .cta:hover { filter: brightness(1.08); }
+      .note { color: var(--muted); font-size: .9rem; margin: .9rem 0 0; }
+      ul { margin: 0; padding-left: 1.2rem; }
+      li { margin: .3rem 0; }
+      h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 .8rem; }
+      a { color: var(--accent); }
+      .links { display: flex; flex-wrap: wrap; gap: 1.25rem; }
+      footer { color: var(--muted); font-size: .85rem; border-top: 1px solid var(--line); padding-top: 1.25rem; }
+      code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .9em; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>vue-dockable-desktop</h1>
+      <p class="tag">
+        A window manager and dockable layout engine for Vue 3 — split docking, tabbed groups,
+        floating resizable windows, and zero-unmount state preservation.
+      </p>
+
+      <div class="card">
+        <a class="cta" href="./demo/">Open the demo &rarr;</a>
+        <p class="note">
+          Every capability in one application: maps, Monaco editors, a markdown pipeline and
+          six locales, in panels you can dock, float, minimise and reload. Loads about 16 MB
+          on first visit, most of it Monaco.
+        </p>
+      </div>
+
+      <div class="card">
+        <h2>What to try in the demo</h2>
+        <ul>
+          <li>Drag a panel's tab over another panel to split it, or onto a tab strip to group it.</li>
+          <li>Float a panel, then drag it to a workspace corner — anchored windows stack and follow resizes.</li>
+          <li>Pan a map, type in an editor, then dock, float and minimise that panel: no state is lost, because the DOM is moved rather than destroyed.</li>
+          <li>Save the layout, reload the page, and restore it.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>Documentation</h2>
+        <div class="links">
+          <a href="https://github.com/felipecarrillo100/vue-dockable-desktop#readme">README</a>
+          <a href="https://github.com/felipecarrillo100/vue-dockable-desktop/tree/main/docs/manual">Users manual</a>
+          <a href="https://github.com/felipecarrillo100/vue-dockable-desktop/tree/main/docs/decisions">Design decisions</a>
+          <a href="https://github.com/felipecarrillo100/vue-dockable-desktop/blob/main/docs/PARITY.md">Parity with the React version</a>
+          <a href="https://github.com/felipecarrillo100/vue-dockable-desktop">Source</a>
+          <a href="https://www.npmjs.com/package/vue-dockable-desktop">npm (coming soon)</a>
+        </div>
+      </div>
+
+      <footer>
+        Pre-release, MIT licensed. Reads and writes the same serialised layout format as
+        <a href="https://github.com/felipecarrillo100/react-dockable-desktop">react-dockable-desktop</a>,
+        so a layout saved by either library loads in the other.
+      </footer>
+    </main>
+  </body>
+</html>

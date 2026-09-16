@@ -14,6 +14,9 @@ artifacts/coverage/
 artifacts/.vitest.json
 coverage/
 
+# Pages staging directory, assembled by .github/workflows/pages.yml
+_site/
+
 # ─── Editors ─────────────────────────────────────────────────────────────────
 # Visual Studio Code
 .vscode/

@@ -1,0 +1,54 @@
+# The repository's own verification, run the way it is run locally: one command.
+#
+# `npm run gate -- M14` is the standing gate — types, lint, the whole test suite, the library
+# build, test counts, the CSS-prefix and API-surface checks, the docs/API cross-check, the
+# demo build, the M14 milestone rules, and the M14 browser gate. The browser gate drives real
+# Chrome, which the ubuntu-24.04 runner image already ships, so there is no browser to install.
+#
+# Node 22, not 20: vitest 5 declares `node: ^22.12 || ^24 || >=26` and will not run on 20.
+name: Gate
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Gate
+        run: npm run gate -- M14
+
+      # The gate records its own evidence (screenshots, a state trace, gate.json). Kept on
+      # failure as well as success, because a failed browser gate is exactly when the trace
+      # is worth reading.
+      - name: Upload gate evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: gate-evidence
+          path: artifacts/M14
+          if-no-files-found: warn
+          retention-days: 14
