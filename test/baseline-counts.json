@@ -24,7 +24,7 @@
   "overlays.test.ts": 6,
   "panelLifecycle.test.ts": 25,
   "toast.test.ts": 16,
-  "panelOverlay.test.ts": 64,
+  "panelOverlay.test.ts": 69,
   "diagnostics.test.ts": 14,
   "contributions.test.ts": 21,
   "i18n.test.ts": 25,

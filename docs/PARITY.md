@@ -131,7 +131,7 @@ All **26** rdd test files are accounted for below, by name, with a disposition. 
 the driving code is rewritten ([0011](decisions/0011-tests-as-specification.md)).
 
 rdd's suite is 445 `it()` declarations, 468 tests once its `it.each` blocks expand. vdd's is
-**687**. The surplus is not padding: it is the Vue-specific cases rdd could not have (a `ref`
+**730** as of 1.0.1. The surplus is not padding: it is the Vue-specific cases rdd could not have (a `ref`
 passed as a prop, a `markRaw` component, watcher scheduling), the divergences vdd fixes and
 must keep fixed, and the assertions rdd's own tests were too weak to make — two of which were
 found by mutation-testing this suite against itself (PO25, and `useStyleClasses`).
@@ -141,7 +141,7 @@ quietly dropped from it.
 
 | rdd suite | vdd disposition |
 |---|---|
-| `PanelOverlay` (1,349) | **Ported — 60/60** (M11). rdd's nine stale-closure refs, its `key`-remount trick and its controlled/uncontrolled `stretch` branch have no equivalent; the four placement props are one `v-model:placement`, and `usePanelFloatingWindow()` is `v-model:open` — each noted in the file header and below. One test was **strengthened**: rdd's PO25 could not distinguish "clears both buckets of its edge" from "clears only its own corner". One was **added**: a sub-threshold header move must not undock |
+| `PanelOverlay` (1,349) | **Ported — 60/60** (M11). rdd's nine stale-closure refs, its `key`-remount trick and its controlled/uncontrolled `stretch` branch have no equivalent; the four placement props are one `v-model:placement`, and `usePanelFloatingWindow()` is `v-model:open` — each noted in the file header and below. One test was **strengthened**: rdd's PO25 could not distinguish "clears both buckets of its edge" from "clears only its own corner". One was **added**: a sub-threshold header move must not undock. **1.0.1 adds five** (PO31–PO35) for R1 below, the one part of this surface neither suite covered |
 | `Sidebar` (1,678) | **Ported — 91/91** (M9). Every handle-based test (`openTab`, `closeDrawer`, `getActiveTab`, `show`/`hide`/`toggle`, `showStrip`/`hideStrip`, `setWidth`/`getWidth`) is mapped one-to-one to a `v-model` or `useSidebar()` counterpart, with the mapping tabulated in the file header. Two assertions changed shape and say so at the test: SB22 (rdd clamped inside `setWidth`; vdd clamps where the value is produced and bounds the render) and SB26 (an inline `flex-basis` that moved to the stylesheet — D12) |
 | `Toast` (327) | **Ported — 16/16** (M10). The event emitter is deleted: the queue is module-level reactive state, so `toast()` works outside components without one |
 | `Toolbar` (725) | **Ported — 42/42** (M9). `<ToolbarProvider>` is gone: the state is on the workspace, so TB1 asserts the missing-workspace error instead. `getActiveInGroup`/`isModifierActive`/`setModifierActive`/`toggleModifier` are renamed `activeInGroup`/`isToggled`/`setToggled`/`toggle`; TB20's handle becomes `v-model:visible` |
@@ -209,6 +209,22 @@ class/rule correspondence sweep, which is what surfaced the gap at all.
 D6 is worth singling out: it contradicts rdd's own headline claim of "zero-unmount state
 preservation". The guarantee holds for component state, WebGL contexts and media, but scroll
 offsets are browser state that detaching discards, and nothing in rdd puts them back.
+
+### Port regressions found after 1.0.0
+
+Not divergences — vdd matched rdd before the port broke it, and matches it again now. Kept here
+because the *reason* rdd is immune is a design fact worth not losing.
+
+| # | What broke | rdd's design, and why it cannot happen there |
+|---|---|---|
+| R1 | **A widget opened through `useFloatingWidgets()` discarded every placement gesture** (1.0.0; fixed 1.0.1). `<VddPanelOverlay>` bound `placement` — a `defineModel` — as a fresh `{ anchor, stretch }` literal with no `@update:placement`, and Vue re-syncs a model from its prop whenever the prop's *identity* changes. So a drop reverted on the render the drop itself triggered (`draggingId` is cleared in the same function that applies the placement), and a stretched widget reverted whenever any other widget opened or closed (`managedVersion`). Template-declared widgets and plain resizes were unaffected | `PanelFloatingWindow` splits the surface four ways: `defaultAnchor` and `defaultStretch` (seeds, consumed by `useState`), `stretch` (opt-in controlled) and `onPlacementChange` (report), and the managed path passes seeds only. Two properties make the defect unreachable there: the **anchor is never controllable** (`applyPlacement` always calls `setCurrentAnchor` — "Anchor is always internal"), and the one controllable placement value is a **primitive**, so identity churn cannot occur. Collapsing all four into one `v-model:placement` ([0005](decisions/0005-vmodel.md)) removed the seed position and made the two-way value an object; the overlay owns the record and echoes gestures now, and ADR 0005 carries the amendment |
+
+Neither suite covered it: rdd's own PO7/PO8 test `openManaged`/`closeManaged`/`openIds`/`closeAll`
+and nothing about placement, and every gesture test in both libraries drives a declaratively
+rendered widget. vdd's browser gate set placement through a handle by design — "the rendered
+result of a placement rather than the gesture that produced it" — so the gesture path into an
+overlay-owned widget was untested everywhere. PO31–PO35 and a real pointer drag in the M14
+browser walkthrough close that.
 
 ### The demo
 

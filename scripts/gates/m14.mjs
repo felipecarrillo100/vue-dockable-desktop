@@ -107,11 +107,42 @@ const CAPABILITIES = {
   'the colour scheme': /useColorScheme\(/,
   'layout persistence': /saveLayout\(|loadLayout\(/,
   'drag primitives': /startPointerDrag\(/,
-  'floating widgets from data': /useFloatingWidgets|@update:open/,
+  // `@update:open` used to satisfy this too, which let the demo claim the capability while
+  // rendering the widgets declaratively — so the managed path went undemonstrated and its
+  // 1.0.0 defect undetected. The composable itself is the capability.
+  'floating widgets from data': /useFloatingWidgets\(/,
 }
 for (const [capability, pattern] of Object.entries(CAPABILITIES)) {
   must(pattern.test(all), `no demo panel demonstrates ${capability}`)
 }
+
+// ── 4b. An object-valued model is never bound as a literal ─────────────────
+// The 1.0.0 defect: `<VddPanelOverlay>` bound `placement` — a `defineModel` — as a fresh
+// `{ anchor, stretch }` literal, and `useModel` re-syncs from the prop whenever its *identity*
+// changes, so every render of the overlay threw away the user's gesture. These rules are
+// structural because the symptom is not: the widget renders correctly and then reverts, which
+// looks like a drag-handling bug anywhere but here.
+const vueSources = [...walk('src'), ...walk('demo/src')].filter(f => /\.vue$/.test(f))
+for (const file of vueSources) {
+  const body = stripSourceComments(readFileSync(file, 'utf8'))
+  must(!/:placement="\s*\{/.test(body),
+    `${file} binds an object literal to :placement — hold it in a ref and bind v-model:placement, ` +
+    `or the model resets on every render of this component`)
+}
+
+const overlayRoot = stripSourceComments(readFileSync('src/components/VddPanelOverlay.vue', 'utf8'))
+must(/@update:placement/.test(overlayRoot),
+  'VddPanelOverlay binds :placement for managed widgets, so it must also handle @update:placement — ' +
+  'a bound model with no write-back discards every gesture')
+
+// The other half of the fix: the writer must not touch the ref that re-renders the widget list,
+// which is the render that used to destroy the gesture.
+const overlayStore = readFileSync('src/core/overlayState.ts', 'utf8')
+const setter = overlayStore.match(/setManagedPlacement:[\s\S]*?\n {4}\},/)?.[0] ?? ''
+must(setter !== '', 'the overlay store must expose setManagedPlacement')
+must(!/managedVersion/.test(setter),
+  'setManagedPlacement must not bump managedVersion — that re-renders the widget list, which is ' +
+  'what discarded the placement in 1.0.0')
 
 // ── 5. The dependencies are the ones ADR 0013 decided on ───────────────────
 const deps = { ...pkg.dependencies, ...pkg.devDependencies }

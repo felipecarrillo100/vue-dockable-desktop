@@ -11,6 +11,54 @@ correspondence lives, alongside the feature-by-feature map in [docs/PARITY.md](d
 
 ## [Unreleased]
 
+## [1.0.1] — 2026-09-17
+
+**Parity: react-dockable-desktop 6.3.0.**
+
+### Fixed
+
+- **A widget opened through `useFloatingWidgets()` discarded every placement gesture.** Dropping
+  a managed widget on another corner returned it to the corner `open()` named, and a stretched
+  one lost its stretch as soon as any other widget opened or closed. Template-declared widgets
+  and plain resizes were unaffected. Reported by a user.
+
+  `<VddPanelOverlay>` bound `placement` — a `defineModel` — as a fresh `{ anchor, stretch }`
+  literal with no `@update:placement`, and Vue re-syncs a model from its prop whenever the
+  prop's *identity* changes. Every render of the overlay therefore reset the widget, and the
+  overlay re-renders on exactly the wrong events: a drop clears `draggingId` in the same
+  function that applies the placement, and opening a widget bumps `managedVersion`.
+
+  The overlay now keeps a placement record per widget id and writes gestures straight back into
+  it. `anchor`, `stretch`, `width` and `height` on `open()` are **initial values** — as rdd's
+  `defaultAnchor`/`defaultStretch` are — so `open()` on an id that is already open refreshes its
+  content and leaves the widget where the user put it, and `close()` then `open()` is what
+  resets placement. No public API changed.
+
+  A port regression: rdd never makes the anchor controllable, and the only placement value it
+  lets a caller control is a primitive, so identity churn cannot arise there. Recorded as **R1**
+  in [`docs/PARITY.md`](docs/PARITY.md), with the underlying `defineModel` constraint amended
+  into [ADR 0005](docs/decisions/0005-vmodel.md). Pinned by PO31–PO35, four M14 gate rules, and
+  a real pointer drag in the demo's browser walkthrough — the gesture path into an overlay-owned
+  widget that no layer of either library's verification had ever driven.
+
+- **In the demo, no camera marker on the main map could be clicked**, though the legend invited
+  it: a decorative polygon added after the markers covered the whole cluster and swallowed every
+  click. It is `interactive: false` now. Found by the new browser assertion trying to open a
+  widget the way a user does.
+
+### Changed
+
+- The demo's camera widgets are opened through `useFloatingWidgets()` instead of a `v-for` over
+  `<VddFloatingWidget>`, so the managed path — the one that regressed — is demonstrated and
+  walked by the gate. The M14 capability rule now requires the composable itself rather than
+  accepting `@update:open`, which is what let the demo claim the capability without exercising
+  it.
+- The M11 browser gate's stretch assertion was measuring the wrong thing: it expected a
+  full-width strip to be `panel - 16` and ignored the inline panel toolbars beside it, so a
+  strip that tracked its panel perfectly was reported as having stopped. It now asserts the
+  tracking claim as a delta and measures the toolbar band. No library behaviour was involved —
+  the failure reproduced identically against 1.0.0's source.
+
 ## [1.0.0] — 2026-09-16
 
 **Parity: react-dockable-desktop 6.3.0.**

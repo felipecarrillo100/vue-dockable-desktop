@@ -7,7 +7,11 @@
  * closures in its pointer handlers, plus a `key` remount trick and a controlled/uncontrolled
  * branch for `stretch`. None of that is here: a Vue ref read inside a handler is already the
  * current value, and `v-model:placement` makes controlled and uncontrolled the same code path
- * (docs/decisions/0005-vmodel.md).
+ * for a *caller* (docs/decisions/0005-vmodel.md). What it does not offer is rdd's third
+ * position — seed it, then let the component own it — because binding the prop at all makes
+ * the binder authoritative. `<VddPanelOverlay>` needed exactly that for managed widgets, and
+ * 1.0.0 shipped it as a bound object literal, which reset placement on every render; the
+ * overlay owns and echoes the value now. See the model's own comment below.
  *
  * Anchor and stretch are **one** model, because one gesture can change both — releasing a
  * stretched axis re-pins the anchor — and reporting them separately would surface a state
@@ -49,6 +53,12 @@ const open = defineModel<boolean>('open', { default: true })
  *
  * Bind it and the caller owns placement — which is also the only way to persist it, since the
  * library serialises nothing about inner widgets. Leave it off and the widget keeps its own.
+ *
+ * **If you bind it, the value must be stable or echoed back.** `defineModel` re-syncs from the
+ * prop whenever the prop's *identity* changes, so a fresh object literal — `:placement="{ anchor,
+ * stretch }"` — resets the widget on every render of the parent, with or without a listener, and
+ * gestures appear to work and then revert. Hold it in a `ref` and use `v-model:placement`, or
+ * write the emitted value back into whatever you bound.
  */
 const placement = defineModel<PanelFloatPlacement>('placement', {
   default: () => ({ anchor: 'top-right' as FloatAnchor, stretch: null }),

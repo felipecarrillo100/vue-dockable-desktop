@@ -373,6 +373,26 @@ check('M14 catches the library gaining a runtime dependency', 'package.json',
   s => s.replace('"peerDependencies"', '"dependencies": { "leaflet": "^1.9.4" },\n  "peerDependencies"'),
   'node scripts/gates/m14.mjs')
 
+// The 1.0.1 rules. Each mutation below is a shape the code actually shipped in 1.0.0, so these
+// are regression proofs rather than hypotheticals.
+check('M14 catches an object literal bound to a placement model', 'src/components/VddPanelOverlay.vue',
+  s => s.replace(':placement="placement"',
+                 ':placement="{ anchor: widget.anchor ?? \'top-right\', stretch: widget.stretch ?? null }"'),
+  'node scripts/gates/m14.mjs')
+
+check('M14 catches the overlay binding placement with no write-back', 'src/components/VddPanelOverlay.vue',
+  s => s.replace('      @update:placement="(next: PanelFloatPlacement) => store.setManagedPlacement(id, next)"\n', ''),
+  'node scripts/gates/m14.mjs')
+
+check('M14 catches setManagedPlacement re-rendering the widget list', 'src/core/overlayState.ts',
+  s => s.replace('      if (id in managedPlacements) managedPlacements[id] = placement',
+                 '      if (id in managedPlacements) managedPlacements[id] = placement\n      managedVersion.value++'),
+  'node scripts/gates/m14.mjs')
+
+check('M14 catches the demo demonstrating managed widgets declaratively', 'demo/src/panels/CameraWidgets.vue',
+  s => s.replace('const widgets = useFloatingWidgets()', 'const widgets = fakeWidgets()'),
+  'node scripts/gates/m14.mjs')
+
 // M1: hide a build artefact the exports map promises
 const hidden = 'dist/styles.css'
 if (existsSync(hidden)) {
