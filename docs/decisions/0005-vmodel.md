@@ -51,3 +51,30 @@ and is still "controlled").
 - `defineModel` requires Vue 3.4+. That sets the floor for the peer dependency.
 - `defineExpose` is kept only where the action is genuinely imperative and has no state to
   model: `<VddContextMenu>.show()`, the toast singleton, and `useFloatingWidgets()`.
+
+## Amendment (1.0.1) — a model cannot also be a seed
+
+Appended rather than rewritten: the decision stands, but one thing it says about the
+controlled/uncontrolled distinction turned out to be true only from the caller's side.
+
+`defineModel` has **two** positions, not three. Bind the prop and the binder is authoritative —
+Vue re-syncs the child's local value whenever the prop's *identity* changes. Leave it off and
+the component owns the value. There is no way to say *"start here, then let the component own
+it"*, which is exactly what rdd's `defaultAnchor` / `defaultStretch` say, and what any caller
+inside the library that renders widgets from data needs.
+
+`<VddPanelOverlay>` needed that third position for `useFloatingWidgets()` widgets and had no
+spelling for it, so 1.0.0 bound `:placement` to a freshly-built `{ anchor, stretch }` literal —
+which reset the widget on every render of the overlay, discarding every placement gesture a
+user made. (Reported by a user; recorded as R1 in [PARITY.md](../PARITY.md).)
+
+Two things follow for anything added later:
+
+1. **An object-valued model must never be bound to a literal.** Vue compares by identity, so a
+   new object each render is a reset each render. rdd could not hit this: the only placement
+   value it let a caller control was a primitive (`stretch`), and the anchor was always
+   internal. Ours is a pair, so the hazard is ours to police — the M14 gate now rejects
+   `:placement="{`, and the manual states the rule where the model is introduced.
+2. **Where the library itself needs a seed, the library owns the state.** The overlay keeps a
+   placement record per widget id and echoes gestures back into it. That is the honest shape:
+   if something must be bound, the bound value has to be the live one.

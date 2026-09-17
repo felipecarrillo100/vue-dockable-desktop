@@ -176,17 +176,44 @@ const stripAfter = await boxOr('[data-vdd-widget="strip"]', 'stretch')
 if (!overlayBefore || !overlayAfter || !stripBefore || !stripAfter) {
   record.push({ step: 'stretch tracks', skipped: 'a box was missing' })
 } else {
+/**
+ * A stretched inline axis is inset by the *toolbar band*, not only by the gutter.
+ *
+ * This gate asserted `overlay - 16` — the 8px gutter on each side — and the playground has a
+ * `left` and a `right` panel toolbar, each claiming 48px. So a strip that tracked the panel
+ * perfectly measured 96px narrower than the assertion demanded and was reported as "it stopped
+ * tracking". Corrected in 1.0.1, on the maintainer's authorisation, after the arithmetic was
+ * confirmed against a stashed working tree: the failure was identical at HEAD, so it was the
+ * gate and not the library.
+ *
+ * Measured rather than assumed, so a change to the playground's toolbars cannot make this lie
+ * again — and the tracking claim itself is now asserted as a *delta*, which no inset can skew.
+ */
+const inlineInset = (await box('[data-vdd-panel-overlay] .vdd-panel-toolbar--left'))?.width ?? 0
+const inlineInsetEnd = (await box('[data-vdd-panel-overlay] .vdd-panel-toolbar--right'))?.width ?? 0
+const GUTTERS = 16                                   // DOCK_INSET on each side
+const expectedStrip = overlayAfter.width - inlineInset - inlineInsetEnd - GUTTERS
+const overlayDelta = overlayAfter.width - overlayBefore.width
+const stripDelta = stripAfter.width - stripBefore.width
+
 record.push({
   step: 'stretch tracks',
   overlay: `${Math.round(overlayBefore.width)} -> ${Math.round(overlayAfter.width)}`,
   strip: `${Math.round(stripBefore.width)} -> ${Math.round(stripAfter.width)}`,
+  delta: `overlay ${Math.round(overlayDelta)} · strip ${Math.round(stripDelta)}`,
+  band: `toolbars ${Math.round(inlineInset)}+${Math.round(inlineInsetEnd)} + gutters ${GUTTERS}`,
+  expectedStrip: Math.round(expectedStrip),
 })
 if (!near(overlayAfter.width, overlayBefore.width - 160, 20)) {
   fail('stretch', `the overlay panel did not narrow as expected (${Math.round(overlayBefore.width)} -> ${Math.round(overlayAfter.width)})`)
 }
-// The strip must have followed, keeping its 8px gutter on each side.
-if (!near(stripAfter.width, overlayAfter.width - 16, 4)) {
-  fail('stretch', `the strip is ${Math.round(stripAfter.width)} wide in a ${Math.round(overlayAfter.width)} panel — it stopped tracking`)
+// The claim itself: the strip followed the panel by the same amount. Two pins, no JavaScript.
+if (!near(stripDelta, overlayDelta, 4)) {
+  fail('stretch', `the panel changed by ${Math.round(overlayDelta)}px and the strip by ${Math.round(stripDelta)}px — it stopped tracking`)
+}
+// And it sits inside the toolbar band, not merely inside the panel.
+if (!near(stripAfter.width, expectedStrip, 4)) {
+  fail('stretch', `the strip is ${Math.round(stripAfter.width)} wide; spanning a ${Math.round(overlayAfter.width)} panel inside a ${Math.round(inlineInset)}+${Math.round(inlineInsetEnd)} toolbar band with ${GUTTERS}px of gutters is ${Math.round(expectedStrip)}`)
 }
 }
 
