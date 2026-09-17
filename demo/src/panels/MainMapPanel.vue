@@ -21,7 +21,7 @@ import {
   usePanel, useWorkspace,
 } from 'vue-dockable-desktop'
 import type { PanelFloatPlacement } from 'vue-dockable-desktop'
-import CameraFeed from './CameraFeed.vue'
+import CameraWidgets from './CameraWidgets.vue'
 
 const CAMERAS = [
   { id: 'cam-north', name: 'North Gate', colour: '#38bdf8', at: [51.515, -0.09] as [number, number] },
@@ -78,9 +78,13 @@ watch(host, (element) => {
     return marker
   })).addTo(map))
 
+  // `interactive: false` because this is decoration: it is added after the markers, so it
+  // paints — and hit-tests — above them in Leaflet's shared overlay pane, and it covers the
+  // whole cluster. Without this, not one camera marker could be clicked, while the legend
+  // invited exactly that. Found by the M14 browser gate trying to click one.
   groups.set('polygons', L.layerGroup([L.polygon(
     [[[51.52, -0.14], [51.52, -0.06], [51.49, -0.06], [51.49, -0.14]]],
-    { color: '#f59e0b', weight: 1.4, fillOpacity: 0.06 },
+    { color: '#f59e0b', weight: 1.4, fillOpacity: 0.06, interactive: false },
   )]).addTo(map))
 
   groups.set('polylines', L.layerGroup([L.polyline(
@@ -163,19 +167,11 @@ const recentre = () => map?.setView([51.505, -0.09], 13)
       </div>
     </VddFloatingWidget>
 
-    <!-- Widgets from data: one per open camera, each anchored to a different corner. -->
-    <VddFloatingWidget
-      v-for="camera in cameraWidgets"
-      :key="camera.id"
-      :widget-id="camera.id"
-      :title="camera.name"
-      :placement="{ anchor: camera.corner, stretch: null }"
-      :width="260"
-      :height="190"
-      :open="true"
-      @update:open="(value: boolean) => { if (!value) toggleCamera(camera.id) }"
-    >
-      <CameraFeed :name="camera.name" :colour="camera.colour" />
-    </VddFloatingWidget>
+    <!--
+      Widgets from data: one per open camera, each seeded to a different corner and then free to
+      be dragged anywhere. Opened through `useFloatingWidgets()`, which has to be called from
+      inside the overlay — hence the child component.
+    -->
+    <CameraWidgets :cameras="cameraWidgets" @close="toggleCamera" />
   </VddPanelOverlay>
 </template>

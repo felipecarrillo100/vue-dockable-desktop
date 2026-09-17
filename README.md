@@ -34,7 +34,7 @@ npm install vue-dockable-desktop
 
 Requires Vue 3.4+. No other runtime dependencies. The published package is
 [`vue-dockable-desktop`](https://www.npmjs.com/package/vue-dockable-desktop); the public API
-is pinned by `api-surface.json` and covered by 725 tests.
+is pinned by `api-surface.json` and covered by 730 tests.
 
 ## Quick start
 

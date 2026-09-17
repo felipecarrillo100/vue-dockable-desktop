@@ -37,7 +37,8 @@ import { createWorkspace } from '../../src/core/workspace'
 import VddPanelOverlay from '../../src/components/VddPanelOverlay.vue'
 import VddPanelToolbar from '../../src/components/VddPanelToolbar.vue'
 import VddFloatingWidget from '../../src/components/VddFloatingWidget.vue'
-import { useFloatingWidgets } from '../../src/composables/usePanelOverlay'
+import { useFloatingWidgets, usePanelOverlay } from '../../src/composables/usePanelOverlay'
+import type { PanelOverlayStore } from '../../src/core/overlayState'
 import type { PanelFloatPlacement } from '../../src/core/stretch'
 import type { FloatAnchor } from '../../src/types'
 
@@ -1189,5 +1190,157 @@ describe('PO28–PO30: a stored widget title is localisable', () => {
     mounted.push(mount(host, { global: { plugins: [ws] }, attachTo: document.body }) as VueWrapper)
     await nextTick()
     expect(titleText()).toBe('Leyenda SLD')
+  })
+})
+
+// ─── PO31–PO35 ───────────────────────────────────────────────────────────────
+
+/**
+ * Added in 1.0.1, for a defect a user reported: a widget opened through
+ * `useFloatingWidgets()` discarded every placement gesture.
+ *
+ * `<VddPanelOverlay>` bound `placement` — a `defineModel` — as a fresh object literal with no
+ * `@update:placement`, and `useModel` re-syncs its local value whenever the prop's *identity*
+ * changes. Two literals are never `Object.is`-equal, so every render of the overlay reset the
+ * widget to the anchor `open()` was called with. The overlay re-renders on precisely the wrong
+ * events: `draggingId` and `hovered` (the drop zones) and `managedVersion` (the widget list), and
+ * a drop clears `draggingId` in the same function that applies the placement.
+ *
+ * The overlay owns placement per widget id now, so these tests are about *ownership*: a gesture
+ * sticks (PO31), an unrelated render does not disturb it (PO32), `open()`'s anchor is a seed
+ * rather than live state (PO33), closing is what resets it (PO34), and the record does not
+ * outlive its widget (PO35).
+ */
+describe('PO31–PO35: a managed widget owns its placement', () => {
+  type Api = ReturnType<typeof useFloatingWidgets>
+  let api: Api
+  let store: PanelOverlayStore
+
+  /** Wide enough that a full-width stretch is unambiguous, with the widget in the far corner. */
+  const OVERLAY = domRect(0, 0, 1000, 600)
+  const WIDGET = domRect(732, 372, 260, 220)
+
+  const host = () => {
+    const Probe = defineComponent({
+      name: 'Probe',
+      setup() {
+        api = useFloatingWidgets()
+        store = usePanelOverlay()
+        return () => h('span')
+      },
+    })
+    return defineComponent({
+      components: { VddPanelOverlay },
+      setup: () => ({ Probe }),
+      template: '<VddPanelOverlay><component :is="Probe" /></VddPanelOverlay>',
+    })
+  }
+
+  const byId = (id: string) => document.querySelector(`[data-vdd-widget="${id}"]`) as HTMLElement
+  const titleOf = (id: string) => byId(id).querySelector('.vdd-panel-float__title')?.textContent
+  const openBottomRight = (id = 'w1', title = 'W') =>
+    api.open(id, { title, component: Dot, anchor: 'bottom-right', width: 260, height: 220 })
+
+  /** Drag the header onto the top-left drop zone and release there. */
+  const dropTopLeft = (id = 'w1') => pressHeader(byId(id), { x: 10, y: 10 }, 'up')
+
+  it('PO31: a managed widget keeps the corner it is dropped on', async () => {
+    const restore = stubGeometry({ overlay: OVERLAY, widget: WIDGET })
+    try {
+      render(host())
+      openBottomRight()
+      await nextTick()
+      expect(byId('w1').style.insetInlineEnd).toBe('8px')     // seeded where open() said
+      await dropTopLeft()
+      expect(byId('w1').style.insetInlineStart).toBe('8px')
+      expect(byId('w1').style.insetInlineEnd).toBe('')
+      expect(byId('w1').style.top).toBe('0px')
+    } finally {
+      restore()
+    }
+  })
+
+  it('PO32: a stretched managed widget is not reset when another widget opens', async () => {
+    const restore = stubGeometry({ overlay: OVERLAY, widget: WIDGET })
+    try {
+      render(host())
+      openBottomRight()
+      await nextTick()
+      // Drag the inline-start edge out to the panel's full width: resize-to-stretch arms.
+      await dragHandle(byId('w1'), 'w', { x: 732, y: 480 }, { x: 8, y: 480 })
+      expect(byId('w1').style.insetInlineStart).toBe('8px')
+      expect(byId('w1').style.insetInlineEnd).toBe('8px')
+      expect(byId('w1').style.width).toBe('')                 // two pins, no width
+
+      api.open('w2', { title: 'Other', component: Dot })
+      await nextTick()
+      expect(byId('w1').style.insetInlineStart).toBe('8px')
+      expect(byId('w1').style.insetInlineEnd).toBe('8px')
+      expect(byId('w1').style.width).toBe('')
+    } finally {
+      restore()
+    }
+  })
+
+  it('PO33: re-opening a live id refreshes its content without moving it', async () => {
+    const restore = stubGeometry({ overlay: OVERLAY, widget: WIDGET })
+    try {
+      render(host())
+      openBottomRight()
+      await nextTick()
+      await dropTopLeft()
+      expect(byId('w1').style.insetInlineStart).toBe('8px')
+
+      // `anchor` is a seed, as rdd's `defaultAnchor` is: it must not yank the widget back to
+      // the corner it started in, or a re-render of the caller's own state would undo a drag.
+      openBottomRight('w1', 'Renamed')
+      await nextTick()
+      expect(titleOf('w1')).toBe('Renamed')
+      expect(byId('w1').style.insetInlineStart).toBe('8px')
+      expect(byId('w1').style.insetInlineEnd).toBe('')
+    } finally {
+      restore()
+    }
+  })
+
+  it('PO34: closing and reopening re-seeds the placement', async () => {
+    const restore = stubGeometry({ overlay: OVERLAY, widget: WIDGET })
+    try {
+      render(host())
+      openBottomRight()
+      await nextTick()
+      await dropTopLeft()
+      expect(byId('w1').style.insetInlineStart).toBe('8px')
+
+      api.close('w1')
+      await nextTick()
+      openBottomRight()
+      await nextTick()
+      expect(byId('w1').style.insetInlineEnd).toBe('8px')      // back to the seed
+      expect(byId('w1').style.insetInlineStart).toBe('')
+    } finally {
+      restore()
+    }
+  })
+
+  it('PO35: the placement record does not outlive its widget', async () => {
+    const restore = stubGeometry({ overlay: OVERLAY, widget: WIDGET })
+    try {
+      render(host())
+      openBottomRight()
+      await nextTick()
+      expect(store.managedPlacements.w1).toEqual({ anchor: 'bottom-right', stretch: null })
+
+      api.close('w1')
+      await nextTick()
+      expect('w1' in store.managedPlacements).toBe(false)
+
+      // A gesture that lands after a close must not resurrect the widget.
+      store.setManagedPlacement('w1', { anchor: 'top-left', stretch: null })
+      expect('w1' in store.managedPlacements).toBe(false)
+      expect(widgets()).toHaveLength(0)
+    } finally {
+      restore()
+    }
   })
 })
