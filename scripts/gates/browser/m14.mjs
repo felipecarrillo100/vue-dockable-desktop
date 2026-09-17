@@ -97,6 +97,104 @@ await page.waitForFunction(() => !!window.__demo, null, { timeout: 60000 })
 // Monaco and Leaflet both finish asynchronously; the initial layout settles after them.
 await page.waitForTimeout(3500)
 
+// ── a widget opened from data keeps a placement gesture ────────────────────
+/**
+ * The 1.0.1 regression, driven as a user drives it.
+ *
+ * `<VddPanelOverlay>` bound `placement` — a `defineModel` — as a fresh object literal for
+ * widgets opened through `useFloatingWidgets()`, and Vue re-syncs a model from its prop
+ * whenever the prop's identity changes. So a drop reverted on the very render the drop
+ * triggered (`draggingId` is cleared in the same function), and any other widget opening
+ * reverted a stretched one (`managedVersion`).
+ *
+ * Nothing in the suite could see it: the playground's widgets are all `v-model:placement`,
+ * and the M11 browser gate sets placement through a handle rather than by gesture. So this
+ * is deliberately end to end — a real pointer drag onto a real drop zone, in the demo.
+ */
+await walk('open two camera widgets from data', async () => {
+  // On the demo's own starting layout, deliberately: the bulk open below puts `dirtyForm` —
+  // registered `initialTarget: 'floating'` — over the map, and a floating window intercepts
+  // the marker clicks. Found by this gate on its first run.
+  await drive(() => window.__demo.workspace.focusPanel('mainMap'))
+  await page.waitForTimeout(400)
+  const markers = page.locator('[data-vdd-slot="mainMap"] .leaflet-interactive')
+  await markers.nth(0).click({ timeout: 4000 })     // cam-north, seeded top-right
+  await markers.nth(1).click({ timeout: 4000 })     // cam-east, seeded top-left
+}, 500)
+
+{
+  const cams = await drive(() => Array.from(document.querySelectorAll('[data-vdd-widget]'))
+    .map(el => el.dataset.vddWidget).filter(id => id.startsWith('cam-')))
+  record.push({ step: 'camera widgets', open: cams })
+  if (cams.length < 2) fail('camera widgets', `expected two camera widgets, found ${cams.join(', ') || 'none'}`)
+}
+
+const insetsOf = (id) => drive((widgetId) => {
+  const el = document.querySelector(`[data-vdd-widget="${widgetId}"]`)
+  if (!el) return { missing: true }
+  return {
+    start: el.style.insetInlineStart, end: el.style.insetInlineEnd,
+    top: el.style.top, bottom: el.style.bottom,
+  }
+}, id)
+
+{
+  const seeded = await insetsOf('cam-north')
+  record.push({ step: 'cam-north seeded', ...seeded })
+  if (seeded.end === '') fail('camera seed', `cam-north should start at its seeded top-right corner, got ${JSON.stringify(seeded)}`)
+}
+
+await walk('drag a camera widget to the opposite corner', async () => {
+  const header = await page.locator('[data-vdd-widget="cam-north"] [data-vdd-widget-header]').boundingBox()
+  const root = await page.locator('[data-vdd-slot="mainMap"] [data-vdd-panel-overlay]').boundingBox()
+  if (!header || !root) throw new Error('the widget header or the overlay root has no box')
+  await page.mouse.move(header.x + header.width / 2, header.y + header.height / 2)
+  await page.mouse.down()
+  // Into the bottom-left drop zone — an 80px square at the overlay's own corner.
+  await page.mouse.move(root.x + 20, root.y + root.height - 20, { steps: 12 })
+  await page.waitForTimeout(120)
+  await page.mouse.up()
+}, 500)
+
+const dropped = await insetsOf('cam-north')
+record.push({ step: 'cam-north after drop', ...dropped })
+if (dropped.start === '' || dropped.end !== '') {
+  fail('widget re-anchor', `a dropped managed widget did not take the bottom-left corner: ${JSON.stringify(dropped)}`)
+}
+if (dropped.bottom === '' || dropped.top !== '') {
+  fail('widget re-anchor', `a dropped managed widget kept its block edge: ${JSON.stringify(dropped)}`)
+}
+
+// The other half: opening another widget re-renders the list, which is what used to revert it.
+await walk('open a third camera widget', async () => {
+  await page.locator('[data-vdd-slot="mainMap"] .leaflet-interactive').nth(2).click({ timeout: 4000 })
+}, 500)
+
+{
+  const after = await insetsOf('cam-north')
+  record.push({ step: 'cam-north after another opens', ...after })
+  if (after.start !== dropped.start || after.end !== dropped.end || after.bottom !== dropped.bottom) {
+    fail('widget re-anchor', `another widget opening moved cam-north: ${JSON.stringify(dropped)} -> ${JSON.stringify(after)}`)
+  }
+}
+
+await page.screenshot({ path: `${OUT}/01b-widget-reanchor.png` })
+
+// Closing from the widget's own × runs the demo's write-back: the overlay drops the widget and
+// the panel's camera list follows, so the two cannot drift.
+await walk('close the camera widgets again', async () => {
+  for (const id of ['cam-north', 'cam-east', 'cam-south']) {
+    const close = page.locator(`[data-vdd-widget="${id}"] [data-vdd-widget-close]`)
+    if (await close.count()) await close.first().click({ timeout: 4000 })
+  }
+}, 400)
+
+{
+  const left = await drive(() => Array.from(document.querySelectorAll('[data-vdd-widget]'))
+    .map(el => el.dataset.vddWidget).filter(id => id.startsWith('cam-')))
+  if (left.length !== 0) fail('camera widgets', `${left.join(', ')} survived a close`)
+}
+
 // ── every panel type ───────────────────────────────────────────────────────
 const KINDS = await drive(() => window.__demo.workspace.registry.keys())
 record.push({ step: 'registry', kinds: KINDS })

@@ -102,7 +102,7 @@ is written to `artifacts/M<n>/` and is not committed, since re-running the gate 
 
 | | |
 |---|---|
-| Tests | **725** across 32 files, against rdd's 468 |
+| Tests | **730** across 32 files, against rdd's 468 |
 | Gate rules proven non-vacuous | **75** (`npm run gate:selftest`) |
 | Source modules, all exercised | **74**, 90.9% of lines |
 | Public API | 49 runtime exports, 83 types, gated against `api-surface.json` |
@@ -149,6 +149,10 @@ something Vue does not have.
 
 - **D15**: a tab bar that overflows has no scroll buttons. The container scrolls; the
   affordance is not ported.
+- **A managed widget's geometry cannot be read**, so `useFloatingWidgets()` placement cannot be
+  persisted and restored — a template widget's `v-model:placement` is the only route today.
+  1.0.1 moved placement into a record the overlay owns, which is the half of that groundwork;
+  size, free position and a public accessor are the rest.
 - Six consumer hooks are emitted with no rule of their own, declared in the gate rather than
   accidental, matching rdd.
 - iOS and Android were out of scope by agreement; touch behaviour is tested in jsdom and in

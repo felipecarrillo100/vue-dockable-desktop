@@ -31,9 +31,23 @@ export interface ManagedWidget {
   /** Rendered as the widget's content. */
   component: Component
   props?: Record<string, unknown>
+  /**
+   * The corner to dock to **on first open**, not live state.
+   *
+   * Seeded into the overlay's own placement record and owned there afterwards, so a gesture
+   * that moves the widget is not undone the next time the caller's state re-renders — and
+   * `open()` on a widget that is already open refreshes its content without yanking it back
+   * to this corner. `close()` then `open()` is what re-seeds it. rdd draws the same line,
+   * with `defaultAnchor` feeding a `useState`.
+   *
+   * @default 'top-right'
+   */
   anchor?: FloatAnchor
+  /** Initial width in pixels. @default 320 */
   width?: number
+  /** Initial height in pixels. @default 240 */
   height?: number
+  /** Which axes span the panel **on first open**. As `anchor`, a seed rather than live state. */
   stretch?: Stretch | null
 }
 
@@ -64,6 +78,15 @@ export interface PanelOverlayStore {
   managed: Map<string, ManagedWidget>
   /** Bumped whenever `managed` changes, since a `Map` is not reactive by itself. */
   managedVersion: Ref<number>
+  /**
+   * Live placement of each managed widget, seeded by {@link PanelOverlayStore.openManaged}
+   * from the widget's own `anchor`/`stretch` and owned here from then on.
+   *
+   * Here rather than inside `<VddFloatingWidget>` because a managed widget's `placement` model
+   * has to be *bound* by the overlay — and a bound model is authoritative on every render, so
+   * whatever the overlay binds has to be the live value rather than a re-derived seed.
+   */
+  managedPlacements: Record<string, PanelFloatPlacement>
 
   registerToolbar(position: ToolbarPosition, size: number): void
   unregisterToolbar(position: ToolbarPosition): void
@@ -75,6 +98,8 @@ export interface PanelOverlayStore {
   closeManaged(id: string): void
   closeAllManaged(): void
   managedIds(): string[]
+  /** Record what a gesture did to a managed widget's placement. */
+  setManagedPlacement(id: string, placement: PanelFloatPlacement): void
 }
 
 export const PANEL_OVERLAY_KEY = Symbol('vdd-panel-overlay') as InjectionKey<PanelOverlayStore>
@@ -92,6 +117,7 @@ export function createPanelOverlayStore(): PanelOverlayStore {
   const hovered = ref<FloatAnchor | null>(null)
   const managed = new Map<string, ManagedWidget>()
   const managedVersion = ref(0)
+  const managedPlacements = reactive<Record<string, PanelFloatPlacement>>({})
 
   let zCounter = 100
 
@@ -102,7 +128,7 @@ export function createPanelOverlayStore(): PanelOverlayStore {
 
   return {
     container, insets, topId, zOrders, stacks, dockedSizes, draggingId, hovered,
-    managed, managedVersion,
+    managed, managedVersion, managedPlacements,
 
     registerToolbar: (position, size) => { insets[field(position)] = size },
     unregisterToolbar: (position) => { insets[field(position)] = 0 },
@@ -141,17 +167,45 @@ export function createPanelOverlayStore(): PanelOverlayStore {
 
     openManaged: (id, widget) => {
       managed.set(id, { ...widget, component: markRaw(widget.component) })
+      // Seeded once per open, then owned here. Re-opening a live id therefore updates its
+      // content and leaves it where the user dragged it; `closeManaged` drops the record, so
+      // close-then-open is the reset. rdd's `defaultAnchor` behaves identically, because a
+      // `useState` initialiser is ignored on every render after the first.
+      if (!(id in managedPlacements)) {
+        managedPlacements[id] = { anchor: widget.anchor ?? 'top-right', stretch: widget.stretch ?? null }
+      }
       managedVersion.value++
     },
-    closeManaged: (id) => { if (managed.delete(id)) managedVersion.value++ },
+    closeManaged: (id) => {
+      if (!managed.delete(id)) return
+      delete managedPlacements[id]
+      managedVersion.value++
+    },
     closeAllManaged: () => {
       if (managed.size === 0) return
       managed.clear()
+      for (const id of Object.keys(managedPlacements)) delete managedPlacements[id]
       managedVersion.value++
     },
     managedIds: () => {
       void managedVersion.value        // tracked, so a computed sees opens and closes
       return Array.from(managed.keys())
+    },
+
+    /**
+     * Two things here are load-bearing.
+     *
+     * The guard: a gesture can land after the widget was closed — a drop resolves on
+     * `pointerup`, and nothing stops a close in between — and writing then would put back a
+     * key that `managedIds()` no longer lists, leaving a placement for a widget that does not
+     * exist.
+     *
+     * The *absence* of a `managedVersion` bump: that ref is what re-renders the widget list,
+     * and a re-render of the list is what used to destroy the gesture this function exists to
+     * record. Bumping it here would restore the original defect in a new place.
+     */
+    setManagedPlacement: (id, placement) => {
+      if (id in managedPlacements) managedPlacements[id] = placement
     },
   }
 }

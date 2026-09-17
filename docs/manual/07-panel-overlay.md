@@ -115,6 +115,13 @@ Bind the model and you own placement — which is also **how you persist it**. T
 serialises nothing about inner widgets, by design: a widget's identity is whatever your app
 says it is. Store what the model gives you, and hand it back on the next load.
 
+> **Bind a `ref`, never an object literal.** `v-model:placement` is a model, so the value you
+> bind wins on every render — and Vue re-reads it whenever its *identity* changes, which a
+> fresh `:placement="{ anchor, stretch }"` does every time. The widget would apply a gesture and
+> then snap back on the next render of your component, with or without a listener. Keep it in a
+> `ref` and use `v-model:placement`, or write the emitted value back into whatever you bound.
+> (The library shipped this mistake itself in 1.0.0 — see the note under *Widgets from data*.)
+
 ### Stretch: spanning an axis
 
 An axis can span the panel instead of carrying a size. `stretch` is `'width'`, `'height'`,
@@ -125,11 +132,15 @@ The mechanism is worth knowing, because it explains the behaviour: a stretched a
 CSS keeps the widget spanning the panel as the panel resizes, with no observer and no
 JavaScript.
 
+```ts
+// A full-width status strip along the bottom, tracking the panel's width.
+const strip = ref<PanelFloatPlacement>({ anchor: 'bottom-left', stretch: 'width' })
+```
+
 ```vue
-<!-- A full-width status strip along the bottom, tracking the panel's width. -->
 <VddFloatingWidget
   widget-id="timeline" title="Timeline"
-  :placement="{ anchor: 'bottom-left', stretch: 'width' }"
+  v-model:placement="strip"
   :width="240" :height="120"
 >
 ```
@@ -217,8 +228,21 @@ widgets.close(`feature-${id}`)
 widgets.closeAll()
 ```
 
-`openIds` is a reactive list of what is open, and `isOpen(id)` asks about one. A widget
-written in the template is the simpler option and behaves identically otherwise.
+`openIds` is a reactive list of what is open, and `isOpen(id)` asks about one. A widget written
+in the template is the simpler option where you can write one.
+
+**`anchor`, `stretch`, `width` and `height` are initial values here, not live state.** The
+overlay seeds a widget from them the first time you open that id and owns its placement from
+then on, so a drag or a resize-to-stretch survives — including a later `open()` on the same id,
+which refreshes the widget's content and leaves it where the user put it. `close(id)` forgets
+the placement, so closing and reopening is how you reset it.
+
+The consequence worth knowing: a managed widget's placement is not readable, so it cannot be
+persisted the way a template widget's `v-model:placement` can. If you need to restore widgets
+where the user left them, declare them in the template and own the model.
+
+> In 1.0.0 these gestures were discarded: the overlay bound the model to a fresh object literal,
+> so every render reset the widget to the corner `open()` named. Fixed in 1.0.1.
 
 ### Titles that follow the language
 

@@ -43,6 +43,11 @@ Appended at each gate. One row per attempt, so failures stay visible.
 | M14 demo | run 1 — **fail** | 719 | browser gate **hung with no output**: `page.evaluate` awaits its function's return, and `requestClosePanel` on a dirty panel only settles when answered |
 | M14 demo | run 2 — **fail** | 719 | four reported failures, three of them the gate mis-modelling the app: its own `goto` counted as an unexpected navigation, a modal's curtain covers the panel that opened it, and the pre-save state snapshot was stale |
 | **M14 demo** | **PASS** | **719** | 24 demo sources, 16 panel kinds, a 32-step walkthrough with no console errors. Found a Leaflet/overlay stacking conflict now documented in the manual. [M14 record](evidence/M14.md) |
+| 1.0.1 R1 | M14 run 1 — **fail** | 730 | `no-regex-spaces` in the new gate rule's *own* regex — the lint gate caught the gate |
+| 1.0.1 R1 | M14 browser runs 1–2 — **fail** | 730 | the walkthrough could not click a camera marker: `dirtyForm` opens floating over the map, and then a decorative polygon added after the markers swallowed every click. Both real; the second is a demo defect the gate found |
+| **1.0.1 R1** | **M14 PASS** | **730** | managed widget placement is owned by the overlay and echoed back. PO31–PO35, four M14 source rules (all non-vacuous), a real pointer drag through the managed path in the demo walkthrough. M1 PASS (version), M13 PASS, sweep 74 modules / 88% |
+| 1.0.1 R1 | M11 run 1 — **fail** | 730 | browser: `[stretch] the strip is 286 wide in a 398 panel — it stopped tracking`. Reproduced identically against a stashed tree, so **the gate was wrong, not the library**: its assertion expected `overlay - 16` and ignored the playground's 48+48 inline panel toolbars. Reported rather than fixed (integrity rule 1); corrected on the maintainer's authorisation |
+| **1.0.1 R1** | **M11 PASS** | **730** | the stretch step now asserts the claim as a *delta* — panel −160, strip −160 — and measures the toolbar band instead of assuming a bare gutter. Proven non-vacuous by releasing the strip's stretch before the panel narrows: both assertions fire (`strip 0px`, `240 ≠ 286`). `selftest.mjs` runs source gates only, so that proof is empirical rather than a selftest row |
 
 ## Decisions unlocked
 
