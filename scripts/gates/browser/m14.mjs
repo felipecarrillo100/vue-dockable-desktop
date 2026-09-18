@@ -387,14 +387,86 @@ await walk('back to English', async () => {
   await page.selectOption('[data-demo-locale]', 'en')
 })
 
-// ── skins and the colour scheme ────────────────────────────────────────────
-await walk('every skin, and the light scheme', async () => {
-  for (const skin of ['macos', 'chrome', 'slate', 'nord', 'obsidian', 'tokyo', 'vscode']) {
-    await page.selectOption('[data-demo-skin]', skin)
-    await page.waitForTimeout(90)
+// ── every skin, in both colour schemes ─────────────────────────────────────
+/**
+ * This step used to cycle the seven skins and assert nothing about them, which is how
+ * `<VddDesktop :skin>` shipped doing nothing at all: the stylesheet keyed 104 selectors on
+ * `data-workspace-skin` while the component emitted `data-vdd-skin`, and every skin painted
+ * identically to the default. The unit test was no help either — it asserted the attribute was
+ * *set*, not that anything looked different, the same weakness this library criticised in rdd's
+ * `useStyleClasses`.
+ *
+ * So the assertion is what the feature promises, measured: each skin looks different from the
+ * default, and every skin's surfaces change between dark and light. The second half is the one
+ * that catches the subtler defect — a skin block matches the workspace element as well as the
+ * root, so unless the colour scheme is mirrored *onto that element*, the skin's dark tokens
+ * shadow the light ones and light mode paints dark panels with dark text.
+ *
+ * Only computed styles can see any of this, which is why it lives here and not in jsdom.
+ */
+const SKINS = ['vscode', 'macos', 'chrome', 'slate', 'nord', 'obsidian', 'tokyo', 'mono']
+const SURFACES = {
+  panel: ['.vdd-workspace-panel', 'backgroundColor'],
+  tabBar: ['.vdd-workspace-tab-bar', 'backgroundColor'],
+  activeTab: ['.vdd-workspace-tab.vdd-active', 'backgroundColor'],
+  activeTabText: ['.vdd-workspace-tab.vdd-active', 'color'],
+}
+
+const surfaces = () => drive((spec) => {
+  const out = {}
+  for (const [name, [sel, prop]] of Object.entries(spec)) {
+    const el = document.querySelector(sel)
+    out[name] = el ? getComputedStyle(el)[prop] : null
   }
-  await page.locator('[data-demo-theme]').first().click({ timeout: 4000 })
-}, 500)
+  return out
+}, SURFACES)
+
+const setScheme = async (want) => {
+  const now = await drive(() => document.documentElement.getAttribute('data-color-scheme') === 'light' ? 'light' : 'dark')
+  if (now !== want) {
+    await page.locator('[data-demo-theme]').first().click({ timeout: 4000 })
+    await page.waitForTimeout(350)
+  }
+}
+
+const painted = {}
+for (const skin of SKINS) {
+  step = `skin ${skin}`
+  let dark, light
+  try {
+    await page.selectOption('[data-demo-skin]', skin, { timeout: 4000 })
+    await setScheme('dark')
+    await page.waitForTimeout(250)
+    dark = await surfaces()
+    await setScheme('light')
+    await page.waitForTimeout(250)
+    light = await surfaces()
+  } catch (error) {
+    // A skin the demo does not offer is a failure to report, not a crash to die of — the
+    // runner attributes every other step this way.
+    fail(`skin ${skin}`, error.message.split('\n')[0])
+    continue
+  }
+  painted[skin] = { dark, light }
+  record.push({ step: `skin ${skin}`, dark, light })
+
+  for (const name of Object.keys(SURFACES)) {
+    if (dark[name] === null) { fail(`skin ${skin}`, `${name} is not rendered, so nothing was measured`); continue }
+    if (dark[name] === light[name]) {
+      fail(`skin ${skin}`, `${name} is ${dark[name]} in both schemes — the skin's own tokens are shadowing the light ones`)
+    }
+  }
+  await setScheme('dark')
+}
+
+// A skin that paints exactly like the default is a skin whose rules never matched.
+for (const skin of SKINS.filter(s => s !== 'vscode')) {
+  const same = Object.keys(SURFACES).every(n => painted[skin]?.dark[n] === painted.vscode?.dark[n])
+  if (same) fail('skins', `"${skin}" paints identically to vscode — its rules are not matching`)
+}
+
+await page.selectOption('[data-demo-skin]', 'vscode')
+await setScheme('light')
 {
   const light = await drive(() => document.documentElement.getAttribute('data-color-scheme'))
   if (light !== 'light') fail('scheme', `data-color-scheme is "${light}" after toggling`)

@@ -19,6 +19,7 @@ import { provideDragDock } from '../composables/useDragDock'
 import type { Workspace } from '../core/workspace'
 import { buildTaskbarMenu } from '../core/panelMenu'
 import { useWorkspace } from '../composables/useWorkspace'
+import { useColorScheme } from '../composables/useColorScheme'
 import VddWorkspaceGrid from './VddWorkspaceGrid.vue'
 import VddPanelMount from './VddPanelMount.vue'
 import VddFloatingWindow from './VddFloatingWindow.vue'
@@ -53,6 +54,19 @@ const emit = defineEmits<{
 }>()
 
 const ws = useWorkspace()
+/**
+ * The application's colour scheme, read back so it can be mirrored onto the workspace element.
+ *
+ * Not decoration: a skin's token block is written `[data-vdd-skin="macos"]`, which matches this
+ * element as well as `<html>`. The scheme lives on `<html>`, so without repeating it here only
+ * the skin's *dark* variant matches at this level — and those tokens, re-declared closer to the
+ * content, shadow the light values inherited from the root. The workspace would then paint dark
+ * panels with dark text in light mode, for every skin but the default.
+ *
+ * So the pair travels together, on both elements. rdd does the same on its own root div for the
+ * same reason.
+ */
+const colorScheme = useColorScheme()
 const dom = new PanelDomCache()
 providePanelDom(dom)
 const drag = provideDragDock(ws as unknown as Workspace<never>)
@@ -204,6 +218,7 @@ onBeforeUnmount(() => {
     class="vdd-workspace"
     :class="{ 'vdd-no-animations': animations === false }"
     :data-vdd-skin="skin"
+    :data-color-scheme="colorScheme"
     :dir="ws.state.dir"
   >
     <div ref="viewport" class="vdd-workspace-viewport">
