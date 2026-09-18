@@ -393,6 +393,26 @@ check('M14 catches the demo demonstrating managed widgets declaratively', 'demo/
   s => s.replace('const widgets = useFloatingWidgets()', 'const widgets = fakeWidgets()'),
   'node scripts/gates/m14.mjs')
 
+// The 1.1.0 rules. The first mutation is the shape the stylesheet actually shipped in 1.0.x,
+// which is why this rule exists at all.
+check('M14 catches an attribute selector no component emits', 'src/index.css',
+  s => s.replace('[data-vdd-skin="macos"]', '[data-workspace-skin="macos"]'),
+  'node scripts/gates/m14.mjs')
+
+check('M14 catches a token declared on :root but not documented', 'src/index.css',
+  s => s.replace('  --vdd-accent-color: #38bdf8;', '  --vdd-accent-color: #38bdf8;\n  --vdd-undocumented-token: #f00;'),
+  'node scripts/gates/m14.mjs')
+
+check('M14 catches a documented token that does not exist', 'docs/manual/10-theming.md',
+  s => s + '\n| `--vdd-imaginary-token` | `#f00` | nothing at all |\n',
+  'node scripts/gates/m14.mjs')
+
+// The shape 1.0.x actually shipped: base values hidden inside a scheme block that never matches.
+check('M14 catches a token whose only home is a colour-scheme block', 'src/index.css',
+  s => s.replace('  --vdd-sidebar-tabs-bg: #141619;\n', '')
+        .replace('[data-color-scheme="light"] {', '[data-color-scheme="light"] {\n  --vdd-sidebar-tabs-bg: #e9ecef;'),
+  'node scripts/gates/m14.mjs')
+
 // M1: hide a build artefact the exports map promises
 const hidden = 'dist/styles.css'
 if (existsSync(hidden)) {
