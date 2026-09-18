@@ -220,7 +220,7 @@ directions, so a token cannot be added without a row here, and a row cannot outl
 | `--vdd-tab-accent-bar-width` | `3px` | Thickness of that accent bar. |
 | `--vdd-tab-btn-active-glow` | `none` | Halo behind an active sidebar tab button. |
 | `--vdd-tab-btn-active-radius` | `0px` | Corner radius of an active sidebar tab button. |
-| `--vdd-tab-btn-active-width` | `100%` | Width of an active sidebar tab button indicator. |
+| `--vdd-tab-btn-active-width` | `100%` | Width of the selected rail button, as a share of the rail's tab container — which floors at 44px, a button's own size. |
 
 ### Buttons
 

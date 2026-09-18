@@ -49,6 +49,20 @@ correspondence lives, alongside the feature-by-feature map in [docs/PARITY.md](d
   demo; it affects rdd too, whose own demo happens to set the attribute for both schemes and so
   never shows it.
 
+- **The sidebar rail did not fill its own column.** `.vdd-sidebar-strip-outer` is full height,
+  but it is a block wrapper — added in this port to own the width-collapse transition — and a
+  block does not stretch its child the way rdd's flex row did. So the strip inside it shrank to
+  its buttons, 216px of a 915px column, and its background covered only the icons while the rest
+  showed the host page through. It has `height: 100%` now.
+
+- **A rail holding one tab collapsed that tab to its icon.** An active rail button takes
+  `width: var(--vdd-tab-btn-active-width, 100%)`, and that percentage resolves against the
+  shrink-to-fit tabs list; with a single tab there is no sibling to hold the list open, so button
+  and list both shrank to 26px against a normal 44px, putting the accent border 15px inboard of
+  the rail's edge. `.vdd-sidebar-tabs-list` now carries the same `min-width: 44px` floor that
+  `.vdd-sidebar-header-area` and `.vdd-sidebar-footer-area` already had for exactly this reason.
+  A rail with several tabs hid it, because the inactive buttons' own 44px kept the list open.
+
 - **The theming chapter documented three things that were not true**: the skin selector
   (`data-workspace-skin`), the claim that *"the workspace publishes its scheme as
   `data-color-scheme`"* — the library only ever reads it; your application sets it — and a
