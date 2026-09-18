@@ -2274,6 +2274,15 @@ html.vdd-no-animations [class*="vdd-"]::after {
   bottom: 0;
   width: 400px;
   background: var(--vdd-side-panel-bg);
+  /* The library owns this container's background, so it owns its foreground too — as
+     `.vdd-modal-window`, `.vdd-workspace` and `.vdd-sidebar-content-drawer` all already do. This
+     one was missed, so content teleported into a drawer inherited the host page's text colour,
+     which on a dark panel is the user agent's black: measured at 1.18:1 in the demo's own Panel
+     manager, while the library's own title beside it sat at 16.31:1. rdd has the same omission;
+     its demo hides it by importing Bootstrap, and ours deliberately does not (ADR 0013). An
+     application that wants a different colour sets it on its own content, or reaches the body
+     through `createWorkspace({ classes: { sidePanelBody } })`. */
+  color: var(--vdd-text-primary);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-right: 1px solid var(--vdd-side-panel-border);

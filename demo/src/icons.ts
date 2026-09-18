@@ -17,6 +17,9 @@ export const icon = (paths: string[], stroke = 2): Component => markRaw({
 })
 
 export const ICONS = {
+  /* Three bars, for the sidebar's header action — a hamburger is what a rail's top button
+     conventionally is, and what that button's own id has always claimed it was. */
+  hamburger: icon(['M4 6h16', 'M4 12h16', 'M4 18h16'], 2.2),
   code: icon(['m18 16 4-4-4-4', 'm6 8-4 4 4 4', 'm14.5 4-5 16']),
   document: icon(['M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', 'M14 2v6h6']),
   map: icon(['m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3z', 'M9 3v15', 'M15 6v15']),

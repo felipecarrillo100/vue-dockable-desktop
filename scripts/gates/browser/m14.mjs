@@ -313,6 +313,57 @@ await walk('open a drawer, a toast and a modal', async () => {
   if (chrome.modal < 1) fail('chrome', 'no modal opened')
   if (chrome.toast < 1) fail('chrome', 'no toast appeared')
 }
+
+/**
+ * Text inside the library's own containers has to be readable on the library's own background.
+ *
+ * `.vdd-side-panel` set a background and no foreground, so content teleported into a drawer
+ * inherited the host page's text colour — the user agent's black on a dark panel, measured at
+ * **1.18:1** in the demo's Panel manager while the library's own title beside it sat at 16.31:1.
+ * `.vdd-modal-window`, `.vdd-workspace` and `.vdd-sidebar-content-drawer` all set one; the drawer
+ * was simply missed, and nothing could see it: the colour is inherited, so no rule is "wrong", and
+ * jsdom computes no cascade.
+ *
+ * Measured against each element's *own* nearest opaque background, so a native control on its
+ * light UA background is judged fairly, and against 4.5:1 — WCAG AA for body text.
+ */
+{
+  step = 'contrast inside library containers'
+  const worst = await drive(() => {
+    const lin = (c) => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4) }
+    const L = (rgb) => { const [r, g, b] = rgb.match(/[\d.]+/g).map(Number); return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b) }
+    const ratio = (a, b) => { const [x, y] = [L(a), L(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05) }
+    const bgOf = (el) => {
+      for (let e = el; e; e = e.parentElement) {
+        const bg = getComputedStyle(e).backgroundColor
+        const m = bg.match(/[\d.]+/g)
+        if (m && (m[3] === undefined || Number(m[3]) > 0.5)) return bg
+      }
+      return 'rgb(255, 255, 255)'
+    }
+    const out = []
+    for (const host of document.querySelectorAll('.vdd-side-panel, .vdd-modal-window')) {
+      let low = null
+      for (const el of host.querySelectorAll('*')) {
+        const text = Array.from(el.childNodes).filter(n => n.nodeType === 3).map(n => n.textContent.trim()).join('')
+        if (text.length < 3) continue
+        const cs = getComputedStyle(el)
+        const r = ratio(cs.color, bgOf(el))
+        if (!low || r < low.r) low = { r, color: cs.color, bg: bgOf(el), text: text.slice(0, 24) }
+      }
+      out.push({ container: host.className.toString().split(' ')[0], ...(low ?? { r: null }) })
+    }
+    return out
+  })
+  record.push({ step, worst })
+  for (const c of worst) {
+    if (c.r === null) continue
+    if (c.r < 4.5) {
+      fail(step, `${c.container}: "${c.text}" is ${c.r.toFixed(2)}:1 (${c.color} on ${c.bg}) — ` +
+                 `below 4.5:1, so the container is setting a background without a foreground`)
+    }
+  }
+}
 await page.screenshot({ path: `${OUT}/03-chrome.png` })
 
 await walk('dismiss them with Escape', async () => {

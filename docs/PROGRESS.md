@@ -56,6 +56,7 @@ Appended at each gate. One row per attempt, so failures stay visible.
 | 1.1.0 rail geometry | M14 browser run 1 — **fail** | 732 | the two geometry assertions, written first: `the left rail is 216px tall in a 915px column`, and `the right rail's active tab is 26px wide with 1 tab(s)` |
 | 1.1.0 rail geometry | M14 browser run 2 — **fail** | 732 | the fixes held, but the new step left the Inspector drawer open and it covered the save control four steps later — the gate's own state leaking between steps |
 | **1.1.0 rail geometry** | **M14 PASS** | **732** | strip `height: 100%` (the block wrapper this port added had stopped it stretching) and `min-width: 44px` on the tabs list — the floor its two sibling containers already carried. Rails 915/915, lone active tab 44px. No version bump: 1.1.0 is unpublished |
+| **1.1.0 drawer contrast** | **M14 PASS** | **732** | `.vdd-side-panel` sets a foreground now: drawer text went 1.18:1 → 16.31:1. The browser gate measures the worst text contrast inside every `.vdd-side-panel` and `.vdd-modal-window` against 4.5:1, each element judged on its own nearest opaque background; proven non-vacuous by removing the declaration (1.18:1, caught). Demo: the sidebar's header action is a hamburger, which its own id had always claimed |
 
 ## Decisions unlocked
 
