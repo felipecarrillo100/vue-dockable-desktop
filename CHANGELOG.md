@@ -11,6 +11,63 @@ correspondence lives, alongside the feature-by-feature map in [docs/PARITY.md](d
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-09-18
+
+**Parity: react-dockable-desktop 6.3.0.**
+
+### Fixed
+
+- **`<VddDesktop :skin>` did nothing at all.** The stylesheet keyed its 104 skin selectors on
+  `data-workspace-skin` while the component emitted `data-vdd-skin`, so no skin rule had ever
+  matched in any published version: all seven skins painted identically to the default. The
+  stylesheet now uses the library's own `data-vdd-skin`, which is the name the component, its
+  test and [ADR 0008](docs/decisions/0008-css-prefix.md) already agreed on.
+
+  A consumer who wrote a custom skin against `[data-workspace-skin="…"]`, as the manual
+  previously showed, must rename it to `[data-vdd-skin="…"]`. Nothing can break in practice:
+  skins have never applied, so no such CSS was having any effect.
+
+- **Skins would have been unusable in light mode**, which the rename alone would have shipped. A
+  skin's token block matches the workspace element as well as the root, and the colour scheme was
+  only on the root — so a skin's *dark* tokens were re-declared closer to the content than the
+  root's light ones and shadowed them: dark panels with dark text. `<VddDesktop>` now mirrors
+  `data-color-scheme` onto the workspace element beside the skin, which is how rdd has always done
+  it. Measured across seven skins × two schemes on four surfaces; every surface now flips.
+
+- **The theming chapter documented three things that were not true**: the skin selector
+  (`data-workspace-skin`), the claim that *"the workspace publishes its scheme as
+  `data-color-scheme`"* — the library only ever reads it; your application sets it — and a
+  `createWorkspace({ windowClass, modalClass, … })` config shape that has never existed (it is
+  `classes: { window, modal, … }`).
+
+### Added
+
+- **A token reference**: all 90 tokens the library declares on `:root`, grouped, with defaults and
+  what each paints ([ch. 10](docs/manual/10-theming.md#token-reference)). A gate checks it against
+  the stylesheet in both directions, so a new token needs a row and a row cannot outlive its token.
+
+- **Six skin knobs are now declared on `:root`** — `--vdd-tab-accent-bar-width`,
+  `--vdd-tab-btn-active-glow/-radius/-width`, `--vdd-toolbar-accent-bar-width`,
+  `--vdd-toolbar-btn-active-glow` — at exactly the values their `var()` fallbacks already used, so
+  nothing renders differently. They were set by the built-in skins and discoverable only by
+  reading the stylesheet. Six more of that family are documented but deliberately left undeclared:
+  they are read with no fallback in some rules and with differing fallbacks in others (one has
+  three), so giving them a base value would change how the default skin paints.
+
+- **Guidance for defining your own skin**, both of it learned by measurement: leave the selector
+  unqualified (`[data-vdd-skin="mono"]`, not `html[…]`, which cannot match the workspace element
+  and loses there), and import your stylesheet after the library's. The demo ships `mono` as a
+  worked example in both schemes, and the browser gate measures it beside the seven built-ins.
+
+### Changed
+
+- The M14 browser gate's skin step used to cycle the seven skins and assert nothing — which is how
+  this shipped. It now measures each skin in both schemes and fails if a surface does not change
+  between them or if a skin paints identically to the default. Two new source rules join it: every
+  `[data-*]` selector in the stylesheet must name an attribute a component emits (the rule that
+  would have caught this on day one), and the token reference must match the stylesheet. All three
+  are proven non-vacuous by `gate:selftest`, now 86 rules.
+
 ## [1.0.1] — 2026-09-17
 
 **Parity: react-dockable-desktop 6.3.0.**

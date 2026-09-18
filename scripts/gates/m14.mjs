@@ -12,6 +12,7 @@ import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { classNames } from './lib/css.mjs'
 import { stripSourceComments } from './lib/css.mjs'
+import { sourceFiles } from './lib/emitted.mjs'
 
 const failures = []
 const must = (cond, msg) => { if (!cond) failures.push(msg) }
@@ -143,6 +144,47 @@ must(setter !== '', 'the overlay store must expose setManagedPlacement')
 must(!/managedVersion/.test(setter),
   'setManagedPlacement must not bump managedVersion — that re-renders the widget list, which is ' +
   'what discarded the placement in 1.0.0')
+
+// ── 4c. Every attribute the stylesheet keys on is one a component emits ────
+// This is the rule that was missing. `<VddDesktop :skin>` shipped doing nothing for two
+// releases because the stylesheet keyed 104 selectors on `data-workspace-skin` while the
+// component emitted `data-vdd-skin` — a dead hookup of exactly the kind ADR 0008's prefix work
+// was meant to end, invisible to the class/rule sweep because it is an *attribute*.
+{
+  const sheet = stripSourceComments(readFileSync('src/index.css', 'utf8'))
+  const keyed = new Set(Array.from(sheet.matchAll(/\[(data-[a-z0-9-]+)/g), m => m[1]))
+  const emitted = new Set()
+  for (const file of sourceFiles()) {
+    const body = readFileSync(file, 'utf8')
+    for (const m of body.matchAll(/\b(data-[a-z0-9-]+)\b/g)) emitted.add(m[1])
+  }
+  for (const attribute of keyed) {
+    must(emitted.has(attribute),
+      `src/index.css keys on [${attribute}], which no component emits — the rules never match`)
+  }
+}
+
+// ── 4d. The manual's token reference matches the stylesheet ────────────────
+// A token nobody documents is a token nobody can theme with: the six skins' own knobs were
+// reachable only by reading 3,900 lines of CSS. Checked in both directions so the table cannot
+// drift — a new token needs a row, and a row cannot outlive its token.
+{
+  const sheet = stripSourceComments(readFileSync('src/index.css', 'utf8'))
+  const rootBlock = sheet.match(/(?:^|\})\s*:root\s*\{([^{}]*)\}/m)?.[1] ?? ''
+  const declared = Array.from(rootBlock.matchAll(/(--vdd-[\w-]+)\s*:/g), m => m[1])
+  must(declared.length > 50, `only ${declared.length} tokens found on :root — the parse is wrong`)
+
+  const chapter = readFileSync('docs/manual/10-theming.md', 'utf8')
+  for (const token of new Set(declared)) {
+    must(chapter.includes(token),
+      `${token} is declared on :root but missing from the token reference in docs/manual/10-theming.md`)
+  }
+  const mentioned = new Set(Array.from(chapter.matchAll(/(--vdd-[\w-]+)/g), m => m[1]))
+  for (const token of mentioned) {
+    must(sheet.includes(token),
+      `docs/manual/10-theming.md documents ${token}, which the stylesheet neither declares nor reads`)
+  }
+}
 
 // ── 5. The dependencies are the ones ADR 0013 decided on ───────────────────
 const deps = { ...pkg.dependencies, ...pkg.devDependencies }

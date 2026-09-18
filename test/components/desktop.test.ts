@@ -293,6 +293,42 @@ describe('skin and animations', () => {
     expect(document.documentElement.getAttribute('data-vdd-skin')).toBeNull()
   })
 
+  /**
+   * The workspace element needs the skin *and* the colour scheme, because a skin's token block
+   * is written `[data-vdd-skin="macos"]` and so matches this element too. With only the skin
+   * here, the skin's dark tokens are re-declared closer to the content than the root's light
+   * ones and shadow them — light mode then paints dark panels with dark text.
+   *
+   * jsdom cannot resolve the stylesheet, so what is asserted here is the *hook-up*: both
+   * attributes present, and the scheme tracking the document. That the paint actually changes
+   * is measured in the M14 browser gate, across seven skins and both schemes. Asserting only
+   * the attribute is what let the skins ship dead for two releases, so neither half stands
+   * alone now.
+   */
+  it('mirrors the skin and the colour scheme onto the workspace element together', async () => {
+    const ws = createWorkspace()
+    const wrapper = mount(VddDesktop, { props: { skin: 'macos' }, global: { plugins: [ws] } })
+    mounted.push(wrapper)
+    const workspace = wrapper.find('.vdd-workspace')
+    expect(workspace.attributes('data-vdd-skin')).toBe('macos')
+    expect(workspace.attributes('data-color-scheme')).toBe('dark')
+  })
+
+  it('the mirrored scheme follows the attribute the application sets', async () => {
+    const ws = createWorkspace()
+    const wrapper = mount(VddDesktop, { global: { plugins: [ws] } })
+    mounted.push(wrapper)
+    expect(wrapper.find('.vdd-workspace').attributes('data-color-scheme')).toBe('dark')
+
+    document.documentElement.setAttribute('data-color-scheme', 'light')
+    // `useColorScheme` watches the attribute with a MutationObserver, which delivers on a
+    // microtask, so one flush is not enough.
+    await new Promise(resolve => setTimeout(resolve, 0))
+    await nextTick()
+    expect(wrapper.find('.vdd-workspace').attributes('data-color-scheme')).toBe('light')
+    document.documentElement.removeAttribute('data-color-scheme')
+  })
+
   it('opts out of the library\'s own animations without touching the host app', () => {
     const ws = createWorkspace()
     const wrapper = mount(VddDesktop, { props: { animations: false }, global: { plugins: [ws] } })
