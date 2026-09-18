@@ -157,7 +157,7 @@ onMounted(() => {
         :position="sidebarSide"
         :tabs="sidebarTabs"
         :header-action="{
-          id: 'hamburger', icon: ICONS.panel, label: 'Panel manager',
+          id: 'hamburger', icon: ICONS.hamburger, label: 'Panel manager',
           onClick: () => ws.overlays.openLeftPanel(PanelManagerForm, {}, { title: 'Panel manager', width: 340 }),
         }"
         :footer-action="{

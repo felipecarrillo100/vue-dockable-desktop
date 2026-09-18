@@ -313,6 +313,57 @@ await walk('open a drawer, a toast and a modal', async () => {
   if (chrome.modal < 1) fail('chrome', 'no modal opened')
   if (chrome.toast < 1) fail('chrome', 'no toast appeared')
 }
+
+/**
+ * Text inside the library's own containers has to be readable on the library's own background.
+ *
+ * `.vdd-side-panel` set a background and no foreground, so content teleported into a drawer
+ * inherited the host page's text colour — the user agent's black on a dark panel, measured at
+ * **1.18:1** in the demo's Panel manager while the library's own title beside it sat at 16.31:1.
+ * `.vdd-modal-window`, `.vdd-workspace` and `.vdd-sidebar-content-drawer` all set one; the drawer
+ * was simply missed, and nothing could see it: the colour is inherited, so no rule is "wrong", and
+ * jsdom computes no cascade.
+ *
+ * Measured against each element's *own* nearest opaque background, so a native control on its
+ * light UA background is judged fairly, and against 4.5:1 — WCAG AA for body text.
+ */
+{
+  step = 'contrast inside library containers'
+  const worst = await drive(() => {
+    const lin = (c) => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4) }
+    const L = (rgb) => { const [r, g, b] = rgb.match(/[\d.]+/g).map(Number); return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b) }
+    const ratio = (a, b) => { const [x, y] = [L(a), L(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05) }
+    const bgOf = (el) => {
+      for (let e = el; e; e = e.parentElement) {
+        const bg = getComputedStyle(e).backgroundColor
+        const m = bg.match(/[\d.]+/g)
+        if (m && (m[3] === undefined || Number(m[3]) > 0.5)) return bg
+      }
+      return 'rgb(255, 255, 255)'
+    }
+    const out = []
+    for (const host of document.querySelectorAll('.vdd-side-panel, .vdd-modal-window')) {
+      let low = null
+      for (const el of host.querySelectorAll('*')) {
+        const text = Array.from(el.childNodes).filter(n => n.nodeType === 3).map(n => n.textContent.trim()).join('')
+        if (text.length < 3) continue
+        const cs = getComputedStyle(el)
+        const r = ratio(cs.color, bgOf(el))
+        if (!low || r < low.r) low = { r, color: cs.color, bg: bgOf(el), text: text.slice(0, 24) }
+      }
+      out.push({ container: host.className.toString().split(' ')[0], ...(low ?? { r: null }) })
+    }
+    return out
+  })
+  record.push({ step, worst })
+  for (const c of worst) {
+    if (c.r === null) continue
+    if (c.r < 4.5) {
+      fail(step, `${c.container}: "${c.text}" is ${c.r.toFixed(2)}:1 (${c.color} on ${c.bg}) — ` +
+                 `below 4.5:1, so the container is setting a background without a foreground`)
+    }
+  }
+}
 await page.screenshot({ path: `${OUT}/03-chrome.png` })
 
 await walk('dismiss them with Escape', async () => {
@@ -533,6 +584,75 @@ const transparent = (value) => /rgba\([^)]*,\s*0\s*\)/.test(value)
     }
   }
   await setScheme('dark')
+}
+
+// ── the rail's geometry ────────────────────────────────────────────────────
+/**
+ * Two things the colour assertions above cannot see, both reported from the demo.
+ *
+ * The rail must **fill its column**. `.vdd-sidebar-strip-outer` is `height: 100%`, but the strip
+ * inside it had none and, as a flex column, shrank to its buttons — 216px of a 915px column, the
+ * rest showing the page behind it. Painting the strip (which this gate does check) colours only
+ * the icon area when the strip is the wrong size, so height is asserted separately.
+ *
+ * A **lone active tab must keep its size**. `.vdd-sidebar-tab-btn.vdd-active` takes
+ * `width: var(--vdd-tab-btn-active-width, 100%)`, and that percentage resolves against the
+ * shrink-to-fit tabs list; with one tab in the rail the list has no other child to hold it open,
+ * so both collapsed to the icon's 26px. The demo's secondary sidebar has exactly one tab, which
+ * is the only configuration that shows it — the primary rail's inactive buttons mask it.
+ *
+ * Geometry, so measured once, in dark.
+ */
+{
+  step = 'rail geometry'
+  // The collapse only shows on an *active* lone tab, so open the secondary rail's one tab first.
+  // Without this the measurement finds `activeWidth: null` there and proves nothing.
+  await page.locator('.vdd-sidebar-tabs-strip.vdd-right .vdd-sidebar-tab-btn').first()
+    .click({ timeout: 4000 }).catch(error => fail(step, error.message.split('\n')[0]))
+  await page.waitForTimeout(500)
+  const geometry = await drive(() => {
+    const rails = Array.from(document.querySelectorAll('.vdd-sidebar-strip-outer')).map((outer) => {
+      const strip = outer.querySelector('.vdd-sidebar-tabs-strip')
+      const list = strip?.querySelector('.vdd-sidebar-tabs-list')
+      const active = list?.querySelector('.vdd-sidebar-tab-btn.vdd-active')
+      const inactive = list?.querySelector('.vdd-sidebar-tab-btn:not(.vdd-active)')
+      const w = (el) => (el ? Math.round(el.getBoundingClientRect().width) : null)
+      const h = (el) => (el ? Math.round(el.getBoundingClientRect().height) : null)
+      return {
+        side: strip?.classList.contains('vdd-right') ? 'right' : 'left',
+        columnHeight: h(outer), stripHeight: h(strip),
+        tabs: list ? list.querySelectorAll('.vdd-sidebar-tab-btn').length : 0,
+        activeWidth: w(active), inactiveWidth: w(inactive),
+      }
+    })
+    return rails
+  })
+  record.push({ step, rails: geometry })
+
+  for (const rail of geometry) {
+    if (rail.stripHeight === null) { fail(step, `the ${rail.side} rail has no strip to measure`); continue }
+    if (Math.abs(rail.columnHeight - rail.stripHeight) > 1) {
+      fail(step, `the ${rail.side} rail is ${rail.stripHeight}px tall in a ${rail.columnHeight}px column — ` +
+                 `it does not fill it, so its background covers only the icons`)
+    }
+    // 44px is the rail button's own intrinsic size, which every container floors at.
+    if (rail.activeWidth !== null && rail.activeWidth < 44) {
+      fail(step, `the ${rail.side} rail's active tab is ${rail.activeWidth}px wide with ${rail.tabs} tab(s) — ` +
+                 `a lone active tab collapsed against its shrink-to-fit container`)
+    }
+    if (rail.activeWidth !== null && rail.inactiveWidth !== null &&
+        Math.abs(rail.activeWidth - rail.inactiveWidth) > 1) {
+      fail(step, `the ${rail.side} rail's active tab is ${rail.activeWidth}px and an inactive one ` +
+                 `${rail.inactiveWidth}px — they should match`)
+    }
+  }
+
+  // Close it again. An open drawer covers part of the workspace, and the save/restore steps below
+  // click through there — leaving it open made them fail, which is this gate's own state leaking
+  // between steps rather than anything about the library.
+  await page.locator('.vdd-sidebar-tabs-strip.vdd-right .vdd-sidebar-tab-btn').first()
+    .click({ timeout: 4000 }).catch(() => { /* already closed */ })
+  await page.waitForTimeout(400)
 }
 
 await page.selectOption('[data-demo-skin]', 'vscode')
