@@ -1977,6 +1977,13 @@ body.vdd-dragging-active {
 
 .vdd-sidebar-tabs-strip {
   background-color: var(--vdd-sidebar-tabs-bg) !important;
+  /* Fills `.vdd-sidebar-strip-outer`, which is `height: 100%` but `display: block` — so it does
+     not stretch this child the way a flex row would. rdd has no such wrapper: its strip is a
+     direct flex child of the sidebar row and inherits the row's `align-items: stretch`. vdd added
+     the wrapper to own the width-collapse transition, and the strip quietly lost its height with
+     it, so the background covered only the buttons — 216px of a 915px column, the rest showing
+     the host page through. */
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2038,6 +2045,14 @@ body.vdd-dragging-active {
   align-items: center;
   gap: 8px;
   flex: 1;
+  /* The same floor `.vdd-sidebar-header-area` and `.vdd-sidebar-footer-area` carry, for the same
+     reason — and this is the container that actually needed it. An active tab takes
+     `width: var(--vdd-tab-btn-active-width, 100%)`, and that percentage resolves against this
+     shrink-to-fit box; a rail holding exactly one tab has no other child to hold the box open, so
+     the tab collapsed to its icon's width (26px against a normal 44px) and its accent border sat
+     15px inboard of the rail's edge. A rail with several tabs hid it, because the inactive
+     buttons' intrinsic 44px kept the box open. */
+  min-width: 44px;
 }
 
 /* Position-specific tab strip border alignment */
@@ -2259,6 +2274,15 @@ html.vdd-no-animations [class*="vdd-"]::after {
   bottom: 0;
   width: 400px;
   background: var(--vdd-side-panel-bg);
+  /* The library owns this container's background, so it owns its foreground too — as
+     `.vdd-modal-window`, `.vdd-workspace` and `.vdd-sidebar-content-drawer` all already do. This
+     one was missed, so content teleported into a drawer inherited the host page's text colour,
+     which on a dark panel is the user agent's black: measured at 1.18:1 in the demo's own Panel
+     manager, while the library's own title beside it sat at 16.31:1. rdd has the same omission;
+     its demo hides it by importing Bootstrap, and ours deliberately does not (ADR 0013). An
+     application that wants a different colour sets it on its own content, or reaches the body
+     through `createWorkspace({ classes: { sidePanelBody } })`. */
+  color: var(--vdd-text-primary);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-right: 1px solid var(--vdd-side-panel-border);
