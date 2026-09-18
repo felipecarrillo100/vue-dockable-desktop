@@ -14,7 +14,7 @@
   "eventBus.test.ts": 11,
   "stateTransitions.test.ts": 45,
   "workspace.test.ts": 30,
-  "desktop.test.ts": 22,
+  "desktop.test.ts": 24,
   "floatingWindows.test.ts": 25,
   "dragDock.test.ts": 27,
   "taskbar.test.ts": 20,

@@ -32,7 +32,8 @@ const ws = useWorkspace()
 const locale = inject<Ref<Locale>>('demo-locale')!
 
 // ── what the shell owns ────────────────────────────────────────────────────
-const SKINS = ['vscode', 'macos', 'chrome', 'slate', 'nord', 'obsidian', 'tokyo'] as const
+// `mono` is not the library's — it is defined in demo.css, as an application defines its own.
+const SKINS = ['vscode', 'macos', 'chrome', 'slate', 'nord', 'obsidian', 'tokyo', 'mono'] as const
 const skin = ref<(typeof SKINS)[number]>('vscode')
 const scheme = ref<'dark' | 'light'>('dark')
 const animations = ref(true)

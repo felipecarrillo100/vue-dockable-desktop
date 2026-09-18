@@ -266,6 +266,15 @@ Two things the demo is for beyond showing the library off:
 
 ### Shape changes with no behavioural equivalent
 
+- **The skin attribute is `data-vdd-skin`, not `data-workspace-skin`.** Same seven skins, same
+  tokens, same values — the stylesheets are identical after prefix normalisation — but the hook a
+  consumer writes their own skin against carries the library's own prefix, as
+  [0008](decisions/0008-css-prefix.md) requires of everything else it owns. An app sharing one
+  stylesheet with the React library needs both selectors. Nothing else about skinning differs:
+  the prop, the names, and the dark/light pairing all behave as rdd's do, including the mirroring
+  of the colour scheme onto the workspace element that makes a skin's light variant win there
+  (vdd 1.0.x omitted that mirror, which is what made the skins unusable in light mode).
+
 - `usePanelFloatingWindow()`, `SidebarHandle`, `ToolbarHandle`, `WorkspaceClient._connect`
   and the pending-call queue do not exist. Replaced as per section 1.
 - **`usePanelFloatingWindow()`** in particular was `useState(false)` plus `open`, `close` and

@@ -20,6 +20,7 @@ people arranged.
 | `SidebarHandle` / `ToolbarHandle` methods | `v-model:visible`, `v-model:active-tab-id`, `v-model:width` |
 | `renderContent` / `renderHeader` / `renderHeaderActions` | slots |
 | `onActivate` / `onDeactivate` / `onMinimize` / `onRestore` / `onResize` | `watch()` on `isActive` / `isMinimized` / `size` |
+| `[data-workspace-skin="…"]` in your skin CSS | `[data-vdd-skin="…"]` — every selector the library owns is `vdd-` prefixed ([ch. 10](10-theming.md#defining-your-own)) |
 
 Full table in [PARITY.md](../PARITY.md#1-api-map). Every action name (`openPanel`,
 `floatPanel`, `saveLayout`, …) and every type name (`LayoutNode`, `PanelInfo`,
