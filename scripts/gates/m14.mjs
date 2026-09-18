@@ -186,6 +186,29 @@ must(!/managedVersion/.test(setter),
   }
 }
 
+// ── 4e. No token's only home is a colour-scheme block ──────────────────────
+// Dark is the base look, and an app signals it by *removing* `data-color-scheme` — so
+// `[data-color-scheme="dark"]` matches nothing in the normal case. A token declared only there
+// is therefore undefined exactly when it is needed, and the 15 of them read without a `var()`
+// fallback took their whole declaration down with them: the sidebar, its drawer and the
+// workspace toolbar rendered unstyled in dark mode for two releases. Base values belong on
+// `:root`; a scheme block may only *override* them.
+{
+  const sheet = stripSourceComments(readFileSync('src/index.css', 'utf8'))
+  const blockFor = (selector) => {
+    const found = Array.from(sheet.matchAll(/([^{}]*)\{([^{}]*)\}/g))
+      .find(m => m[1].replace(/\s+/g, ' ').trim() === selector)
+    return found ? Array.from(found[2].matchAll(/(--vdd-[\w-]+)\s*:/g), m => m[1]) : []
+  }
+  const base = new Set(blockFor(':root'))
+  for (const scheme of ['[data-color-scheme="dark"]', '[data-color-scheme="light"]']) {
+    for (const token of blockFor(scheme)) {
+      must(base.has(token),
+        `${token} is declared in ${scheme} but not on :root — it is undefined in the other scheme`)
+    }
+  }
+}
+
 // ── 5. The dependencies are the ones ADR 0013 decided on ───────────────────
 const deps = { ...pkg.dependencies, ...pkg.devDependencies }
 for (const kept of ['monaco-editor', 'leaflet', 'unified', 'remark-gfm', 'remark-math', 'rehype-katex', 'rehype-highlight', 'rehype-raw', 'rehype-slug']) {

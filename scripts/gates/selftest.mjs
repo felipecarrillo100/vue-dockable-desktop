@@ -407,6 +407,12 @@ check('M14 catches a documented token that does not exist', 'docs/manual/10-them
   s => s + '\n| `--vdd-imaginary-token` | `#f00` | nothing at all |\n',
   'node scripts/gates/m14.mjs')
 
+// The shape 1.0.x actually shipped: base values hidden inside a scheme block that never matches.
+check('M14 catches a token whose only home is a colour-scheme block', 'src/index.css',
+  s => s.replace('  --vdd-sidebar-tabs-bg: #141619;\n', '')
+        .replace('[data-color-scheme="light"] {', '[data-color-scheme="light"] {\n  --vdd-sidebar-tabs-bg: #e9ecef;'),
+  'node scripts/gates/m14.mjs')
+
 // M1: hide a build artefact the exports map promises
 const hidden = 'dist/styles.css'
 if (existsSync(hidden)) {

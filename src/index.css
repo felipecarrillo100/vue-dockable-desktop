@@ -110,19 +110,50 @@
   --vdd-panel-float-header-bg-active: var(--vdd-window-header-bg, rgba(0, 0, 0, 0.25));
   --vdd-panel-float-title-color: var(--vdd-window-text, #f8f9fa);
   --vdd-panel-float-title-color-active: var(--vdd-window-text, #f8f9fa);
-  /* ── Skin knobs, declared here so a skin author can find them ──
-     These six are set by the built-in skins and were reachable only by reading the stylesheet:
-     they existed as `var(--vdd-…, fallback)` reads with no declaration to discover. The values
-     below are exactly those fallbacks, so nothing renders differently — the point is that
-     `:root` is now a complete inventory of what a skin may override.
-
-     Six more of the same family are deliberately *not* declared:
-     `--vdd-tab-icon-active`, `--vdd-tab-btn-active-bg`, `--vdd-tab-btn-active-shadow`,
-     `--vdd-toolbar-btn-active-shadow`, `--vdd-toolbar-btn-radio-active-bg` and
-     `--vdd-toolbar-btn-toggle-active-bg` are read with no fallback in some places and with
-     differing fallbacks in others (that last one has three), so giving them a base value would
-     change how the default skin paints. They are documented in the manual's token table as
-     skin-level knobs with no base default; unifying them is a behaviour change of its own. */
+  /* ── Sidebar, tab-icon and toolbar-button tokens ──
+     These are the library's *dark* values, and they live here rather than in a
+     `[data-color-scheme="dark"]` block because dark is the base look: an application signals it
+     by **removing** `data-color-scheme`, so a dark-scoped block matches nothing in the normal
+     case. Until 1.1.0 they were scoped that way, which left them undefined exactly when they
+     were needed — and fifteen of them are read with no `var()` fallback, so the declaration was
+     dropped rather than defaulted. The sidebar, its drawer and the workspace toolbar rendered
+     with no background and inherited text in dark mode; the selected rail icon had no colour at
+     all. `[data-color-scheme="light"]` overrides these, which is all a scheme block should ever
+     do, and a gate rule now rejects a token whose only home is such a block. */
+  --vdd-sidebar-bg: #1e2024;
+  --vdd-sidebar-tabs-bg: #141619;
+  --vdd-sidebar-border: rgba(255, 255, 255, 0.08);
+  --vdd-sidebar-card-bg: rgba(255, 255, 255, 0.03);
+  --vdd-sidebar-card-border: rgba(255, 255, 255, 0.08);
+  --vdd-sidebar-card-active-bg: rgba(56, 189, 248, 0.06);
+  --vdd-sidebar-card-active-border: rgba(56, 189, 248, 0.3);
+  --vdd-sidebar-text-title: #f8f9fa;
+  --vdd-sidebar-text-muted: #8a90a0;
+  --vdd-sidebar-badge-bg: #2d3139;
+  --vdd-sidebar-badge-text: #b0b5c0;
+  --vdd-sidebar-btn-front-border: #38bdf8;
+  --vdd-sidebar-btn-front-text: #38bdf8;
+  --vdd-sidebar-btn-front-bg: transparent;
+  --vdd-sidebar-btn-front-hover-bg: rgba(56, 189, 248, 0.1);
+  --vdd-tab-icon-active: #38bdf8;
+  --vdd-tab-icon-inactive: #9ea4b0;
+  --vdd-tab-btn-active-bg: #1e2024; /* Seamless merge look */
+  --vdd-sidebar-btn-hover-bg: rgba(255, 255, 255, 0.05);
+  --vdd-sidebar-card-hover-border: rgba(56, 189, 248, 0.25);
+  --vdd-sidebar-card-hover-bg: rgba(255, 255, 255, 0.04);
+  --vdd-sidebar-card-active-shadow: rgba(56, 189, 248, 0.08);
+  --vdd-sidebar-drawer-header-bg: rgba(0, 0, 0, 0.12);
+  --vdd-toolbar-btn-hover-bg: rgba(255, 255, 255, 0.06);
+  --vdd-toolbar-btn-radio-active-bg: rgba(56, 189, 248, 0.14);
+  --vdd-toolbar-btn-toggle-active-bg: rgba(56, 189, 248, 0.08);
+  --vdd-toolbar-separator-color: rgba(255, 255, 255, 0.09);
+  /* Sidebar active-tab design tokens */
+  --vdd-tab-btn-active-shadow: none;
+  /* Toolbar active-button design tokens */
+  --vdd-toolbar-btn-active-shadow: none;
+  /* Scheme-independent measurements and off-by-default effects. The values are the ones the
+     `var()` reads already fell back to, so nothing renders differently; declaring them is what
+     makes `:root` a complete inventory for a skin author. */
   --vdd-tab-accent-bar-width: 3px;
   --vdd-tab-btn-active-glow: none;
   --vdd-tab-btn-active-radius: 0px;
@@ -1052,46 +1083,6 @@ body.vdd-dragging-active {
   user-select: none !important;
 }
 
-/* --- Theme Variables for Sidebar and Tabs --- */
-[data-color-scheme="dark"] {
-  --vdd-sidebar-bg: #1e2024;
-  --vdd-sidebar-tabs-bg: #141619;
-  --vdd-sidebar-border: rgba(255, 255, 255, 0.08);
-  --vdd-sidebar-card-bg: rgba(255, 255, 255, 0.03);
-  --vdd-sidebar-card-border: rgba(255, 255, 255, 0.08);
-  --vdd-sidebar-card-active-bg: rgba(56, 189, 248, 0.06);
-  --vdd-sidebar-card-active-border: rgba(56, 189, 248, 0.3);
-  --vdd-sidebar-text-title: #f8f9fa;
-  --vdd-sidebar-text-muted: #8a90a0;
-  --vdd-sidebar-badge-bg: #2d3139;
-  --vdd-sidebar-badge-text: #b0b5c0;
-  --vdd-sidebar-btn-front-border: #38bdf8;
-  --vdd-sidebar-btn-front-text: #38bdf8;
-  --vdd-sidebar-btn-front-bg: transparent;
-  --vdd-sidebar-btn-front-hover-bg: rgba(56, 189, 248, 0.1);
-  --vdd-tab-icon-active: #38bdf8;
-  --vdd-tab-icon-inactive: #9ea4b0;
-  --vdd-tab-btn-active-bg: #1e2024; /* Seamless merge look */
-  --vdd-sidebar-btn-hover-bg: rgba(255, 255, 255, 0.05);
-  --vdd-sidebar-card-hover-border: rgba(56, 189, 248, 0.25);
-  --vdd-sidebar-card-hover-bg: rgba(255, 255, 255, 0.04);
-  --vdd-sidebar-card-active-shadow: rgba(56, 189, 248, 0.08);
-  --vdd-sidebar-drawer-header-bg: rgba(0, 0, 0, 0.12);
-  --vdd-toolbar-btn-hover-bg: rgba(255, 255, 255, 0.06);
-  --vdd-toolbar-btn-radio-active-bg: rgba(56, 189, 248, 0.14);
-  --vdd-toolbar-btn-toggle-active-bg: rgba(56, 189, 248, 0.08);
-  --vdd-toolbar-separator-color: rgba(255, 255, 255, 0.09);
-  /* Sidebar active-tab design tokens */
-  --vdd-tab-btn-active-width: 100%;
-  --vdd-tab-btn-active-radius: 0px;
-  --vdd-tab-btn-active-shadow: none;
-  --vdd-tab-btn-active-glow: none;
-  --vdd-tab-accent-bar-width: 3px;
-  /* Toolbar active-button design tokens */
-  --vdd-toolbar-btn-active-shadow: none;
-  --vdd-toolbar-btn-active-glow: none;
-  --vdd-toolbar-accent-bar-width: 3px;
-}
 
 [data-color-scheme="light"] {
   --vdd-bg-primary: #f8f9fa;
