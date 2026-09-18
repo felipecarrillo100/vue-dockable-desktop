@@ -465,6 +465,76 @@ for (const skin of SKINS.filter(s => s !== 'vscode')) {
   if (same) fail('skins', `"${skin}" paints identically to vscode — its rules are not matching`)
 }
 
+// ── the chrome *outside* the workspace follows the scheme too ──────────────
+/**
+ * The sidebar, its drawer and the workspace toolbar are ancestors and siblings of
+ * `<VddDesktop>`, not descendants — so they are themed only by what reaches `<html>`. The matrix
+ * above samples inside the workspace and passed happily while all three rendered unstyled in
+ * dark mode: their tokens lived only in `[data-color-scheme="dark"]`, a selector that never
+ * matches, because an app signals dark by *removing* the attribute.
+ *
+ * Alpha zero is the signature of that failure — `background-color: var(--vdd-sidebar-tabs-bg)`
+ * with the token undefined drops the declaration and leaves the strip transparent — so an opaque
+ * background is asserted directly, in both schemes.
+ */
+await page.selectOption('[data-demo-skin]', 'vscode')
+// A *tab*, not a header action: the rail's first button is a hamburger, and clicking it opens
+// nothing, so the drawer's header and body would never render to be measured.
+await walk('open a sidebar tab, for the drawer', async () => {
+  await page.locator('.vdd-sidebar-tab-btn:not(.vdd-sidebar-header-action-btn)').first().click({ timeout: 4000 })
+}, 600)
+{
+  const active = await drive(() => document.querySelectorAll('.vdd-sidebar-tab-btn.vdd-active').length)
+  if (active !== 1) fail('sidebar', `${active} rail buttons are active after clicking a tab, expected 1`)
+}
+
+const OUTSIDE = {
+  sidebarRail: '.vdd-sidebar-tabs-strip',
+  sidebarDrawer: '.vdd-sidebar-content-drawer',
+  drawerHeader: '.vdd-sidebar-drawer-header',
+  toolbar: '.vdd-toolbar-strip',
+}
+const outside = () => drive((spec) => {
+  const out = {}
+  for (const [name, sel] of Object.entries(spec)) {
+    const el = document.querySelector(sel)
+    if (!el) { out[name] = null; continue }
+    const cs = getComputedStyle(el)
+    out[name] = { bg: cs.backgroundColor, color: cs.color }
+  }
+  return out
+}, OUTSIDE)
+
+{
+  step = 'chrome outside the workspace'
+  await setScheme('dark')
+  await page.waitForTimeout(300)
+  const dark = await outside()
+  await setScheme('light')
+  await page.waitForTimeout(300)
+  const light = await outside()
+  record.push({ step, dark, light })
+
+const transparent = (value) => /rgba\([^)]*,\s*0\s*\)/.test(value)
+  // The drawer header is translucent by design (it sits over the drawer's own surface), so it is
+  // judged on changing rather than on being opaque.
+  const OPAQUE = ['sidebarRail', 'sidebarDrawer', 'toolbar']
+  for (const name of Object.keys(OUTSIDE)) {
+    if (!dark[name]) { fail(step, `${name} (${OUTSIDE[name]}) is not rendered, so nothing was measured`); continue }
+    if (OPAQUE.includes(name)) {
+      for (const [scheme, seen] of [['dark', dark[name]], ['light', light[name]]]) {
+        if (transparent(seen.bg)) {
+          fail(step, `${name} has no background in ${scheme} mode (${seen.bg}) — its tokens are undefined there`)
+        }
+      }
+    }
+    if (dark[name].bg === light[name].bg && dark[name].color === light[name].color) {
+      fail(step, `${name} is unchanged between schemes (bg ${dark[name].bg}, color ${dark[name].color})`)
+    }
+  }
+  await setScheme('dark')
+}
+
 await page.selectOption('[data-demo-skin]', 'vscode')
 await setScheme('light')
 {

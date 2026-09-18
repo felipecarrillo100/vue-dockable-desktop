@@ -168,6 +168,7 @@ Your classes are *added* to the library's own, so `vdd-` styling stays and yours
 This is the way in for a utility framework — Tailwind, Bootstrap, MUI — on elements that live
 inside the library's markup and that you otherwise cannot reach.
 
+
 ## Token reference
 
 Every token the library declares on `:root`, with its default. This is the complete surface a
@@ -302,8 +303,6 @@ directions, so a token cannot be added without a row here, and a row cannot outl
 | `--vdd-panel-toolbar-btn-active-bg` | `var(--vdd-toolbar-btn-radio-active-bg, rgba(56, 189, 248, 0.14))` | Background of a toggled or selected button. |
 | `--vdd-panel-toolbar-btn-active-color` | `var(--vdd-tab-icon-active, #38bdf8)` | Glyph of a toggled or selected button. |
 | `--vdd-panel-toolbar-separator-color` | `var(--vdd-toolbar-separator-color, rgba(255, 255, 255, 0.09))` | Separator inside a panel toolbar. |
-| `--vdd-toolbar-accent-bar-width` | `3px` | Thickness of the accent bar on an active workspace-toolbar button. |
-| `--vdd-toolbar-btn-active-glow` | `none` | Halo behind an active workspace-toolbar button. |
 
 ### Panel overlay - floating widgets
 
@@ -328,6 +327,47 @@ directions, so a token cannot be added without a row here, and a row cannot outl
 | `--vdd-panel-text` | `var(--vdd-text-primary)` | Text colour for the same. |
 | `--vdd-panel-title-color` | `var(--vdd-accent-color, #38bdf8)` | Heading colour for the same. |
 
+### Sidebar — rail and drawer
+
+| Token | Default | What it paints |
+|---|---|---|
+| `--vdd-sidebar-tabs-bg` | `#141619` | The activity rail behind the tab buttons. |
+| `--vdd-sidebar-bg` | `#1e2024` | The drawer's surface. |
+| `--vdd-sidebar-border` | `rgba(255, 255, 255, 0.08)` | Rail and drawer edges. |
+| `--vdd-sidebar-drawer-header-bg` | `rgba(0, 0, 0, 0.12)` | The drawer's header strip. |
+| `--vdd-sidebar-text-title` | `#f8f9fa` | Headings inside the drawer. |
+| `--vdd-sidebar-text-muted` | `#8a90a0` | Secondary text inside the drawer. |
+| `--vdd-tab-icon-inactive` | `#9ea4b0` | Icon of an unselected rail button. |
+| `--vdd-tab-icon-active` | `#38bdf8` | Icon of the selected rail button, and of an active toolbar button. |
+| `--vdd-tab-btn-active-bg` | `#1e2024` | The selected rail button behind its icon. |
+| `--vdd-tab-btn-active-shadow` | `none` | Shadow behind it. |
+| `--vdd-sidebar-btn-hover-bg` | `rgba(255, 255, 255, 0.05)` | A rail button under the pointer. |
+| `--vdd-sidebar-badge-bg` | `#2d3139` | Badge behind a count on a rail button. |
+| `--vdd-sidebar-badge-text` | `#b0b5c0` | That badge text. |
+| `--vdd-sidebar-card-bg` | `rgba(255, 255, 255, 0.03)` | Card surface offered to drawer content. |
+| `--vdd-sidebar-card-border` | `rgba(255, 255, 255, 0.08)` | That card border. |
+| `--vdd-sidebar-card-hover-bg` | `rgba(255, 255, 255, 0.04)` | That card on hover. |
+| `--vdd-sidebar-card-hover-border` | `rgba(56, 189, 248, 0.25)` | Its border on hover. |
+| `--vdd-sidebar-card-active-bg` | `rgba(56, 189, 248, 0.06)` | That card when selected. |
+| `--vdd-sidebar-card-active-border` | `rgba(56, 189, 248, 0.3)` | Its border when selected. |
+| `--vdd-sidebar-card-active-shadow` | `rgba(56, 189, 248, 0.08)` | Its glow when selected. |
+| `--vdd-sidebar-btn-front-bg` | `transparent` | Primary-button style offered to drawer content. |
+| `--vdd-sidebar-btn-front-border` | `#38bdf8` | Its border. |
+| `--vdd-sidebar-btn-front-text` | `#38bdf8` | Its label. |
+| `--vdd-sidebar-btn-front-hover-bg` | `rgba(56, 189, 248, 0.1)` | Its background on hover. |
+
+### Workspace toolbar
+
+| Token | Default | What it paints |
+|---|---|---|
+| `--vdd-toolbar-btn-hover-bg` | `rgba(255, 255, 255, 0.06)` | A workspace-toolbar button under the pointer. |
+| `--vdd-toolbar-btn-radio-active-bg` | `rgba(56, 189, 248, 0.14)` | The selected radio button in a workspace toolbar. |
+| `--vdd-toolbar-btn-toggle-active-bg` | `rgba(56, 189, 248, 0.08)` | An engaged toggle in a workspace toolbar. |
+| `--vdd-toolbar-btn-active-glow` | `none` | Halo behind an active workspace-toolbar button. |
+| `--vdd-toolbar-btn-active-shadow` | `none` | Shadow behind either of those. |
+| `--vdd-toolbar-accent-bar-width` | `3px` | Thickness of the accent bar on an active workspace-toolbar button. |
+| `--vdd-toolbar-separator-color` | `rgba(255, 255, 255, 0.09)` | Separator between workspace-toolbar groups. |
+
 ### Machinery
 
 | Token | Default | What it paints |
@@ -344,9 +384,3 @@ want them; leaving them unset is the supported state.
 
 | Token | What it paints |
 |---|---|
-| `--vdd-tab-icon-active` | Icon colour on an active tab or toolbar button. |
-| `--vdd-tab-btn-active-bg` | Background of an active sidebar tab button. |
-| `--vdd-tab-btn-active-shadow` | Shadow behind it. |
-| `--vdd-toolbar-btn-active-shadow` | Shadow behind an active workspace-toolbar button. |
-| `--vdd-toolbar-btn-radio-active-bg` | Background of the selected radio button in a toolbar. |
-| `--vdd-toolbar-btn-toggle-active-bg` | Background of an engaged toolbar toggle. |

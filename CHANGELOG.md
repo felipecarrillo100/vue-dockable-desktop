@@ -34,6 +34,21 @@ correspondence lives, alongside the feature-by-feature map in [docs/PARITY.md](d
   `data-color-scheme` onto the workspace element beside the skin, which is how rdd has always done
   it. Measured across seven skins × two schemes on four surfaces; every surface now flips.
 
+- **The sidebar, its drawer and the workspace toolbar were unstyled in dark mode.** Twenty-nine
+  tokens — the whole `--vdd-sidebar-*` family, the rail's icon colours and the workspace toolbar's
+  button states — had their dark values only inside `[data-color-scheme="dark"]`, and that selector
+  never matches: dark is signalled by *removing* the attribute, as `useColorScheme()` documents. So
+  they were undefined exactly when they were needed, and fifteen of them are read with no `var()`
+  fallback, which drops the whole declaration instead of defaulting it. The strips had no
+  background, the drawer inherited black text, and **the selected rail icon had no colour at all**,
+  which is why it appeared not to render.
+
+  Dark is the base look, so those values now live on `:root` and the dark block is gone —
+  `[data-color-scheme="light"]` overrides them, which is all a scheme block should do. An
+  application that sets `data-color-scheme="dark"` explicitly sees no change. Reported from the
+  demo; it affects rdd too, whose own demo happens to set the attribute for both schemes and so
+  never shows it.
+
 - **The theming chapter documented three things that were not true**: the skin selector
   (`data-workspace-skin`), the claim that *"the workspace publishes its scheme as
   `data-color-scheme`"* — the library only ever reads it; your application sets it — and a
@@ -42,17 +57,17 @@ correspondence lives, alongside the feature-by-feature map in [docs/PARITY.md](d
 
 ### Added
 
-- **A token reference**: all 90 tokens the library declares on `:root`, grouped, with defaults and
-  what each paints ([ch. 10](docs/manual/10-theming.md#token-reference)). A gate checks it against
-  the stylesheet in both directions, so a new token needs a row and a row cannot outlive its token.
+- **A token reference**: all **119** tokens the library declares on `:root`, in sixteen groups,
+  with defaults and what each paints ([ch. 10](docs/manual/10-theming.md#token-reference)). A gate
+  checks it against the stylesheet in both directions, so a new token needs a row and a row cannot
+  outlive its token.
 
-- **Six skin knobs are now declared on `:root`** — `--vdd-tab-accent-bar-width`,
-  `--vdd-tab-btn-active-glow/-radius/-width`, `--vdd-toolbar-accent-bar-width`,
-  `--vdd-toolbar-btn-active-glow` — at exactly the values their `var()` fallbacks already used, so
-  nothing renders differently. They were set by the built-in skins and discoverable only by
-  reading the stylesheet. Six more of that family are documented but deliberately left undeclared:
-  they are read with no fallback in some rules and with differing fallbacks in others (one has
-  three), so giving them a base value would change how the default skin paints.
+- **`:root` is now a complete inventory.** Six measurements and off-by-default effects that
+  existed only as `var()` fallbacks are declared at exactly those values, so nothing renders
+  differently — `--vdd-tab-accent-bar-width`, `--vdd-tab-btn-active-glow/-radius/-width`,
+  `--vdd-toolbar-accent-bar-width`, `--vdd-toolbar-btn-active-glow`. Together with the
+  twenty-nine folded out of the dark block, everything a skin may override is declared and
+  documented in one place.
 
 - **Guidance for defining your own skin**, both of it learned by measurement: leave the selector
   unqualified (`[data-vdd-skin="mono"]`, not `html[…]`, which cannot match the workspace element
@@ -65,8 +80,11 @@ correspondence lives, alongside the feature-by-feature map in [docs/PARITY.md](d
   this shipped. It now measures each skin in both schemes and fails if a surface does not change
   between them or if a skin paints identically to the default. Two new source rules join it: every
   `[data-*]` selector in the stylesheet must name an attribute a component emits (the rule that
-  would have caught this on day one), and the token reference must match the stylesheet. All three
-  are proven non-vacuous by `gate:selftest`, now 86 rules.
+  would have caught this on day one), and the token reference must match the stylesheet. A third
+  rejects a token whose only declaration sits inside a colour-scheme block — the shape that left
+  the sidebar unstyled. The browser gate also measures the chrome *outside* the workspace now: the
+  first matrix sampled only inside it, and passed while the sidebar was unpainted. All are proven
+  non-vacuous by `gate:selftest`, now 87 rules.
 
 ## [1.0.1] — 2026-09-17
 
