@@ -63,6 +63,15 @@ correspondence lives, alongside the feature-by-feature map in [docs/PARITY.md](d
   `.vdd-sidebar-header-area` and `.vdd-sidebar-footer-area` already had for exactly this reason.
   A rail with several tabs hid it, because the inactive buttons' own 44px kept the list open.
 
+- **Text in a side panel was black on a dark background.** `.vdd-side-panel` set a background
+  and no foreground, so content teleported into a drawer inherited the host page's text colour —
+  the user agent's black. Measured at **1.18:1** in the demo's own Panel manager, against the
+  16.31:1 of the library's title beside it. `.vdd-modal-window`, `.vdd-workspace` and
+  `.vdd-sidebar-content-drawer` all set a colour; the drawer was simply missed. rdd has the same
+  omission, hidden in its demo by Bootstrap's page-wide theme, which this demo deliberately does
+  not import. An application that wants its own colour still sets it on its content or through
+  `createWorkspace({ classes: { sidePanelBody } })`.
+
 - **The theming chapter documented three things that were not true**: the skin selector
   (`data-workspace-skin`), the claim that *"the workspace publishes its scheme as
   `data-color-scheme`"* — the library only ever reads it; your application sets it — and a
