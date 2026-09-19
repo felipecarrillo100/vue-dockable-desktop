@@ -11,13 +11,29 @@ import { spawnSync } from 'node:child_process'
 const run = (cmd) => spawnSync(cmd, { shell: true, encoding: 'utf8' })
 const results = []
 
+/**
+ * `gate` may be a bare script path or a full command (some checks rebuild first).
+ *
+ * This used to always prepend `node`, so a gate passed as `node scripts/gates/m1.mjs` ran as
+ * `node node scripts/gates/m1.mjs` — which fails whatever the mutation did, and reported the
+ * rule as caught for the wrong reason. 77 of the checks were written that way, so most of
+ * this file was proving nothing. A mutation that changes no bytes is now called out too: a
+ * stale anchor is the other way a check can quietly stop testing anything.
+ */
 function check(name, file, mutate, gate) {
   const backup = `${file}.selftest-backup`
   copyFileSync(file, backup)
   try {
-    writeFileSync(file, mutate(readFileSync(file, 'utf8')))
-    const r = run(`node ${gate}`)
-    const caught = r.status !== 0
+    const before = readFileSync(file, 'utf8')
+    const after = mutate(before)
+    writeFileSync(file, after)
+    const cmd = /^(node|npm|npx)\b/.test(gate.trim()) ? gate : `node ${gate}`
+    const r = run(cmd)
+    const caught = r.status !== 0 && after !== before
+    if (after === before) {
+      results.push({ name, caught: false, output: 'the mutation changed nothing — stale anchor' })
+      return
+    }
     results.push({ name, caught, output: (r.stderr || r.stdout).trim().split('\n').slice(0, 2).join(' | ') })
   } finally {
     copyFileSync(backup, file)
@@ -58,14 +74,14 @@ check('css-prefix catches an unprefixed class added via classList', 'src/core/pa
   'scripts/gates/css-prefix.mjs')
 
 check('M1 catches the exported version drifting from package.json', 'src/index.ts',
-  s => s.replace("export const version = '1.0.0'", "export const version = '0.9.0'"),
+  s => s.replace(/export const version = '[^']+'/, "export const version = '0.0.0-drift'"),
   'node scripts/gates/m1.mjs')
 
 check('api-surface catches an undocumented export', 'src/index.ts',
   s => s + '\nexport const sneaky = 1\n', `${rebuild} && node scripts/gates/api-surface.mjs`)
 
 check('api-surface catches a removed export', 'src/index.ts',
-  s => s.replace("export const version = '1.0.0'", "const version = '1.0.0'\nvoid version"),
+  s => s.replace(/export const version = '[^']+'/, m => m.replace('export ', '') + '\nvoid version'),
   `${rebuild} && node scripts/gates/api-surface.mjs`)
 
 check('api-surface refuses a stale build', 'src/index.ts',
@@ -260,6 +276,19 @@ check('M12 catches a consumer class that no element applies', 'src/components/Vd
 check('M12 catches a consumer class replacing the library\'s own instead of adding to it', 'src/components/VddOverlayFrame.vue',
   s => s.replace(':class="[c.body, hostBodyClass]"', ':class="hostBodyClass"'),
   'node scripts/gates/m12.mjs')
+
+check('M6 catches a dock action that no longer refuses a self-destroying drop', 'src/core/workspace.ts',
+  s => s.replace("if (placementIsPointless(id, targetLeafId, 'dockPanelToGroup')) return", '// unguarded'),
+  'node scripts/gates/m6.mjs')
+
+check('M6 catches the edge dock losing its only-panel guard', 'src/core/workspace.ts',
+  s => s.replace('if (removePanelFromTree(toRaw(state).gridRoot, id) === null) return', '// unguarded'),
+  'node scripts/gates/m6.mjs')
+
+check('M4 catches the read path no longer repairing a saved layout', 'src/core/serialize.ts',
+  s => s.replace('const repaired = repairLayoutTree(p.gridRoot as LayoutNode, panels)',
+                 'const repaired = { gridRoot: p.gridRoot as LayoutNode, repairs: [] as string[] }'),
+  'node scripts/gates/m4.mjs')
 
 check('M12 catches a stored widget title typed as a bare string', 'src/core/overlayState.ts',
   s => s.replace('title: Label', 'title: string'),

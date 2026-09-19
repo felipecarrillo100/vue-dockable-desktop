@@ -11,6 +11,7 @@
 import { describe, it, expect } from 'vitest'
 import { defineComponent, h } from 'vue'
 import { createWorkspace } from '../../src/core/workspace'
+import type { LayoutNode } from '../../src/types'
 import { findLeafForPanel } from '../../src/core/layoutTree'
 
 const P = defineComponent({ name: 'MockPanel', setup: () => () => h('div') })
@@ -395,7 +396,16 @@ describe('D4: re-opening a minimized panel publishes the layout change', () => {
     w.floatPanel('a'); w.dockPanel('a')
     w.dockPanelToGroup('a', 'group-left-bottom', 'center')
     w.dockPanelToWorkspaceEdge('a', 'top')
-    w.movePanelOrder('a', 'group-left-bottom', 0)
+    // The edge dock moved `a` into a leaf of its own, which removed the one it came from, so
+    // the reorder has to name a leaf that still exists. It used to name the removed one: the
+    // call published a layout change while leaving `a` in no leaf at all, which is the bug
+    // the guard in movePanelOrder now refuses. A refused placement publishes nothing.
+    const leaves: { id: string; panels: string[] }[] = []
+    const walk = (n: LayoutNode) => n.type === 'leaf'
+      ? leaves.push({ id: n.id, panels: n.panels })
+      : n.children.forEach(walk)
+    walk(w.state.gridRoot)
+    w.movePanelOrder('a', leaves.find(l => l.panels.includes('b'))!.id, 0)
     w.minimizePanel('a'); w.restorePanel('a')
     w.closePanel('a')
     expect(count).toBe(8)

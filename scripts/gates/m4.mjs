@@ -60,7 +60,25 @@ const pg = readFileSync('playground/src/main.ts', 'utf8')
 must(/createWorkspace/.test(pg) && /window\).__vdd|__vdd/.test(pg),
   'the playground must drive the library through its public API, not test-only hooks')
 
+/**
+ * A layout saved by an affected version is repaired when it is read.
+ *
+ * `saveLayout()` wrote out the corrupted tree the self-drop bug produced, so the fault
+ * returned on every reload: a stored layout stayed broken for good. The repair has to sit at
+ * the *shared* parse point, or `initialState` and `loadLayout()` would disagree about what a
+ * layout means — which they did once before, over the floating-anchor migration.
+ */
+const serialize = readFileSync('src/core/serialize.ts', 'utf8')
+must(/repairLayoutTree\(/.test(serialize), 'the read path must repair a corrupted saved layout')
+must(/export function repairLayoutTree/.test(readFileSync('src/core/layoutTree.ts', 'utf8')),
+  'the repair must be a pure tree function, testable without a workspace')
+must(serialize.indexOf('repairLayoutTree(') < serialize.indexOf('const scope'),
+  'the repair must run before anything reads the tree, or activePanelId resolves against a broken one')
+must(/export function parseLayoutPayload/.test(serialize) && !/repairLayoutTree/.test(readFileSync('src/core/workspace.ts', 'utf8')),
+  'the repair must live at the one shared parse point, not in loadLayout alone')
+
 if (failures.length) {
   console.error('M4: FAIL'); failures.forEach(f => console.error('  ' + f)); process.exit(1)
 }
-console.log('M4: ok — port unconditional, slot places during patch, height chain intact')
+console.log('M4: ok — port unconditional, slot places during patch, height chain intact, ' +
+  'saved layouts repaired on read')

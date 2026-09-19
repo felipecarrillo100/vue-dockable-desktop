@@ -6,7 +6,7 @@
  * Anything in this file that changes what is read or written is a compatibility change.
  */
 import type { FloatAnchor, FloatingWindow, LayoutNode, PanelInfo, SerializedLayout } from '../types'
-import { deriveActivePanelId, isVisibleActiveTarget, EMPTY_LEAF } from './layoutTree'
+import { deriveActivePanelId, isVisibleActiveTarget, repairLayoutTree, EMPTY_LEAF } from './layoutTree'
 import type { ActiveTargetScope } from './layoutTree'
 
 /** A validated payload, with `activePanelId` already resolved. */
@@ -49,8 +49,21 @@ export function parseLayoutPayload(parsed: unknown, onWarn?: (msg: string) => vo
   if (!p.gridRoot || !Array.isArray(p.floating) || !Array.isArray(p.minimized) || !p.panels) return null
 
   const floating = migrateFloating(p.floating)
-  const gridRoot = p.gridRoot as LayoutNode
   const panels = p.panels as Record<string, PanelInfo>
+
+  // Repair before anything reads the tree: `activePanelId` resolution below asks which panels
+  // are visible, and a layout that lists a panel twice — or lists none of a docked one — has
+  // no honest answer. Layouts saved by earlier versions can contain both.
+  const repaired = repairLayoutTree(p.gridRoot as LayoutNode, panels)
+  if (repaired.repairs.length > 0) {
+    onWarn?.(
+      `Repaired the saved layout on load: ${repaired.repairs.join('; ')}. Layouts written ` +
+      `before this version could contain it — dropping a lone docked panel onto its own group ` +
+      `left the panel in no group — and the repair runs every time the layout is read, so ` +
+      `saving again from this session stores the corrected layout.`,
+    )
+  }
+  const gridRoot = repaired.gridRoot
   const scope: ActiveTargetScope = { gridRoot, floating, panels }
 
   // A persisted value wins while it still names a visible panel. Anything stale — the panel

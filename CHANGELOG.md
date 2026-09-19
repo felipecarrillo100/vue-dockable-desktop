@@ -11,6 +11,70 @@ correspondence lives, alongside the feature-by-feature map in [docs/PARITY.md](d
 
 ## [Unreleased]
 
+## [1.1.1] — 2026-09-19
+
+**Parity: react-dockable-desktop 6.3.1.**
+
+### Fixed
+
+- **Dragging the only docked panel onto its own group made it disappear.** With one panel in
+  the workspace, dropping it on its own drop cross — any side, the centre, or its own tab
+  strip — left the panel `docked` but in **no group**: no tab, nothing rendered, and still
+  listed as open. Re-opening it did nothing, because an already-open panel is only focused;
+  the only way back was to minimise and restore it, which returned it as a floating window.
+  Dropping it on a workspace edge left an empty group holding half the width instead.
+
+  The cause: the dock actions detach the panel before resolving the target, and detaching the
+  only panel of a group **deletes that group** — so the drop destroyed the very target it
+  named, and `splitLeafInTree` then had nothing to find. Dropping a lone panel onto its own
+  group is now a no-op, since the result would be the layout it already has. Guarded in the
+  store rather than in the drag layer, so `dockPanelToGroup`, `movePanelOrder` and
+  `dockPanelToWorkspaceEdge` are safe for any caller, not just the mouse. The same bug, in a
+  different shape, was [reported against react-dockable-desktop](https://github.com/felipecarrillo100/react-dockable-desktop)
+  and fixed there in 6.3.1 — there it duplicated the panel into two groups instead.
+
+- **A dock into a group that no longer exists no longer loses the panel.** Emptying a group
+  removes it, so an id held across a layout change can name one that is gone; placing into it
+  left the panel in no group. `dockPanelToGroup` and `movePanelOrder` now ignore such a call
+  with a development warning.
+
+- **Layouts already saved in the broken state are repaired when read.** `saveLayout()` wrote
+  the corrupted tree out, so the fault came back on every reload and a stored layout stayed
+  broken. Reading one now drops a panel listed in more than one group from all but the first,
+  prunes a group emptied by that unless it set `keepOnEmpty`, collapses a branch left with one
+  child, and puts a panel the layout calls docked but that no group lists back into the first
+  group, naming each repair in a development warning. Only what is *read* changes — the saved
+  format is untouched, so every rdd fixture still round-trips byte-identically.
+
+- **`openPanel` recovers a panel that is in no group** instead of only focusing it — a safety
+  net, now that nothing should produce that state.
+
+- **An emptied root group keeps its own identity.** Removing the last panel replaced the root
+  leaf with a fresh `group-default`, so a leaf the application had named, or had marked
+  `keepOnEmpty` or `canClose: false`, silently lost all three.
+
+Covered by `test/store/selfDrop.test.ts` (20), the repair and the guard as pure functions in
+`test/core/layoutTree.test.ts`, and three compatibility tests for layouts written by 1.1.0.
+New M6 rules keep the guard in the store rather than in the drag layer, and new M4 rules keep
+the repair on the shared read path.
+
+### Fixed — the gate harness itself
+
+- **`npm run gate:selftest` was proving almost nothing.** It ran each gate as `node ${gate}`
+  while 77 of its 89 checks passed a gate that already began with `node`, so the command
+  executed was `node node scripts/gates/mN.mjs` — which fails whatever the mutation did, and a
+  failing gate is exactly what the harness reads as "this rule caught its violation". Those
+  rules were reported as proven without their gate ever running. The command is now used as
+  given, and a mutation that changes no bytes is reported as a miss in its own right, since a
+  stale anchor is the other way a check quietly stops testing anything.
+
+  With the harness honest, four checks were failing: two pinned `version = '1.0.0'`, stale
+  since 1.0.1, and now match any version; and two M14 capability checks were satisfied by
+  *prose* — the capability scan read whole files, so a doc comment or a `<code>onBeforeClose()`
+  in a paragraph counted as a demonstration. Capabilities that are called are now looked for in
+  script blocks with comments stripped, and the two that are bound in markup are matched on a
+  `<Vdd…>` tag. All 89 rules now genuinely fail when their rule is broken.
+
 ## [1.1.0] — 2026-09-18
 
 **Parity: react-dockable-desktop 6.3.0.**

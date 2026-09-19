@@ -13,8 +13,8 @@ import type {
 } from '../types'
 import {
   addPanelToLeaf, deriveActivePanelId, dockToEdge, emptyRoot, findFirstLeafId, findLeafForPanel,
-  insertPanelInLeaf, isVisibleActiveTarget, leafExists, removeLeafFromTree, removePanelFromTree,
-  selectPanelInTree, splitLeafInTree, updateSizesAtPath,
+  insertPanelInLeaf, isLoneOccupant, isVisibleActiveTarget, leafExists, removeLeafFromTree,
+  removePanelFromTree, selectPanelInTree, splitLeafInTree, updateSizesAtPath,
 } from './layoutTree'
 import type { ActiveTargetScope } from './layoutTree'
 import { LAYOUT_VERSION, parseInitialState } from './serialize'
@@ -391,9 +391,37 @@ export function createWorkspace<TEvents extends Record<string, unknown> = Record
 
   /** Detach a panel from wherever it currently is, without deciding where it goes next. */
   function detach(id: string): void {
-    state.gridRoot = removePanelFromTree(toRaw(state).gridRoot, id) ?? emptyRoot()
+    const before = toRaw(state).gridRoot
+    // `null` means the tree emptied. When the root was a leaf, keep *that* leaf — emptied —
+    // rather than substituting a fresh `group-default`: its id is what a saved layout and any
+    // application holding it refer to, and `keepOnEmpty`/`canClose` are its own settings.
+    state.gridRoot = removePanelFromTree(before, id)
+      ?? (before.type === 'leaf' ? { ...before, panels: [], activePanelId: null } : emptyRoot())
     state.floating = state.floating.filter(w => w.id !== id)
     state.minimized = state.minimized.filter(m => m.id !== id)
+  }
+
+  /**
+   * Would this placement destroy its own target?
+   *
+   * Detaching the dragged panel deletes its leaf when it was the only panel there, so a drop
+   * onto that same leaf asks for a target that will not exist by the time the placement runs.
+   * The result the user asked for is the layout they already have, so the whole action is a
+   * no-op. A target that is *already* gone — an id held across a layout change — is refused
+   * for the same reason, with a warning, rather than leaving the panel in no group at all.
+   */
+  function placementIsPointless(panelId: string, targetLeafId: string, action: string): boolean {
+    const root = toRaw(state).gridRoot
+    if (isLoneOccupant(root, targetLeafId, panelId)) return true
+    if (!leafExists(root, targetLeafId)) {
+      warn(
+        `${action}("${panelId}", "${targetLeafId}") was ignored: no group with that id is in ` +
+        `the layout. Emptying a group removes it, so an id kept across a layout change can ` +
+        `name a group that no longer exists.`,
+      )
+      return true
+    }
+    return false
   }
 
   // ── Actions ────────────────────────────────────────────────────────────────
@@ -429,6 +457,16 @@ export function createWorkspace<TEvents extends Record<string, unknown> = Record
         // Honour where it came from, like `restorePanel` does. rdd sent it to the *first*
         // leaf instead, so the two paths disagreed (divergence D3).
         restorePanel(resolvedId, { focus: shouldFocus })
+        return
+      }
+      // A docked panel that no leaf holds is open and unreachable: it renders nowhere, and
+      // focusing it changes nothing a user can see. Re-opening it is the natural thing to
+      // try, so it docks the panel again rather than quietly doing nothing. The guards in the
+      // dock actions mean nothing should reach this state; this is the way back if it does.
+      if (existing.state === 'docked' && findLeafForPanel(toRaw(state).gridRoot, resolvedId) === null) {
+        warn(`Panel "${resolvedId}" was open but in no group; docking it again.`)
+        dockPanel(resolvedId)
+        if (shouldFocus) focusPanel(resolvedId)
         return
       }
       if (shouldFocus) focusPanel(resolvedId)
@@ -605,6 +643,7 @@ export function createWorkspace<TEvents extends Record<string, unknown> = Record
   function dockPanelToGroup(id: string, targetLeafId: string, position: DropPosition): void {
     const panel = state.panels[id]
     if (!panel) return
+    if (placementIsPointless(id, targetLeafId, 'dockPanelToGroup')) return
     detach(id)
     state.panels = { ...state.panels, [id]: { ...panel, state: 'docked' } }
     state.gridRoot = position === 'center'
@@ -619,6 +658,9 @@ export function createWorkspace<TEvents extends Record<string, unknown> = Record
   function dockPanelToWorkspaceEdge(id: string, position: SplitDirection): void {
     const panel = state.panels[id]
     if (!panel) return
+    // The only docked panel already fills the workspace, so docking it to an edge asks for the
+    // layout it has. Acting on it left an empty group beside it, holding half the width.
+    if (removePanelFromTree(toRaw(state).gridRoot, id) === null) return
     detach(id)
     state.panels = { ...state.panels, [id]: { ...panel, state: 'docked' } }
     state.gridRoot = dockToEdge(toRaw(state).gridRoot, id, position, state.edgeSplitRatio)
@@ -631,6 +673,7 @@ export function createWorkspace<TEvents extends Record<string, unknown> = Record
   function movePanelOrder(panelId: string, targetLeafId: string, targetIndex: number): void {
     const panel = state.panels[panelId]
     if (!panel) return
+    if (placementIsPointless(panelId, targetLeafId, 'movePanelOrder')) return
     const cleaned = removePanelFromTree(toRaw(state).gridRoot, panelId) ?? emptyRoot()
     state.floating = state.floating.filter(w => w.id !== panelId)
     state.minimized = state.minimized.filter(m => m.id !== panelId)

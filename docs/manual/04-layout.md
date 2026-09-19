@@ -16,6 +16,11 @@ them programmatically too — for a "reset layout" button, a workspace preset, o
 - On **touch**: long-press (300ms) a tab or title bar to start a drag; long-press a taskbar
   icon for its context menu. Moving more than 8px cancels the press.
 
+Dropping a panel where it already is does nothing. A panel that is alone in its group,
+dropped back onto that same group — any side, or the centre — asks for the layout it already
+has, and the sole docked panel dropped on a workspace edge likewise already fills the
+workspace. Both are no-ops rather than moves, in the drag and through the actions below.
+
 RTL is handled throughout: drop zones, tab order and corner anchors mirror, and anchors are
 stored logically so a layout saved in one direction restores correctly in the other.
 

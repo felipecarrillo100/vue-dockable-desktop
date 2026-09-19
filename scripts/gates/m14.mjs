@@ -81,7 +81,23 @@ must(/import 'vue-dockable-desktop\/styles\.css'/.test(main),
 
 // ── 4. Every capability is represented ─────────────────────────────────────
 // A capability with no panel demonstrating it is a capability nobody will find.
-const all = sources.map(f => readFileSync(f, 'utf8')).join('\n')
+/**
+ * The demo's *code*, with comments and template prose left out.
+ *
+ * The capability scan below used to read whole files, so a capability counted as
+ * demonstrated when any file merely mentioned it — a doc comment, or `<code>onBeforeClose()`
+ * in a paragraph explaining the panel. Two of these rules were passing on prose alone, which
+ * the self-test only revealed once its own harness was fixed. A capability has to be *called*
+ * to be demonstrated, so only script blocks count.
+ */
+const all = sources
+  .map((f) => {
+    const text = readFileSync(f, 'utf8')
+    if (!f.endsWith('.vue')) return text
+    return [...text.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].map(m => m[1]).join('\n')
+  })
+  .map(stripSourceComments)
+  .join('\n')
 const CAPABILITIES = {
   'zero-unmount state': /usePanel\(\)/,
   'dirty state': /setDirty\(/,
@@ -97,12 +113,11 @@ const CAPABILITIES = {
   'the panel overlay': /VddPanelOverlay/,
   'panel toolbars': /VddPanelToolbar/,
   'floating widgets': /VddFloatingWidget/,
+  // These live in markup, so they are checked against the template blocks below.
   'stretch placement': /stretch: 'width'|stretch: 'height'|stretch: 'both'/,
   'the sidebar': /VddSidebar/,
   'a secondary sidebar': /VddSecondarySidebar/,
   'the workspace toolbar': /VddToolbar\b/,
-  'skins': /:skin=/,
-  'taskbar modes': /:taskbar=/,
   'i18n': /formatMessage/,
   'reading direction': /setDirection\(/,
   'the colour scheme': /useColorScheme\(/,
@@ -115,6 +130,25 @@ const CAPABILITIES = {
 }
 for (const [capability, pattern] of Object.entries(CAPABILITIES)) {
   must(pattern.test(all), `no demo panel demonstrates ${capability}`)
+}
+
+/**
+ * Capabilities the demo shows by *binding* rather than by calling.
+ *
+ * Matched on a `<Vdd…>` tag so prose cannot satisfy them either: a paragraph containing
+ * `:skin=` is documentation, an attribute on a component is a demonstration.
+ */
+const MARKUP_CAPABILITIES = {
+  'skins': /<Vdd[A-Za-z]*[^>]*:skin=/,
+  'taskbar modes': /<Vdd[A-Za-z]*[^>]*:taskbar=/,
+}
+const templates = sources
+  .filter(f => f.endsWith('.vue'))
+  .map(f => [...readFileSync(f, 'utf8').matchAll(/<template[^>]*>([\s\S]*?)<\/template>/g)].map(m => m[1]).join('\n'))
+  .map(stripSourceComments)
+  .join('\n')
+for (const [capability, pattern] of Object.entries(MARKUP_CAPABILITIES)) {
+  must(pattern.test(templates), `no demo panel demonstrates ${capability}`)
 }
 
 // ── 4b. An object-valued model is never bound as a literal ─────────────────
@@ -230,5 +264,6 @@ must(/vue-dockable-desktop/.test(readFileSync('docs/manual/01-getting-started.md
 if (failures.length) {
   console.error('M14: FAIL'); failures.forEach(f => console.error('  ' + f)); process.exit(1)
 }
-console.log(`M14: ok — ${sources.length} demo sources, ${Object.keys(CAPABILITIES).length} capabilities ` +
+const capabilityCount = Object.keys(CAPABILITIES).length + Object.keys(MARKUP_CAPABILITIES).length
+console.log(`M14: ok — ${sources.length} demo sources, ${capabilityCount} capabilities ` +
   `represented, no demo classes in the library, zero runtime dependencies`)

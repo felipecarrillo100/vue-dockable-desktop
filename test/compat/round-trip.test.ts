@@ -13,6 +13,7 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { defineComponent, h } from 'vue'
 import { createWorkspace } from '../../src/core/workspace'
+import type { LayoutNode } from '../../src/types'
 
 const DIR = resolve(import.meta.dirname, '../fixtures/rdd-6.2.0')
 const P = defineComponent({ name: 'MockPanel', setup: () => () => h('div') })
@@ -174,5 +175,66 @@ describe('loadLayout', () => {
     w.subscribe('layout:changed', () => { fired++ })
     w.loadLayout(JSON.stringify(load('two-tabs')))
     expect(fired).toBe(1)
+  })
+
+  // ─── Layouts written by an affected version ─────────────────────────────────
+
+  /**
+   * Until this version, dropping a lone docked panel onto its own group left that panel in no
+   * group at all — and `saveLayout()` wrote the result out, so the fault came back on every
+   * reload. Reading repairs it, which is the only way a stored layout can be healed without
+   * asking the application to do anything. It must not change what a *healthy* layout reads
+   * as, and it must not change what is written: that is the compatibility requirement.
+   */
+  describe('a layout saved with a corrupted tree', () => {
+    const POISONED = JSON.stringify({
+      version: 2,
+      activePanelId: 'a',
+      gridRoot: { type: 'branch', orientation: 'horizontal', sizes: [0.5, 0.5], children: [
+        { type: 'leaf', id: 'group-default', panels: ['a'], activePanelId: 'a' },
+        { type: 'leaf', id: 'group-split-old', panels: ['a'], activePanelId: 'a' } ] },
+      floating: [], minimized: [],
+      panels: { a: { id: 'a', title: 'A', component: 'map', state: 'docked', serializable: true } },
+    })
+
+    const ORPHANED = JSON.stringify({
+      version: 2,
+      activePanelId: null,
+      gridRoot: { type: 'leaf', id: 'group-default', panels: [], activePanelId: null },
+      floating: [], minimized: [],
+      panels: { a: { id: 'a', title: 'A', component: 'map', state: 'docked', serializable: true } },
+    })
+
+    it('loads a duplicated panel as a single panel in one group', () => {
+      const w = createWorkspace({ panels: { map: { component: P } } })
+      expect(w.loadLayout(POISONED)).toBe(true)
+      const placed: string[] = []
+      const walk = (n: LayoutNode) => n.type === 'leaf' ? placed.push(...n.panels) : n.children.forEach(walk)
+      walk(w.state.gridRoot)
+      expect(placed).toEqual(['a'])
+      expect(w.state.activePanelId).toBe('a')
+    })
+
+    it('saving after the repair stores the corrected layout', () => {
+      const w = createWorkspace({ panels: { map: { component: P } } })
+      w.loadLayout(POISONED)
+      const again = createWorkspace({ panels: { map: { component: P } } })
+      again.loadLayout(w.saveLayout())
+      expect(JSON.parse(again.saveLayout())).toEqual(JSON.parse(w.saveLayout()))
+      expect(w.saveLayout()).not.toContain('group-split-old')
+    })
+
+    it('puts a docked panel that no group lists back on screen', () => {
+      const w = createWorkspace({ panels: { map: { component: P } } })
+      expect(w.loadLayout(ORPHANED)).toBe(true)
+      expect(w.isOpen('a')).toBe(true)
+      const root = w.state.gridRoot
+      expect(root.type === 'leaf' && root.panels).toEqual(['a'])
+      expect(w.state.activePanelId).toBe('a')
+    })
+
+    // That healthy layouts still round-trip is the `it.each(names)` suite at the top of this
+    // file, which already loads and re-saves every rdd fixture — including the legacy one the
+    // reader deliberately migrates. Repeating it here would only restate it.
   })
 })

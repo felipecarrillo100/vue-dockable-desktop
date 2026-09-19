@@ -192,6 +192,88 @@ export function findLeaf(node: LayoutNode | null, leafId: string): LayoutLeafNod
   return null
 }
 
+/**
+ * Is `panelId` the only panel in `leafId`?
+ *
+ * The question every dock action has to ask *before* it detaches anything. Detaching a panel
+ * deletes its leaf once that leaf is empty, so a drop onto the dragged panel's own leaf
+ * destroys the very target it names, and the placement that follows has nowhere to go.
+ * Dropping a lone panel onto itself is a no-op by definition: the result is the layout it
+ * already has.
+ */
+export function isLoneOccupant(node: LayoutNode, leafId: string, panelId: string): boolean {
+  const leaf = findLeaf(node, leafId)
+  return leaf !== null && leaf.panels.length === 1 && leaf.panels[0] === panelId
+}
+
+/**
+ * Heal a tree that lists a panel twice, or lists none of a docked panel.
+ *
+ * Both are states this library once produced and then *saved*: a lone docked panel dropped
+ * on its own group left rdd with the panel in two leaves and vdd with it in none, and
+ * `saveLayout()` wrote the result out, so the fault returned on every reload. Repairing on
+ * read means a layout stored by an affected version loads clean with nothing asked of the
+ * application. It changes only what is read; `saveLayout()`'s output is untouched, which is
+ * what keeps the format compatible (docs/decisions/0009-layout-json-compatibility.md).
+ *
+ * `repairs` is empty and the input object is returned unchanged when there is nothing wrong,
+ * so a healthy layout costs one walk and no allocation.
+ */
+export function repairLayoutTree(
+  gridRoot: LayoutNode,
+  panels: Record<string, { id: string; state: PanelInfo['state'] }>,
+): { gridRoot: LayoutNode; repairs: string[] } {
+  const repairs: string[] = []
+  const seen = new Set<string>()
+
+  const walk = (node: LayoutNode): LayoutNode | null => {
+    if (node.type === 'leaf') {
+      const kept = node.panels.filter((id) => {
+        if (seen.has(id)) {
+          repairs.push(`panel "${id}" was listed in more than one group`)
+          return false
+        }
+        seen.add(id)
+        return true
+      })
+      if (kept.length === node.panels.length) return node
+      if (kept.length === 0 && !node.keepOnEmpty) return null
+      const activePanelId = node.activePanelId && kept.includes(node.activePanelId)
+        ? node.activePanelId
+        : (kept[0] ?? null)
+      return { ...node, panels: kept, activePanelId }
+    }
+
+    const children = node.children.map(walk).filter((c): c is LayoutNode => c !== null)
+    // Identity, not count: a child can survive the walk and still have been repaired inside.
+    // Comparing lengths alone returned the original branch and threw those repairs away.
+    if (children.length === node.children.length && children.every((c, i) => c === node.children[i])) {
+      return node
+    }
+    if (children.length === 0) return null
+    if (children.length === 1) return children[0]!
+    const sizes = node.sizes.slice(0, children.length)
+    const sum = sizes.reduce((a, b) => a + b, 0) || 1
+    return { ...node, children, sizes: sizes.map(s => s / sum) }
+  }
+
+  let root = walk(gridRoot) ?? emptyRoot()
+
+  // A panel the layout calls docked but that no leaf lists renders nowhere and cannot be
+  // reached from the workspace at all — not by clicking, and not by re-opening it.
+  const orphans = Object.values(panels).filter(p => p.state === 'docked' && !seen.has(p.id))
+  if (orphans.length > 0) {
+    for (const orphan of orphans) repairs.push(`panel "${orphan.id}" is docked but was in no group`)
+    const ids = orphans.map(o => o.id)
+    const attach = (node: LayoutNode): LayoutNode => node.type === 'leaf'
+      ? { ...node, panels: [...node.panels, ...ids], activePanelId: node.activePanelId ?? ids[0]! }
+      : { ...node, children: [attach(node.children[0]!), ...node.children.slice(1)] }
+    root = attach(root)
+  }
+
+  return { gridRoot: root, repairs }
+}
+
 /** Whether a leaf exists in the tree. */
 export function leafExists(node: LayoutNode, leafId: string): boolean {
   return findLeaf(node, leafId) !== null
