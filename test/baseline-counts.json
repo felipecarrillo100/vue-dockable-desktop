@@ -3,12 +3,12 @@
   "rdd-fixtures.test.ts": 30,
   "anchorGeometry.test.ts": 12,
   "dragResize.test.ts": 10,
-  "layoutTree.test.ts": 30,
+  "layoutTree.test.ts": 40,
   "registry.test.ts": 9,
   "serializable.test.ts": 12,
   "stretch.test.ts": 12,
   "stylesheet.test.ts": 7,
-  "round-trip.test.ts": 23,
+  "round-trip.test.ts": 26,
   "usePanel.test.ts": 14,
   "useWorkspace.test.ts": 9,
   "eventBus.test.ts": 11,
@@ -30,5 +30,6 @@
   "i18n.test.ts": 25,
   "styleHookups.test.ts": 14,
   "panelToolbarControls.test.ts": 16,
-  "useOverlays.test.ts": 9
+  "useOverlays.test.ts": 9,
+  "selfDrop.test.ts": 20
 }

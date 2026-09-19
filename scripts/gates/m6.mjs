@@ -64,7 +64,36 @@ must(/if \(position\) \{ edge\.value = null; corner\.value = null \}/.test(src),
   'arming a leaf zone must clear the edge and corner beneath it')
 must(/if \(value\) edge\.value = null/.test(src), 'arming a corner must clear the edge it overlaps')
 
+/**
+ * A drop that would destroy its own target is refused in the **store**, not in the drag
+ * layer.
+ *
+ * Dropping the only panel of a group onto that same group corrupted the layout: detaching the
+ * panel deletes the emptied group, so the placement had no target left and the panel ended up
+ * in no group at all — open, invisible, and reachable only by minimising and restoring it.
+ * rdd's variant duplicated the panel instead. Guarding in `useDragDock` would have fixed the
+ * mouse and left `dockPanelToGroup`, `movePanelOrder` and `dockPanelToWorkspaceEdge` broken
+ * for every application that calls them, which is why the rule is about where the guard is.
+ */
+const store = stripSourceComments(readFileSync('src/core/workspace.ts', 'utf8'))
+const tree = stripSourceComments(readFileSync('src/core/layoutTree.ts', 'utf8'))
+
+must(/export function isLoneOccupant/.test(tree),
+  'the lone-occupant question must be a pure function in layoutTree, testable without a store')
+must(/function placementIsPointless/.test(store),
+  'the store must hold the guard the dock actions share')
+for (const action of ['dockPanelToGroup', 'movePanelOrder']) {
+  const body = store.split(`function ${action}(`)[1]?.slice(0, 400) ?? ''
+  must(/placementIsPointless\(/.test(body), `${action} must refuse a placement that destroys its own target`)
+}
+must(/if \(removePanelFromTree\(toRaw\(state\)\.gridRoot, id\) === null\) return/.test(store),
+  'docking the only docked panel to a workspace edge must be a no-op, not an empty group')
+// The guard belongs to the store, so the drag layer must not be the only place that has it.
+must(!/isLoneOccupant/.test(stripSourceComments(readFileSync('src/composables/useDragDock.ts', 'utf8'))),
+  'the drag layer must not carry its own copy of the guard — the store is the one place')
+
 if (failures.length) {
   console.error('M6: FAIL'); failures.forEach(f => console.error('  ' + f)); process.exit(1)
 }
-console.log('M6: ok — thresholds pinned, capture only on touch, resolution order fixed, RTL logical')
+console.log('M6: ok — thresholds pinned, capture only on touch, resolution order fixed, ' +
+  'RTL logical, self-destroying drops refused in the store')

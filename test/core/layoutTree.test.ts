@@ -8,9 +8,7 @@
  */
 import { describe, it, expect } from 'vitest'
 import {
-  addPanelToLeaf, deriveActivePanelId, dockToEdge, emptyRoot, findFirstLeafId, findLeaf,
-  findLeafForPanel, insertPanelInLeaf, isVisibleActiveTarget, leafExists, removeLeafFromTree,
-  removePanelFromTree, selectPanelInTree, splitLeafInTree, updateSizesAtPath,
+  addPanelToLeaf, deriveActivePanelId, dockToEdge, emptyRoot, findFirstLeafId, findLeaf, findLeafForPanel, insertPanelInLeaf, isLoneOccupant, isVisibleActiveTarget, leafExists, removeLeafFromTree, removePanelFromTree, repairLayoutTree, selectPanelInTree, splitLeafInTree, updateSizesAtPath,
 } from '../../src/core/layoutTree'
 import type { LayoutLeafNode, LayoutNode, PanelInfo } from '../../src/types'
 
@@ -212,5 +210,94 @@ describe('deriveActivePanelId', () => {
 
   it('never returns a panel absent from panels, however the tree names it', () => {
     expect(deriveActivePanelId({ gridRoot: leaf('L', ['ghost']), floating: [], panels: {} })).toBeNull()
+  })
+})
+
+// ─── The self-drop guard and the layout repair ────────────────────────────────
+
+describe('isLoneOccupant', () => {
+  const tree = {
+    type: 'branch' as const, orientation: 'horizontal' as const, sizes: [0.5, 0.5],
+    children: [leaf('solo', ['alpha']), leaf('pair', ['beta', 'gamma'])],
+  }
+
+  it('is true only for the one panel that is alone in that leaf', () => {
+    expect(isLoneOccupant(tree, 'solo', 'alpha')).toBe(true)
+    expect(isLoneOccupant(tree, 'pair', 'beta')).toBe(false)
+    expect(isLoneOccupant(tree, 'pair', 'gamma')).toBe(false)
+  })
+
+  it('is false for a panel that is not in the named leaf, and for a leaf that is not there', () => {
+    expect(isLoneOccupant(tree, 'solo', 'beta')).toBe(false)
+    expect(isLoneOccupant(tree, 'ghost', 'alpha')).toBe(false)
+  })
+
+  it('is false for an empty leaf', () => {
+    expect(isLoneOccupant(leaf('empty', []), 'empty', 'alpha')).toBe(false)
+  })
+})
+
+describe('repairLayoutTree', () => {
+  const docked = (...ids: string[]) =>
+    Object.fromEntries(ids.map(id => [id, { id, state: 'docked' as const }]))
+
+  it('returns the very same tree when there is nothing to repair', () => {
+    const tree = leaf('L', ['alpha', 'beta'])
+    const result = repairLayoutTree(tree, docked('alpha', 'beta'))
+    expect(result.gridRoot).toBe(tree)
+    expect(result.repairs).toEqual([])
+  })
+
+  it('keeps a duplicated panel in the first leaf that lists it, and collapses what is left', () => {
+    const result = repairLayoutTree({
+      type: 'branch', orientation: 'horizontal', sizes: [0.5, 0.5],
+      children: [leaf('first', ['alpha']), leaf('second', ['alpha'])],
+    }, docked('alpha'))
+    expect(result.gridRoot).toEqual(leaf('first', ['alpha']))
+    expect(result.repairs).toEqual(['panel "alpha" was listed in more than one group'])
+  })
+
+  it('keeps an emptied leaf that asked to stay', () => {
+    const result = repairLayoutTree({
+      type: 'branch', orientation: 'horizontal', sizes: [0.5, 0.5],
+      children: [leaf('first', ['alpha']), { ...leaf('second', ['alpha']), keepOnEmpty: true }],
+    }, docked('alpha'))
+    expect(result.gridRoot.type).toBe('branch')
+    expect((result.gridRoot as { children: unknown[] }).children).toHaveLength(2)
+  })
+
+  it('re-normalises sizes when a branch loses a child', () => {
+    const result = repairLayoutTree({
+      type: 'branch', orientation: 'horizontal', sizes: [0.2, 0.3, 0.5],
+      children: [leaf('a', ['alpha']), leaf('b', ['alpha']), leaf('c', ['beta'])],
+    }, docked('alpha', 'beta'))
+    const root = result.gridRoot as { sizes: number[] }
+    expect(root.sizes.reduce((x, y) => x + y, 0)).toBeCloseTo(1)
+  })
+
+  it('puts a docked panel that no leaf lists into the first leaf, and selects it', () => {
+    const result = repairLayoutTree(leaf('L', []), docked('alpha'))
+    expect(result.gridRoot).toEqual({ type: 'leaf', id: 'L', panels: ['alpha'], activePanelId: 'alpha' })
+    expect(result.repairs).toEqual(['panel "alpha" is docked but was in no group'])
+  })
+
+  it('leaves floating and minimised panels out of the tree, where they belong', () => {
+    const result = repairLayoutTree(leaf('L', []), {
+      floater: { id: 'floater', state: 'floating' },
+      tucked: { id: 'tucked', state: 'minimized' },
+    })
+    expect(result.gridRoot).toEqual(leaf('L', []))
+    expect(result.repairs).toEqual([])
+  })
+
+  it('moves a duplicated panel\'s selection with it', () => {
+    const result = repairLayoutTree({
+      type: 'branch', orientation: 'horizontal', sizes: [0.5, 0.5],
+      children: [leaf('first', ['alpha']), { type: 'leaf', id: 'second', panels: ['alpha', 'beta'], activePanelId: 'alpha' }],
+    }, docked('alpha', 'beta'))
+    const second = (result.gridRoot as { children: { id: string; panels: string[]; activePanelId: string | null }[] })
+      .children.find(c => c.id === 'second')!
+    expect(second.panels).toEqual(['beta'])
+    expect(second.activePanelId).toBe('beta')
   })
 })
