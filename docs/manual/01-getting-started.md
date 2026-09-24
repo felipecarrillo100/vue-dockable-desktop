@@ -84,6 +84,21 @@ class, to `<VddDesktop>` itself or to its wrapper:
 <VddDesktop class="vdd-fill-viewport" />
 ```
 
+## Server rendering (Nuxt, Vite SSR)
+
+The workspace is a client-side library: every panel lives in a real DOM element that moves
+between groups, windows and the taskbar. Render it on the client only:
+
+```vue
+<ClientOnly>
+  <VddDesktop />
+</ClientOnly>
+```
+
+Server-rendering it anyway does not throw — the server emits the workspace's chrome and the
+panels mount on the client — but Vue will report hydration mismatches, so `<ClientOnly>` (or
+your framework's equivalent) is the supported setup.
+
 ## Open a panel
 
 From a component:
