@@ -3,6 +3,15 @@ import type { ComputedRef, Component, MaybeRefOrGetter } from 'vue'
 import { useWorkspace } from './useWorkspace'
 import { providePanel } from './usePanel'
 import type { OverlayInstance } from '../core/overlays'
+import { claimEscape, isEscapeClaimed } from '../core/escape'
+
+/**
+ * When each rendered overlay was opened, by instance id — so that with a drawer on each side,
+ * Escape can close the later one. Mount order is open order: a host mounts when its instance
+ * appears. Kept here rather than on the overlay state, since it is only Escape's concern.
+ */
+const openedAt = new Map<string, number>()
+let openSequence = 0
 
 /**
  * Everything a rendered side panel or modal needs, in one place.
@@ -16,7 +25,8 @@ import type { OverlayInstance } from '../core/overlays'
  * **Escape routing** lives here too, and is the reason it can be stated once: Escape belongs
  * to the topmost modal, and reaches a drawer only when no modal is open. rdd expressed the
  * same rule twice, in two different shapes (`modals.length === 0` in one,
- * `isTopmost` in the other).
+ * `isTopmost` in the other). With a drawer on each side and no modal, the one opened last
+ * answers. Whoever answers claims the event (`../core/escape`), so one Escape closes one thing.
  */
 export function useOverlayHost(
   instance: MaybeRefOrGetter<OverlayInstance>,
@@ -59,20 +69,45 @@ export function useOverlayHost(
 
   function onKeydown(event: KeyboardEvent): void {
     if (event.key !== 'Escape' || !dismissible.value) return
+    // A menu, flyout or search box inside this overlay — or the application's own widget —
+    // already answered it.
+    if (isEscapeClaimed(event)) return
     const self = current()
     if (self.kind === 'modal') {
-      // Only the topmost modal answers, and it stops the event so the drawers below —
-      // which are listening on the same document — do not close as well.
+      // Only the topmost modal answers. `stopPropagation()` keeps the event from nodes above
+      // `document`; it cannot stop the other listeners on `document` itself, which is what
+      // the claim below is for — a drawer that registered after this modal would otherwise
+      // find the stack already empty and close as well.
       if (overlays.topmostModal()?.id !== self.id) return
       event.stopPropagation()
     } else if (overlays.state.modals.length > 0) {
       return
+    } else if (!isLatestDrawer(self.id)) {
+      // Two drawers open: Escape closes the one opened last, then the other.
+      return
     }
+    claimEscape(event)
     void close()
   }
 
-  onMounted(() => document.addEventListener('keydown', onKeydown))
-  onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
+  let sequence = 0
+  onMounted(() => {
+    sequence = ++openSequence
+    openedAt.set(current().id, sequence)
+    document.addEventListener('keydown', onKeydown)
+  })
+  onBeforeUnmount(() => {
+    if (openedAt.get(current().id) === sequence) openedAt.delete(current().id)
+    document.removeEventListener('keydown', onKeydown)
+  })
+
+  /** Whether `id` is the most recently opened of the drawers still open. */
+  function isLatestDrawer(id: string): boolean {
+    const open = [overlays.state.leftPanel, overlays.state.rightPanel]
+      .filter((d): d is OverlayInstance => d !== null && d.id !== id)
+    const mine = openedAt.get(id) ?? 0
+    return open.every(d => (openedAt.get(d.id) ?? 0) < mine)
+  }
 
   // The panel inside gets the same `usePanel()` contract a docked panel gets, so one
   // component can be opened as a tab, a floating window or a modal without knowing which.

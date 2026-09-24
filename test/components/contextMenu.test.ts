@@ -459,6 +459,57 @@ describe('a default slot replaces the built-in menu (rdd ContextMenuAdapter)', (
     expect(document.querySelector('[data-mine]')).toBeNull()
   })
 
+  it('a real click inside the slot reaches its item, pointerdown first', async () => {
+    // A mouse click is pointerdown → click. The capture-phase pointerdown dismissal used to
+    // treat the whole slot as outside, so the menu closed before the click could land.
+    const ws = createWorkspace({ panels: {} })
+    const action = vi.fn()
+    const wrapper = mount(VddContextMenu, {
+      global: { plugins: [ws] },
+      attachTo: document.body,
+      slots: {
+        default: `<ul data-mine><li v-for="(i, n) in items" :key="n">
+          <button data-mine-item @click="i.action()">{{ i.label }}</button></li></ul>`,
+      },
+    })
+    mounted.push(wrapper)
+
+    ws.showContextMenu({ x: 10, y: 10, items: [{ label: 'Go', action }] })
+    await nextTick()
+    document.querySelector('[data-mine-item]')!.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
+    await nextTick()
+    // Re-query: a detached button would still run its listener in jsdom, but in a browser a
+    // click never reaches an element that is no longer in the document.
+    const live = document.querySelector<HTMLButtonElement>('[data-mine-item]')
+    expect(live).not.toBeNull()
+    live!.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await nextTick()
+
+    expect(action).toHaveBeenCalledTimes(1)
+  })
+
+  it('a slot menu is still dismissed by a press outside it, and by Escape', async () => {
+    const ws = createWorkspace({ panels: {} })
+    const wrapper = mount(VddContextMenu, {
+      global: { plugins: [ws] },
+      attachTo: document.body,
+      slots: { default: '<ul data-mine><li>x</li></ul>' },
+    })
+    mounted.push(wrapper)
+
+    ws.showContextMenu({ x: 10, y: 10, items: [{ label: 'One' }] })
+    await nextTick()
+    document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
+    await nextTick()
+    expect(document.querySelector('[data-mine]')).toBeNull()
+
+    ws.showContextMenu({ x: 10, y: 10, items: [{ label: 'One' }] })
+    await nextTick()
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    await nextTick()
+    expect(document.querySelector('[data-mine]')).toBeNull()
+  })
+
   it('renders the built-in menu when no slot is given', async () => {
     const ws = createWorkspace({ panels: {} })
     const wrapper = mount(VddContextMenu, { global: { plugins: [ws] }, attachTo: document.body })
