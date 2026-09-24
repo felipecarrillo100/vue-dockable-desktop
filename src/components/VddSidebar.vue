@@ -12,7 +12,7 @@
 import { computed, provide, ref, watch } from 'vue'
 import type { SidebarProps, SidebarTab } from '../core/sidebarTypes'
 import { SIDEBAR_KEY, isTabEntry, toRailArray } from '../core/sidebarTypes'
-import { startPointerDrag } from '../core/dragResize'
+import { isRtlElement, startPointerDrag } from '../core/dragResize'
 import VddSidebarRail from './VddSidebarRail.vue'
 import VddSidebarDrawer from './VddSidebarDrawer.vue'
 
@@ -117,6 +117,9 @@ const resizing = ref(false)
 function onResizeDown(event: PointerEvent): void {
   event.preventDefault()
   const el = event.currentTarget as HTMLElement
+  // The layout is a flex row, so under RTL `position="left"` renders on the right edge. What
+  // decides the sign is the physical edge, not the prop.
+  const onRight = (props.position === 'right') !== isRtlElement(el)
   resizing.value = true
   startPointerDrag({
     element: el,
@@ -128,9 +131,9 @@ function onResizeDown(event: PointerEvent): void {
       { el, classes: ['vdd-active'] },
       { el: document.body, classes: ['vdd-resizing-active', 'vdd-resizing-col-active'] },
     ],
-    // A right-hand drawer grows when the pointer moves left, so the delta is inverted.
+    // A drawer on the right edge grows when the pointer moves left, so the delta is inverted.
     onMove: (dx, _dy, start) => {
-      const next = props.position === 'right' ? start - dx : start + dx
+      const next = onRight ? start - dx : start + dx
       width.value = Math.max(props.minWidth, Math.min(props.maxWidth, next))
     },
     onEnd: () => { resizing.value = false },

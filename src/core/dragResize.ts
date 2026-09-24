@@ -59,6 +59,31 @@ export function startPointerDrag<TStart>(config: PointerDragConfig<TStart>): voi
   element.addEventListener('pointercancel', handleEnd);
 }
 
+// ── Reading direction ────────────────────────────────────────────────────────
+
+/**
+ * Whether `el` lays out right to left, as the browser computed it.
+ *
+ * A pointer delta is physical, but a flex row reverses under RTL, so a gesture that changes a
+ * logical size or index has to know which way its own element runs. The element's computed
+ * direction is the only source that is right everywhere: the sidebar and toolbar sit
+ * *outside* the workspace, and take their direction from the host page, not from the
+ * workspace's `dir`. Read it once, when the gesture starts.
+ */
+export function isRtlElement(el: Element | null | undefined): boolean {
+  return !!el && getComputedStyle(el).direction === 'rtl'
+}
+
+/**
+ * Which logical side of a tab the pointer is over: `'left'` means before it in tab order,
+ * `'right'` after it — the meaning the insertion index and the RTL indicator CSS both use.
+ * Under RTL the physical left half is the logical end.
+ */
+export function tabSide(clientX: number, rect: { left: number; width: number }, rtl: boolean): 'left' | 'right' {
+  const physicalLeft = clientX - rect.left < rect.width / 2
+  return physicalLeft !== rtl ? 'left' : 'right'
+}
+
 // ── 8-directional resize math ────────────────────────────────────────────────
 
 export type ResizeDir = 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'nw';

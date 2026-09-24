@@ -24,6 +24,7 @@ import type { ComputedRef, InjectionKey, Ref } from 'vue'
 import type { DropPosition, FloatAnchor, SplitDirection } from '../types'
 import { flipZoneHorizontal } from '../core/anchorGeometry'
 import { findLeaf } from '../core/layoutTree'
+import { tabSide } from '../core/dragResize'
 import type { Workspace } from '../core/workspace'
 
 /** How far a mouse must move before a press becomes a drag. */
@@ -154,7 +155,7 @@ export function provideDragDock(ws: Workspace<never>): DragDock {
           leafId: el.dataset.vddTabLeaf,
           panelId: el.dataset.vddTab,
           index: Number.parseInt(el.dataset.vddTabIndex ?? '0', 10),
-          side: x - rect.left < rect.width / 2 ? 'left' : 'right',
+          side: tabSide(x, rect, ws.state.isRtl),
         }
         foundTab = true
       }
