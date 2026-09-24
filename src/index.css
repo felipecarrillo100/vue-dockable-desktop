@@ -16,6 +16,8 @@
  */
 
 :root {
+  /* The font of all the library's chrome. `inherit` hands it to the host page instead. */
+  --vdd-font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
   --vdd-styles-loaded: 1; /* sentinel — checked at mount to detect missing CSS import */
   --vdd-z-base: 1000; /* base for floating windows + all chrome overlays; override via WindowManagerProvider's zIndexBase */
   --vdd-bg-primary: #090b11;
@@ -208,8 +210,22 @@
 .vdd-workspace {
   background-color: var(--vdd-bg-primary);
   color: var(--vdd-text-primary);
-  font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--vdd-font-family);
   -webkit-font-smoothing: antialiased;
+}
+
+/* Chrome rendered outside the workspace root — the sidebar and toolbar around it, and the
+   modals, drawers, toasts, menus and flyouts mounted beside it or teleported to <body> — does
+   not inherit from .vdd-workspace, so it reads the token itself. Without this it took the host
+   page's body font. */
+.vdd-sidebar-layout,
+.vdd-toolbar-strip,
+.vdd-modal-overlay,
+.vdd-side-panel,
+.vdd-toast-container,
+.vdd-toolbar-group-flyout,
+.vdd-panel-toolbar-search__dropdown {
+  font-family: var(--vdd-font-family);
 }
 
 /* Workspace Panel Container */
@@ -633,7 +649,7 @@ body.vdd-resizing-col-active * {
   padding: 8px !important;
   border-radius: 6px;
   font-size: 11px !important;
-  font-family: 'Outfit', 'Inter', system-ui, sans-serif;
+  font-family: var(--vdd-font-family);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
   border: 1px solid var(--vdd-taskbar-item-border, rgba(255, 255, 255, 0.1)) !important;
   animation: vdd-tooltip-fade-in 0.15s cubic-bezier(0.4, 0, 0.2, 1) forwards;
@@ -811,7 +827,7 @@ body.vdd-resizing-col-active * {
 }
 
 .vdd-floating-window-title {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--vdd-font-family);
   font-size: 0.78rem;
   font-weight: 600;
   color: var(--vdd-window-text);
@@ -848,7 +864,7 @@ body.vdd-resizing-col-active * {
   padding: 4px 0;
   min-width: 220px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-family: var(--vdd-font-family);
   font-size: 13px;
   animation: vdd-context-menu-in 0.1s cubic-bezier(0.16, 1, 0.3, 1);
   outline: none;
