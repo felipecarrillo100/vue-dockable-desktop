@@ -101,7 +101,11 @@ const tabClass = (id: string) => {
     @pointerdown="selectedId && ws.focusPanel(selectedId)"
   >
     <div class="vdd-workspace-tab-bar">
-      <div ref="tabBar" class="vdd-tab-headers-container" role="tablist">
+      <div
+        ref="tabBar"
+        class="vdd-tab-headers-container"
+        role="tablist"
+      >
         <div
           v-for="(tab, index) in tabs"
           :key="tab.id"
@@ -165,7 +169,10 @@ const tabClass = (id: string) => {
       </div>
     </div>
 
-    <div class="vdd-panel-body" role="tabpanel">
+    <div
+      class="vdd-panel-body"
+      role="tabpanel"
+    >
       <VddDropZones v-if="drag?.dragging.value" :leaf-id="leaf.id" />
       <!--
         Keyed by the selected panel so switching tabs mounts a new slot, which hands the
