@@ -539,3 +539,86 @@ describe('ARIA roles', () => {
     expect(document.querySelector('[data-vdd-menu-item="Plain"]')?.hasAttribute('aria-checked')).toBe(false)
   })
 })
+
+describe('keyboard', () => {
+  /** A focused opener, as when a menu is raised from a button or by the context-menu key. */
+  const opener = () => {
+    const b = document.createElement('button')
+    b.textContent = 'opener'
+    document.body.appendChild(b)
+    b.focus()
+    return b
+  }
+  const focusedLabel = () => document.activeElement?.getAttribute('data-vdd-menu-item')
+  const press = async (k: string) => {
+    ;(document.activeElement ?? document.body).dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }))
+    await nextTick()
+  }
+  const items = [
+    { label: 'One', action: () => {} },
+    { label: 'Off', action: () => {}, disabled: true },
+    { separator: true as const },
+    { label: 'Two', action: () => {} },
+  ]
+
+  it('focus moves to the first enabled item when the menu opens', async () => {
+    const { ws } = setup()
+    opener()
+    ws.showContextMenu({ x: 10, y: 10, items })
+    await nextTick(); await nextTick()
+    expect(focusedLabel()).toBe('One')
+  })
+
+  it('ArrowDown and ArrowUp move between enabled items, wrapping', async () => {
+    const { ws } = setup()
+    opener()
+    ws.showContextMenu({ x: 10, y: 10, items })
+    await nextTick(); await nextTick()
+    await press('ArrowDown')
+    expect(focusedLabel()).toBe('Two')      // skips the disabled item and the separator
+    await press('ArrowDown')
+    expect(focusedLabel()).toBe('One')      // wraps
+    await press('ArrowUp')
+    expect(focusedLabel()).toBe('Two')
+  })
+
+  it('Escape closes the menu and gives focus back to what opened it', async () => {
+    const { ws } = setup()
+    const b = opener()
+    ws.showContextMenu({ x: 10, y: 10, items })
+    await nextTick(); await nextTick()
+    await press('Escape')
+    expect(document.querySelector('[data-vdd-menu]')).toBeNull()
+    expect(document.activeElement).toBe(b)
+  })
+
+  it('running an item gives focus back too', async () => {
+    const { ws } = setup()
+    const b = opener()
+    const action = vi.fn()
+    ws.showContextMenu({ x: 10, y: 10, items: [{ label: 'Go', action }] })
+    await nextTick(); await nextTick()
+    ;(document.activeElement as HTMLElement).click()
+    await nextTick()
+    expect(action).toHaveBeenCalledTimes(1)
+    expect(document.activeElement).toBe(b)
+  })
+
+  it('Tab closes the menu', async () => {
+    const { ws } = setup()
+    opener()
+    ws.showContextMenu({ x: 10, y: 10, items })
+    await nextTick(); await nextTick()
+    await press('Tab')
+    expect(document.querySelector('[data-vdd-menu]')).toBeNull()
+  })
+
+  it('a submenu also opens on click, not only on hover', async () => {
+    const { ws } = setup()
+    ws.showContextMenu({ x: 10, y: 10, items: [{ label: 'More', items: [{ label: 'Nested', action: () => {} }] }] })
+    await nextTick()
+    ;(document.querySelector('[data-vdd-menu-submenu="More"]') as HTMLElement).click()
+    await nextTick()
+    expect(document.querySelector('[data-vdd-submenu]')).not.toBeNull()
+  })
+})
