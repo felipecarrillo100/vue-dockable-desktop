@@ -591,13 +591,15 @@ body.vdd-resizing-col-active * {
   display: block;
 }
 
-/* It rests 8px above its icon at translateY(-100%). The entry offset stays inside that gap:
-   starting any lower put the preview over the icon for the first frames, so a quick click
-   meant for the icon landed on the preview. */
+/* It rests 8px above its icon at translateY(-100%), with an 8px hover bridge filling the gap.
+   It enters from *above* its resting place: rising from below — as it used to, from -90% —
+   put the preview, and then its bridge, over the icon for the first frames, so a quick click
+   meant for the icon landed on the preview. Measured in Chrome: from below, even a 6px offset
+   left the bridge over the icon's top 6px. */
 @keyframes vdd-tooltip-fade-in {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(calc(-100% + 6px));
+    transform: translateX(-50%) translateY(calc(-100% - 6px));
   }
   to {
     opacity: 1;
