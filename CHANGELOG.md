@@ -11,6 +11,106 @@ correspondence lives, alongside the feature-by-feature map in [docs/PARITY.md](d
 
 ## [Unreleased]
 
+## [1.1.2] — 2026-09-24
+
+**Parity: react-dockable-desktop 6.3.1.**
+
+Fixes from a user bug report. Every item was reproduced before it was fixed, and each fix has a
+regression test that fails against 1.1.1. No public API changes: the export list in
+`api-surface.json` is unchanged.
+
+### Fixed
+
+- **One Escape could close several things.** Modals, drawers, the context menu, the toolbar
+  flyout and the toolbar search all listen for Escape, most of them on `document`, and the
+  answering modal's `stopPropagation()` never stopped the other listeners there. So a drawer
+  opened *after* a modal closed along with it; a context menu, toolbar flyout or toolbar search
+  inside a modal or drawer closed its host too; and with a drawer on each side, one press
+  closed both. Whoever acts on Escape now claims the event, and every other listener checks for
+  a claim first. Transient UI answers before overlays: the menu and flyout listen in the
+  capture phase, and the search claims on its own input. With two drawers open, the one opened
+  last closes first. An application widget inside a modal can keep the modal open by calling
+  `event.preventDefault()` on its own Escape. [ADR 0016](docs/decisions/0016-escape-claiming.md),
+  divergence D17 in [PARITY.md](docs/PARITY.md). Covered by `test/components/escapeRouting.test.ts`.
+
+- **A custom context-menu slot closed before its items could be clicked.** In slot mode the
+  outside-press check had no element for the slot, so the `pointerdown` of any click inside it
+  counted as outside and closed the menu; the `click` then never reached the item. The slot is
+  now wrapped in a `display: contents` element that counts as inside. The docs said dismissal
+  "becomes yours" in slot mode; it does not — Escape and an outside press still close the menu.
+
+- **`usePanel()` did not work inside a modal or side panel.** It looked the panel up in the
+  docked-panel state, which holds no overlays. So `onBeforeClose` registered nothing, and Escape
+  or `close()` closed the overlay regardless; `onSaveState` and `minimize` warned that the panel
+  was "rendered standalone"; `title` returned the instance id, and `dirty` stayed `false` after
+  `setDirty(true)`. The overlay now supplies its title, dirty state and guard registration, and
+  `onSaveState` and `minimize` say accurately why they do nothing there.
+
+- **A toast adapter's `show` was never called.** A new toast only went into the built-in queue;
+  only a repeat of its id reached the adapter, as `update`. The queued records were never
+  removed either, so they piled up and all appeared at once if the adapter was later unset.
+  In adapter mode nothing is queued now: a new id goes to `show` — with `type` and the
+  container's `defaultDuration` and `defaultClosable` filled in — a repeated id to `update`,
+  and a dismissed id used again is a new `show`. Toasts raised before the adapter mounts are
+  handed to it. A toast's `onClose` is not called in adapter mode, and the docs now say so.
+
+- **`loadLayout` accepted a partial layout and cleared the workspace.** Valid JSON with a
+  `gridRoot` but without `floating`, `minimized` or `panels` parsed to an *empty* workspace,
+  which `loadLayout` applied and reported as success — every open panel closed, and `true`
+  returned. It now returns `false` with a warning and leaves the layout unchanged.
+
+- **Right-to-left gestures went the wrong way.** A pointer delta is physical, while the sizes,
+  sides and tab indexes it changes are logical, and a flex row reverses under RTL:
+  - a horizontal split divider moved away from the pointer;
+  - a sidebar resizer shrank the drawer when dragged away from its edge;
+  - a toolbar flyout was placed by the workspace's direction, though the strip sits outside the
+    workspace and follows the page — so an RTL workspace in an LTR page opened a left strip's
+    flyout off-screen, and the viewport clamp pulled it back over the strip;
+  - a tab dropped on another tab's left half was inserted on its right, and vice versa.
+
+  Each gesture now reads its own element's computed direction when it starts. The manual's RTL
+  section says that `<VddSidebar>` and `<VddToolbar>` follow the page's `dir`, not the
+  workspace's.
+
+- **`.vdd-fill-viewport` did nothing on `<VddDesktop>` itself.** There the class shares an
+  element with `.vdd-workspace`, whose `height: 100%` has equal specificity and comes later. A
+  compound selector now outranks it. The zero-height warning, which recommends the class, says
+  where it can go.
+
+- **A quick click on a taskbar icon could land on its preview.** The preview rose into place
+  from below — starting at 90% of its lift, over the icon — so for its first frames a click or
+  right-click meant for the icon hit the preview; and its hover bridge reached 4px past the gap
+  even at rest. It now drifts down into place from just above, so neither the preview nor its
+  bridge ever covers the icon, and the bridge spans exactly the 8px gap. Measured frame by
+  frame in Chrome: a start below the resting place, even by 6px, still put the bridge over the
+  top of the icon.
+
+- **A collapsed toolbar left a 1px line and kept its buttons in the Tab order.** Collapsing only
+  set the strip's size to zero. It now also removes the edge border and makes the strip `inert`.
+
+- **Invalid ARIA.** Toolbar flyout tools were `role="menuitem"` with `aria-pressed`; they are
+  now `menuitemradio` with `aria-checked`. Checkbox context-menu items carried `aria-checked` on
+  a plain `menuitem`; they are now `menuitemcheckbox`. The toast container's `aria-label` sat on
+  a `<div>` with no role, where it is ignored; it now has `role="region"`.
+
+- **An event map declared as an `interface` failed to compile.** The manual shows
+  `interface MyEvents { … }`, but the type parameter was constrained to
+  `Record<string, unknown>`, which an interface does not satisfy (TS2344). The constraint on
+  `createWorkspace`, `Workspace`, `useWorkspace` and `EventBus` is now `object`, so interfaces
+  and type aliases both work. Payloads are still checked against the map.
+
+### Documentation
+
+- Removed the `#panel-actions` slot on `<VddDesktop>`, which was documented but never existed
+  (manual and PARITY.md); the manual now says where a panel's own actions belong.
+- `updateSplitSizes`: the root branch's path is `[]`; `[0]` is its first child.
+- `<VddFloatingWidget>` takes `widget-id`, not `id`, in the migration guide.
+- A close guard does not replace the unsaved-changes question: it runs first, and a dirty panel
+  is still asked about.
+- Only `useSidebar()` works from a panel in the workspace; `useSidebarTab()` needs a drawer tab.
+- Filled in the empty table of theme tokens that have no base value, and corrected the prose
+  around it: every rule that reads them has a fallback, and no built-in skin sets them.
+
 ## [1.1.1] — 2026-09-19
 
 **Parity: react-dockable-desktop 6.3.1.**
