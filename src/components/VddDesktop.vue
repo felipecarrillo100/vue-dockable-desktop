@@ -71,8 +71,15 @@ const dom = new PanelDomCache()
 providePanelDom(dom)
 const drag = provideDragDock(ws as unknown as Workspace<never>)
 
-/** Every panel that exists, so the port can render each exactly once. */
-const mounted = computed(() => Object.keys(ws.state.panels))
+/**
+ * Every panel that exists, so the port can render each exactly once.
+ *
+ * Empty while server-rendering: a panel lives in a real element that the port teleports into,
+ * and there is no document to create one in. The panels mount on the client. The port itself
+ * stays unconditional — only this list differs, and only where there is no DOM.
+ */
+const serverRendering = typeof document === 'undefined'
+const mounted = computed(() => (serverRendering ? [] : Object.keys(ws.state.panels)))
 
 // A closed panel's element is dropped, or the cache would grow for the session's lifetime.
 watch(mounted, (now, before) => {

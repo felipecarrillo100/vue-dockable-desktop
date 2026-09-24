@@ -56,7 +56,16 @@ export class PanelDomCache {
   private sizes = new Map<string, { width: number; height: number }>()
   private hidden: HTMLElement | null = null
 
-  constructor(private readonly doc: Document = document) {}
+  /**
+   * The document is looked up on first use, not in a parameter default: constructing the cache
+   * then touches nothing, so `<VddDesktop>` can be set up where there is no DOM (server
+   * rendering) as long as no panel element is asked for.
+   */
+  constructor(private readonly ownerDocument?: Document) {}
+
+  private get doc(): Document {
+    return this.ownerDocument ?? document
+  }
 
   /** The off-screen store. Panels live here while minimised, and before their first host. */
   hiddenStore(): HTMLElement {
@@ -81,7 +90,7 @@ export class PanelDomCache {
     if (!el) {
       el = this.doc.createElement('div')
       el.className = 'vdd-panel-mount'
-      el.dataset.vddPanel = id
+      el.setAttribute('data-vdd-panel', id)
       this.hiddenStore().appendChild(el)
       this.elements.set(id, el)
     }
