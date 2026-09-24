@@ -88,6 +88,11 @@ watch(isFloating,  floating => console.log(floating ? 'window' : 'docked'))
 `'floating-window'`, `'modal'`, `'left-panel'`, `'right-panel'` or `'standalone'`. The same
 component can be opened as a panel *and* as a modal; this is how it adapts.
 
+Inside a modal or a side panel, `usePanel()` works the same way: `title` and `dirty` follow
+the overlay, and `setTitle`, `setDirty`, `close` and `onBeforeClose` act on it. Two things
+have no meaning there and warn in development instead: `minimize()` (an overlay has nowhere to
+minimise to) and `onSaveState()` (overlays are not part of a saved layout).
+
 ### Unsaved changes
 
 ```ts
@@ -117,7 +122,10 @@ onBeforeClose(async () => {
 ```
 
 Registered in `setup`, disposed automatically with the component. There is no unsubscribe to
-remember.
+remember. It works the same in a docked panel, a floating window, a modal and a side panel.
+
+The guard runs first. If it allows the close and the panel is dirty, the unsaved-changes
+question is still asked.
 
 ### Contributing live state to a saved layout
 

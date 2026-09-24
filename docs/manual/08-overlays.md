@@ -135,8 +135,12 @@ panel.onBeforeClose(async () => {
 ```
 
 Return `false`, or a promise of `false`, to block. The guard is registered in `setup` and
-disposed with the component — there is nothing to unsubscribe. A guard takes precedence over
-the dirty check: if you have registered one, the built-in question is not asked.
+disposed with the component — there is nothing to unsubscribe. It covers every way the overlay
+can close: Escape, the backdrop, the × and `close()`.
+
+The guard runs **before** the dirty check, not instead of it. If the guard allows the close
+and the panel is dirty, the built-in question is still asked. To replace the question with
+your own, keep the panel clean and ask in the guard.
 
 ### Mount `<VddModals>`
 

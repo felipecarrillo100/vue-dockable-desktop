@@ -12,6 +12,8 @@ import { mount } from '@vue/test-utils'
 import { createWorkspace } from '../../src/core/workspace'
 import { usePanel, providePanel } from '../../src/composables/usePanel'
 import type { ContainerType } from '../../src/types'
+import VddModals from '../../src/components/VddModals.vue'
+import VddSidePanels from '../../src/components/VddSidePanels.vue'
 
 const ws = () => createWorkspace({ panels: { map: { component: defineComponent({ setup: () => () => h('div') }) } } })
 
@@ -184,5 +186,96 @@ describe('usePanel outside any container', () => {
     refs!.minimize()
     expect(warn).toHaveBeenCalledTimes(2)
     warn.mockRestore()
+  })
+})
+
+/**
+ * Inside a modal or a drawer the panel is not in `ws.state.panels` — overlays keep their own
+ * state — and before 1.1.2 `usePanel()` looked only there. So a guard registered from inside
+ * a modal was dropped with a "rendered standalone" warning and Escape closed it anyway, and
+ * `title` / `dirty` reported the instance id and `false`.
+ */
+describe('usePanel inside a modal or side panel', () => {
+  const settle = async () => { await nextTick(); await new Promise(r => setTimeout(r, 0)); await nextTick() }
+
+  const open = async (kind: 'modal' | 'left', setup: () => void) => {
+    const w = createWorkspace({ panels: {} })
+    const Inner = defineComponent({ name: 'Inner', setup() { setup(); return () => h('div', 'inner') } })
+    const Shell = defineComponent({
+      name: 'Shell',
+      components: { VddModals, VddSidePanels },
+      template: '<div><VddSidePanels /><VddModals /></div>',
+    })
+    const wrapper = mount(Shell, { global: { plugins: [w] }, attachTo: document.body })
+    const id = kind === 'modal'
+      ? w.overlays.openModal(Inner, {}, { title: 'Settings' })
+      : await w.overlays.openLeftPanel(Inner, {}, { title: 'Settings' })
+    await settle()
+    return { w, wrapper, id: id! }
+  }
+  const escape = async () => {
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
+    await settle()
+  }
+
+  it('a guard registered from inside a modal blocks Escape and close()', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    let api: ReturnType<typeof usePanel> | undefined
+    const guard = vi.fn(() => false)
+    const { w, wrapper } = await open('modal', () => { api = usePanel(); api.onBeforeClose(guard) })
+
+    await escape()
+    expect(guard).toHaveBeenCalledTimes(1)
+    expect(w.overlays.state.modals).toHaveLength(1)
+
+    await api!.close()
+    expect(guard).toHaveBeenCalledTimes(2)
+    expect(w.overlays.state.modals).toHaveLength(1)
+
+    expect(warn.mock.calls.flat().join(' ')).not.toContain('standalone')
+    warn.mockRestore()
+    wrapper.unmount()
+    document.body.innerHTML = ''
+  })
+
+  it('a guard registered from inside a drawer blocks Escape', async () => {
+    const { w, wrapper } = await open('left', () => { usePanel().onBeforeClose(() => false) })
+    await escape()
+    expect(w.overlays.state.leftPanel).not.toBeNull()
+    wrapper.unmount()
+    document.body.innerHTML = ''
+  })
+
+  it('reports the overlay\'s title and dirty state', async () => {
+    let api: ReturnType<typeof usePanel> | undefined
+    const { wrapper } = await open('modal', () => { api = usePanel() })
+    expect(api!.title.value).toBe('Settings')
+    expect(api!.dirty.value).toBe(false)
+
+    api!.setDirty(true)
+    await nextTick()
+    expect(api!.dirty.value).toBe(true)
+
+    api!.setTitle('Renamed')
+    await nextTick()
+    expect(api!.title.value).toBe('Renamed')
+    wrapper.unmount()
+    document.body.innerHTML = ''
+  })
+
+  it('says why onSaveState and minimize do nothing, instead of calling it standalone', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const { wrapper } = await open('modal', () => {
+      const api = usePanel()
+      api.onSaveState(() => ({}))
+      api.minimize()
+    })
+    const messages = warn.mock.calls.flat().join('\n')
+    expect(messages).not.toContain('standalone')
+    expect(messages).toContain('not saved with the layout')
+    expect(messages).toContain('cannot be minimised')
+    warn.mockRestore()
+    wrapper.unmount()
+    document.body.innerHTML = ''
   })
 })
