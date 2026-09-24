@@ -140,6 +140,12 @@ onSaveState(() => ({ path: props.path, scrollTop: list.value?.scrollTop ?? 0 }))
 Return `undefined` to fall back to the panel's static `props`. The value must be synchronous
 and JSON-serialisable.
 
+## Keyboard
+
+Each tab group is one stop in the Tab order: the selected tab. From there, ArrowLeft and
+ArrowRight move to the previous or next tab and show it (mirrored under RTL), and Delete
+closes the focused tab — asking first if it has unsaved changes, as any close does.
+
 ## Closing and minimising from inside
 
 ```ts

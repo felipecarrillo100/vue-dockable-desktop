@@ -6,7 +6,7 @@
  * inactive group is drawn differently from the one the user is actually working in. Those
  * must never disagree with `activePanelId` — the invariant behind divergence D2.
  */
-import { computed } from 'vue'
+import { computed, nextTick, useTemplateRef } from 'vue'
 import type { LayoutLeafNode } from '../types'
 import { useWorkspace } from '../composables/useWorkspace'
 import { useDragDock } from '../composables/useDragDock'
@@ -50,6 +50,36 @@ const tabs = computed(() => props.leaf.panels.flatMap((id) => {
 
 const selectedId = computed(() => props.leaf.activePanelId)
 
+/**
+ * Keyboard: one tab stop per group, arrows to move, Delete to close — the core of the WAI-ARIA
+ * tabs pattern, with automatic activation since switching tabs is cheap here. Arrows follow
+ * tab order, which runs right to left under RTL.
+ */
+const tabBar = useTemplateRef<HTMLElement>('tabBar')
+const tabStop = (id: string, index: number) =>
+  (selectedId.value ? id === selectedId.value : index === 0) ? 0 : -1
+
+function onTabKey(index: number, event: KeyboardEvent): void {
+  const list = tabs.value
+  const current = list[index]
+  if (!current) return
+  if (event.key === 'Delete') {
+    if (current.options.canClose !== false) void ws.requestClosePanel(current.id)
+    event.preventDefault()
+    return
+  }
+  if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return
+  event.preventDefault()
+  const forward = (event.key === 'ArrowRight') !== ws.state.isRtl
+  const next = list[(index + (forward ? 1 : list.length - 1)) % list.length]!
+  ws.focusPanel(next.id)
+  // After the switch has rendered: re-attaching the panel may restore focus inside it, and
+  // keyboard focus belongs on the tab list.
+  void nextTick(() => {
+    tabBar.value?.querySelector<HTMLElement>(`[data-vdd-tab="${CSS.escape(next.id)}"]`)?.focus()
+  })
+}
+
 const tabClass = (id: string) => {
   const hovered = drag?.tab.value
   const isInsertionPoint = hovered?.leafId === props.leaf.id && hovered.panelId === id
@@ -71,7 +101,7 @@ const tabClass = (id: string) => {
     @pointerdown="selectedId && ws.focusPanel(selectedId)"
   >
     <div class="vdd-workspace-tab-bar">
-      <div class="vdd-tab-headers-container">
+      <div ref="tabBar" class="vdd-tab-headers-container" role="tablist">
         <div
           v-for="(tab, index) in tabs"
           :key="tab.id"
@@ -81,6 +111,7 @@ const tabClass = (id: string) => {
           :data-vdd-tab-index="String(index)"
           role="tab"
           :aria-selected="tab.id === selectedId"
+          :tabindex="tabStop(tab.id, index)"
           :style="{ cursor: tab.options.canDrag === false ? 'default' : 'pointer' }"
           @click="ws.focusPanel(tab.id)"
           @contextmenu.prevent="openMenu(tab.id, $event)"
@@ -89,6 +120,7 @@ const tabClass = (id: string) => {
             : undefined"
           @pointermove="onTabPointerMove(leaf.id, tab.id, index, $event)"
           @pointerleave="drag?.dragging.value && drag.hoverTab(null)"
+          @keydown="onTabKey(index, $event)"
         >
           <span class="vdd-text-truncate">
             <span v-if="tab.options.icon" class="vdd-workspace-tab-icon">
@@ -99,6 +131,7 @@ const tabClass = (id: string) => {
           <span
             v-if="tab.options.canClose !== false"
             class="vdd-close-tab-x"
+            aria-hidden="true"
             :title="ws.format(ws.messages.closeTab)"
             :data-vdd-close="tab.id"
             @click.stop="ws.requestClosePanel(tab.id)"
@@ -132,7 +165,7 @@ const tabClass = (id: string) => {
       </div>
     </div>
 
-    <div class="vdd-panel-body">
+    <div class="vdd-panel-body" role="tabpanel">
       <VddDropZones v-if="drag?.dragging.value" :leaf-id="leaf.id" />
       <!--
         Keyed by the selected panel so switching tabs mounts a new slot, which hands the
