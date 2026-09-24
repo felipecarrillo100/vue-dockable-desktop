@@ -17,6 +17,10 @@ import type { Component } from 'vue'
 import type { ToastRecord, ToastType } from '../core/toast'
 import { startExit } from '../core/toast'
 import VddToastIcon from './VddToastIcon.vue'
+import { useLibraryMessage } from '../composables/useLibraryMessage'
+
+/** The library's own strings, translated when a workspace is present. */
+const message = useLibraryMessage()
 
 const props = defineProps<{
   toast: ToastRecord
@@ -160,7 +164,7 @@ onBeforeUnmount(() => {
       v-if="closable"
       type="button"
       class="vdd-toast__close"
-      aria-label="Close notification"
+      :aria-label="message('closeNotification')"
       data-vdd-toast-close
       @click="startExit(toast.id)"
     >
