@@ -88,7 +88,7 @@ exist. The last one held a single boolean.
 |---|---|
 | `SidebarTab.renderContent(id, onClose, onOpen)` | `#tab-<id>` slot, or `tab.component` |
 | `Sidebar.renderHeader(tab, onClose, onOpen)` | `#header="{ tab, close, open }"` |
-| `PanelDefaultOptions.renderHeaderActions(panelId)` | `#panel-actions="{ panelId }"` on `<VddDesktop>` |
+| `PanelDefaultOptions.renderHeaderActions(panelId)` | not ported — no header-actions slot; a panel's actions go in an overlay toolbar, a contribution or its context menu ([03-panels](manual/03-panels.md#panel-actions)) |
 | `ManagedWindowConfig.content: ReactNode` | `component` + `props` |
 | `ToastOptions.content: ReactNode` | `component` + `props`, or a render function |
 

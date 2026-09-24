@@ -255,7 +255,7 @@ const submenuStyle = computed(() => ws.state.isRtl
           :title="simple(item).title ? ws.format(simple(item).title) : undefined"
           :data-cy-action="simple(item).cyAction"
           :data-vdd-menu-item="ws.format(simple(item).label)"
-          role="menuitem"
+          :role="showsCheckbox(item) ? 'menuitemcheckbox' : 'menuitem'"
           :aria-checked="showsCheckbox(item) ? isChecked(item) : undefined"
           @click="activate(item)"
           @pointerenter="onItemEnter(index, item)"

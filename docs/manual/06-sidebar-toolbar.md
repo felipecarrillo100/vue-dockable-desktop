@@ -162,8 +162,9 @@ const { tabId, open, close, openTab } = useSidebarTab()
 ```
 
 which is scoped to the tab you are in — a "done" button can `close()` without knowing which
-tab it lives in. Both work from a panel rendered in the workspace too, since the workspace is
-the sidebar's own content. Both throw, with a message saying what is missing, if used outside.
+tab it lives in. `useSidebar()` also works from a panel rendered in the workspace, since the
+workspace is the sidebar's own content. `useSidebarTab()` does not: it needs a drawer tab
+around it. Each throws, with a message saying what is missing, where it cannot work.
 
 ## The toolbar
 

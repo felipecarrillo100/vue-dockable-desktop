@@ -149,17 +149,16 @@ close({ force: true })   // skips both
 minimize()
 ```
 
-## Header actions
+## Panel actions
 
-To put your own controls in a panel's tab or title bar:
+There is no slot for adding controls to a panel's tab or title bar. Put a panel's own actions
+where the panel already renders:
 
-```vue
-<VddDesktop>
-  <template #panel-actions="{ panelId }">
-    <button v-if="panelId.startsWith('doc-')" @click="save(panelId)">Save</button>
-  </template>
-</VddDesktop>
-```
+- in an overlay toolbar on the panel's edge — see
+  [Inside a panel](07-panel-overlay.md);
+- in the application toolbar, contributed only while the panel is active — see
+  [Panel contributions](09-contributions.md);
+- in the panel's context menu, below.
 
 ## Panel context menu
 

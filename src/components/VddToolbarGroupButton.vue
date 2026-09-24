@@ -134,8 +134,8 @@ const style = computed(() => {
           class="vdd-toolbar-group-flyout-item"
           :class="{ 'vdd-active': activeId === entry.id }"
           :disabled="entry.disabled"
-          role="menuitem"
-          :aria-pressed="activeId === entry.id"
+          role="menuitemradio"
+          :aria-checked="activeId === entry.id"
           :data-vdd-flyout-item="entry.id"
           @click="select(entry.id, entry.onActivate)"
         >

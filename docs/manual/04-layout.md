@@ -57,7 +57,8 @@ createWorkspace({
 Both are clamped to 0.1–0.9. Adjust an existing split by index path:
 
 ```ts
-updateSplitSizes([0], [0.7, 0.3])   // the root branch's two children
+updateSplitSizes([], [0.7, 0.3])    // the root branch's two children
+updateSplitSizes([1], [0.5, 0.5])   // the branch that is the root's second child
 ```
 
 ## Starting from a defined layout

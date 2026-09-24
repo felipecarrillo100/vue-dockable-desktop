@@ -126,7 +126,7 @@ const clampRatio = (n: number | undefined, fallback: number): number =>
 const DEFAULT_RECT = { x: 300, y: 150, width: 450, height: 350 }
 
 /** A workspace instance: reactive state, actions, registry, and a Vue plugin. */
-export interface Workspace<TEvents extends Record<string, unknown> = Record<string, unknown>> {
+export interface Workspace<TEvents extends object = Record<string, unknown>> {
   /** The whole state, read-only. Reactive — use it in templates and `computed`. */
   readonly state: Readonly<WorkspaceState>
   /** The panel catalogue. */
@@ -252,7 +252,7 @@ export const WORKSPACE_KEY = Symbol('vdd-workspace') as InjectionKey<Workspace<n
  * The returned object is both the imperative API and a Vue plugin, matching the
  * `createPinia()` / `createRouter()` shape a Vue developer already knows.
  */
-export function createWorkspace<TEvents extends Record<string, unknown> = Record<string, unknown>>(
+export function createWorkspace<TEvents extends object = Record<string, unknown>>(
   config: WorkspaceConfig = {},
 ): Workspace<TEvents> {
   const registry = new PanelRegistry()
