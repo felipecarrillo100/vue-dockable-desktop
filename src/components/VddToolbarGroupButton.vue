@@ -10,6 +10,7 @@ import type { ToolbarGroupItem } from '../core/toolbarTypes'
 import { flyoutPlacement, isSubItem } from '../core/toolbarTypes'
 import { useWorkspace } from '../composables/useWorkspace'
 import { claimEscape, isEscapeClaimed } from '../core/escape'
+import { isRtlElement } from '../core/dragResize'
 
 const props = defineProps<{
   item: ToolbarGroupItem
@@ -38,8 +39,10 @@ async function toggle(): Promise<void> {
   if (open.value) { open.value = false; return }
   const rect = button.value?.getBoundingClientRect()
   if (rect) {
+    // The strip's own direction, not the workspace's: the strip sits outside the workspace
+    // and follows the host page, so the two can differ.
     placement.value = flyoutPlacement(rect, props.position,
-      { width: window.innerWidth, height: window.innerHeight }, ws.state.isRtl)
+      { width: window.innerWidth, height: window.innerHeight }, isRtlElement(button.value))
   }
   open.value = true
   await nextTick()

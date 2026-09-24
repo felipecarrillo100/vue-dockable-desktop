@@ -2555,7 +2555,8 @@ html.vdd-no-animations [class*="vdd-"]::after {
 }
 
 /* ── Sidebar strips — separator border, accent indicator, drawer shadow ──
-   direction: rtl (inherited from workspace root) reverses the flex row so
+   direction: rtl (inherited from the host page — the sidebar is an ancestor of the
+   workspace, so the workspace's own dir does not reach it) reverses the flex row so
    `vdd-left` strips move visually to the RIGHT and `vdd-right` strips to the LEFT.
    All physical border-left/border-right and box-shadow directions must swap. */
 
