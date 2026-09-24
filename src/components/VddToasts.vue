@@ -7,8 +7,8 @@
  * imperatively when a toast finished exiting; here a toast leaving the list means the next
  * one is simply inside the slice, so promotion is not code.
  */
-import { computed, onBeforeUnmount, watch } from 'vue'
-import { removeToast, toastQueue } from '../core/toast'
+import { computed, onBeforeUnmount, toRaw, watch } from 'vue'
+import { removeToast, setToastAdapter, toastQueue } from '../core/toast'
 import type { ToastAdapter, ToastPosition } from '../core/toast'
 import VddToastItem from './VddToastItem.vue'
 
@@ -47,8 +47,16 @@ const props = withDefaults(defineProps<{
 
 // An adapter is registered on the store, so `toast.*` reaches it even when called from
 // outside any component — the whole point of the singleton.
-watch(() => props.adapter, (adapter) => { toastQueue.adapter = adapter ?? null }, { immediate: true })
-onBeforeUnmount(() => { if (toastQueue.adapter === props.adapter) toastQueue.adapter = null })
+watch(
+  () => [props.adapter, props.defaultDuration, props.defaultClosable] as const,
+  ([adapter, duration, closable]) => setToastAdapter(adapter ?? null, { duration, closable }),
+  { immediate: true },
+)
+onBeforeUnmount(() => {
+  if (props.adapter && toRaw(toastQueue.adapter) === toRaw(props.adapter)) {
+    setToastAdapter(null, { duration: props.defaultDuration, closable: props.defaultClosable })
+  }
+})
 
 /**
  * What is on screen: the oldest `maxVisible` toasts, with the ones still animating out kept

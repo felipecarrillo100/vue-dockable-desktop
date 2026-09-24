@@ -236,6 +236,20 @@ const adapter: ToastAdapter = {
 Give `component` a component instead of `null` and `<VddToasts>` renders it, with a
 `position` prop, in place of the built-in list.
 
+What the adapter receives:
+
+- `show` for a toast it does not have yet, with every option filled in — `type`, and the
+  container's `defaultDuration` and `defaultClosable` where the call left them out.
+- `update` for a call that reuses the id of a toast it is showing, including the settled
+  message of a `toast.promise()`. `patch` holds only what the call passed.
+- `dismiss` for `toast.dismiss(id)`, or with no id for `toast.dismiss()`. An id dismissed and
+  then used again arrives as a new `show`.
+
+Toasts raised before `<VddToasts>` mounts its adapter are handed to it when it does. While an
+adapter is set, nothing is kept in the built-in queue: the adapter owns the toasts, their
+timers and their removal. Since it has no way to report a toast it removed by itself, a toast's
+`onClose` callback is not called in adapter mode.
+
 ## Context menus
 
 Mount `<VddContextMenu>` once, then open a menu from anywhere:

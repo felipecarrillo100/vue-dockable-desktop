@@ -318,3 +318,71 @@ describe('T13: max-height re-syncs when content grows after mount', () => {
     }
   })
 })
+
+// ─── Adapter mode ────────────────────────────────────────────────────────────
+
+/**
+ * Before 1.1.2 `show` was never called — only a repeat of a known id reached the adapter, as
+ * `update` — and every toast was still pushed to the built-in queue and never removed, so
+ * unsetting the adapter later dumped all of them on screen at once.
+ */
+describe('adapter mode', () => {
+  const recorder = () => {
+    const calls: string[] = []
+    const adapter = {
+      component: null,
+      show: (id: string, message: string, o: { type: string; duration: number; closable: boolean }) =>
+        calls.push(`show:${id}:${message}:${o.type}:${o.duration}:${o.closable}`),
+      update: (id: string, message: string) => calls.push(`update:${id}:${message}`),
+      dismiss: (id?: string) => calls.push(`dismiss:${id ?? '*'}`),
+    }
+    return { calls, adapter }
+  }
+
+  it('a new toast goes to show, a repeat to update, and dismiss to dismiss', () => {
+    const { calls, adapter } = recorder()
+    mountContainer({ adapter })
+    toast.info('a', { id: 'x' })
+    toast.info('b', { id: 'x' })
+    toast.dismiss('x')
+    toast.dismiss()
+    expect(calls).toEqual(['show:x:a:info:5000:true', 'update:x:b', 'dismiss:x', 'dismiss:*'])
+  })
+
+  it('show carries the container\'s own defaults', () => {
+    const { calls, adapter } = recorder()
+    mountContainer({ adapter, defaultDuration: 1234, defaultClosable: false })
+    toast.warning('w', { id: 'y' })
+    toast('d', { id: 'z', duration: undefined })
+    expect(calls).toEqual(['show:y:w:warning:1234:false', 'show:z:d:info:1234:false'])
+  })
+
+  it('a dismissed id shown again is a new toast', () => {
+    const { calls, adapter } = recorder()
+    mountContainer({ adapter })
+    toast.info('a', { id: 'x' })
+    toast.dismiss('x')
+    toast.info('again', { id: 'x' })
+    expect(calls).toEqual(['show:x:a:info:5000:true', 'dismiss:x', 'show:x:again:info:5000:true'])
+  })
+
+  it('nothing accumulates in the built-in queue, so removing the adapter shows nothing stale', async () => {
+    const { adapter } = recorder()
+    const wrapper = mountContainer({ adapter })
+    toast.info('1'); toast.info('2'); toast.info('3')
+    toast.dismiss()
+    expect(toastQueue.items).toHaveLength(0)
+
+    await wrapper.setProps({ adapter: undefined })
+    await settle()
+    expect(cards()).toHaveLength(0)
+  })
+
+  it('toasts raised before the adapter mounts are handed to it', () => {
+    toast.success('early', { id: 'e' })
+    const { calls, adapter } = recorder()
+    mountContainer({ adapter })
+    expect(calls).toEqual(['show:e:early:success:5000:true'])
+    expect(toastQueue.items).toHaveLength(0)
+  })
+})
