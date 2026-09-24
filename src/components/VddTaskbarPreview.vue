@@ -138,6 +138,7 @@ onBeforeUnmount(() => releaseIfStillMine(props.panelId))
         </span>
         <span
           class="vdd-tooltip-close-x"
+          aria-hidden="true"
           :data-vdd-preview-close="panelId"
           :title="ws.format(ws.messages.closePanel)"
           @click.stop="emit('close')"
