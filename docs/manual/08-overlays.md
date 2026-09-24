@@ -41,6 +41,11 @@ never closes another, and a modal opened from inside a modal lands on top of it.
 **Escape** goes to the topmost modal, one modal per press. A modal opened with
 `closable: false` ignores it — which is how you make a dialog the user must answer.
 
+Something open *inside* a modal takes Escape first: a context menu, a toolbar flyout or a
+toolbar search closes, and the modal stays. Your own widgets can do the same — a combobox or
+date picker that closes its popup on Escape calls `event.preventDefault()`, and the modal
+leaves that press alone.
+
 The component you pass receives its props plus `panelId`, and can use `usePanel()` to close
 itself, rename its own header or mark itself dirty:
 
@@ -79,7 +84,10 @@ if (id === null) {
 A synchronous return would have to either ignore the guard or lie about the id.
 
 **Escape** closes a drawer only when no modal is open. A modal is always on top of a drawer,
-so it always gets the key first.
+so it always gets the key first — whichever was opened first. With a drawer open on each side,
+one press closes the one opened last, and the next press the other. As with modals, a menu,
+flyout or search box inside the drawer takes the key first, and so does a widget of yours that
+calls `event.preventDefault()`.
 
 ## Unsaved changes
 
@@ -280,9 +288,11 @@ one:
 </VddContextMenu>
 ```
 
-Positioning and dismissal become yours — the built-in clamping, Escape and outside-click
-handling belong to the markup you are replacing. This is what rdd's `ContextMenuAdapter` did,
-minus the adapter object, the provider and the ref handshake.
+Positioning and keyboard navigation become yours — the built-in viewport clamping belongs to
+the markup you are replacing. Dismissal does not: Escape and a press outside your markup still
+close the menu, and a press inside it does not, so your items receive their clicks. Call
+`close` when an item has run. This is what rdd's `ContextMenuAdapter` did, minus the adapter
+object, the provider and the ref handshake.
 
 ## Coming from react-dockable-desktop
 

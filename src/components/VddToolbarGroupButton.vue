@@ -9,6 +9,7 @@ import { computed, nextTick, onBeforeUnmount, ref, useTemplateRef } from 'vue'
 import type { ToolbarGroupItem } from '../core/toolbarTypes'
 import { flyoutPlacement, isSubItem } from '../core/toolbarTypes'
 import { useWorkspace } from '../composables/useWorkspace'
+import { claimEscape, isEscapeClaimed } from '../core/escape'
 
 const props = defineProps<{
   item: ToolbarGroupItem
@@ -44,13 +45,13 @@ async function toggle(): Promise<void> {
   await nextTick()
   clampIntoView()
   document.addEventListener('pointerdown', onOutside, { capture: true })
-  document.addEventListener('keydown', onKey)
+  document.addEventListener('keydown', onKey, { capture: true })
 }
 
 function close(): void {
   open.value = false
   document.removeEventListener('pointerdown', onOutside, { capture: true })
-  document.removeEventListener('keydown', onKey)
+  document.removeEventListener('keydown', onKey, { capture: true })
 }
 
 /** Nudge the flyout back on screen. It is positioned before it has a size, so this is a second pass. */
@@ -73,8 +74,12 @@ function onOutside(event: Event): void {
   if (button.value?.contains(target) || flyout.value?.contains(target)) return
   close()
 }
+/**
+ * Capture phase and a claim, so Escape closes the flyout and nothing else — a modal or drawer
+ * the strip sits in listens on `document` too (see `../core/escape`).
+ */
 function onKey(event: KeyboardEvent): void {
-  if (event.key === 'Escape') close()
+  if (event.key === 'Escape' && !isEscapeClaimed(event)) { claimEscape(event); close() }
 }
 
 function select(id: string, onActivate?: (id: string) => void): void {
