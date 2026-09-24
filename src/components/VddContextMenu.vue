@@ -56,15 +56,25 @@ let openTimer: ReturnType<typeof setTimeout> | undefined
 let closeTimer: ReturnType<typeof setTimeout> | undefined
 const clearTimers = () => { clearTimeout(openTimer); clearTimeout(closeTimer) }
 
-function close(): void {
+/** What had focus when the menu opened, so a keyboard close can hand it back. */
+let opener: HTMLElement | null = null
+
+/**
+ * `restoreFocus` for closes the user made from the keyboard or by choosing an item. Not for an
+ * outside press: focus then belongs wherever the user pressed.
+ */
+function close(restoreFocus = false): void {
   clearTimers()
   openSubmenu.value = null
   ws.closeContextMenu()
+  if (restoreFocus && opener?.isConnected) opener.focus({ preventScroll: true })
+  opener = null
 }
 
 /** Position the menu, then pull it back inside the viewport once it has a size. */
 watch(request, async (next) => {
   if (!next) { openSubmenu.value = null; return }
+  opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
   position.value = { x: next.x, y: next.y }
   itemEls.clear()
   openSubmenu.value = null
@@ -77,7 +87,25 @@ watch(request, async (next) => {
     { width: box.width, height: box.height },
     { width: window.innerWidth, height: window.innerHeight },
   )
+  // Keyboard users land in the menu. The built-in markup only: a slot manages its own focus.
+  enabledItems(el)[0]?.focus({ preventScroll: true })
 })
+
+// ── keyboard ───────────────────────────────────────────────────────────────
+const enabledItems = (menu: Element) =>
+  Array.from(menu.querySelectorAll<HTMLButtonElement>('button[role^="menuitem"]:not(:disabled)'))
+
+/** Up/Down move between enabled items, wrapping; Tab leaves the menu. Enter/Space are the buttons' own. */
+function onMenuKey(event: KeyboardEvent): void {
+  if (event.key === 'Tab') { close(true); return }
+  if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
+  event.preventDefault()
+  const list = enabledItems(event.currentTarget as Element)
+  if (list.length === 0) return
+  const at = list.indexOf(document.activeElement as HTMLButtonElement)
+  const step = event.key === 'ArrowDown' ? 1 : -1
+  list[(at + step + list.length) % list.length]!.focus({ preventScroll: true })
+}
 
 /**
  * Dismissal.
@@ -115,7 +143,7 @@ function onOutside(event: Event): void {
  * order, which puts the menu last. Claiming tells them it is taken.
  */
 function onKey(event: KeyboardEvent): void {
-  if (event.key === 'Escape' && !isEscapeClaimed(event)) { claimEscape(event); close() }
+  if (event.key === 'Escape' && !isEscapeClaimed(event)) { claimEscape(event); close(true) }
 }
 
 onBeforeUnmount(() => {
@@ -144,7 +172,7 @@ function keepEl(index: number, el: unknown): void {
 function activate(item: ContextMenuItem): void {
   if (isDisabled(item)) return
   simple(item).action?.()
-  close()
+  close(true)
 }
 
 function onItemEnter(index: number, item: ContextMenuItem): void {
@@ -155,23 +183,31 @@ function onItemEnter(index: number, item: ContextMenuItem): void {
   }
   if (isSubMenu(item) && item.items?.length) {
     clearTimeout(openTimer)
-    openTimer = setTimeout(() => {
-      const el = itemEls.get(index)
-      if (el) {
-        const box = el.getBoundingClientRect()
-        // Opens away from the parent item, mirrored for reading direction.
-        submenuPosition.value = ws.state.isRtl
-          ? { x: window.innerWidth - box.left + 2, y: box.top }
-          : { x: box.right + 2, y: box.top }
-      }
-      openSubmenu.value = index
-    }, SUBMENU_OPEN_MS)
+    openTimer = setTimeout(() => openSubmenuAt(index), SUBMENU_OPEN_MS)
   } else {
     clearTimeout(openTimer)
     if (openSubmenu.value !== null) {
       closeTimer = setTimeout(() => { openSubmenu.value = null }, SUBMENU_CLOSE_MS)
     }
   }
+}
+
+function openSubmenuAt(index: number): void {
+  const el = itemEls.get(index)
+  if (el) {
+    const box = el.getBoundingClientRect()
+    // Opens away from the parent item, mirrored for reading direction.
+    submenuPosition.value = ws.state.isRtl
+      ? { x: window.innerWidth - box.left + 2, y: box.top }
+      : { x: box.right + 2, y: box.top }
+  }
+  openSubmenu.value = index
+}
+
+/** A click (or tap, or Enter) opens a submenu at once, without the hover delay. */
+function onSubmenuClick(index: number): void {
+  clearTimers()
+  openSubmenuAt(index)
 }
 
 function onItemLeave(item: ContextMenuItem): void {
@@ -222,6 +258,7 @@ const submenuStyle = computed(() => ws.state.isRtl
       data-vdd-menu
       role="menu"
       aria-orientation="vertical"
+      @keydown="onMenuKey"
     >
       <template v-for="(item, index) in request.items" :key="index">
         <hr v-if="isSeparator(item)" class="vdd-context-menu__separator" role="separator" >
@@ -235,8 +272,10 @@ const submenuStyle = computed(() => ws.state.isRtl
           :title="(item as ContextMenuSubMenu).title ? ws.format((item as ContextMenuSubMenu).title) : undefined"
           :data-vdd-menu-submenu="ws.format((item as ContextMenuSubMenu).label)"
           role="menuitem"
-          aria-haspopup="true"
+          tabindex="-1"
+          aria-haspopup="menu"
           :aria-expanded="openSubmenu === index"
+          @click="onSubmenuClick(index)"
           @pointerenter="onItemEnter(index, item)"
           @pointerleave="onItemLeave(item)"
         >
@@ -256,6 +295,7 @@ const submenuStyle = computed(() => ws.state.isRtl
           :data-cy-action="simple(item).cyAction"
           :data-vdd-menu-item="ws.format(simple(item).label)"
           :role="showsCheckbox(item) ? 'menuitemcheckbox' : 'menuitem'"
+          tabindex="-1"
           :aria-checked="showsCheckbox(item) ? isChecked(item) : undefined"
           @click="activate(item)"
           @pointerenter="onItemEnter(index, item)"
@@ -289,6 +329,7 @@ const submenuStyle = computed(() => ws.state.isRtl
       :dir="ws.state.dir"
       data-vdd-submenu
       role="menu"
+      @keydown="onMenuKey"
       @pointerenter="clearTimers()"
       @pointerleave="openSubmenu = null"
     >
@@ -302,6 +343,7 @@ const submenuStyle = computed(() => ws.state.isRtl
           :disabled="isDisabled(item)"
           :data-vdd-menu-item="ws.format(simple(item).label)"
           role="menuitem"
+          tabindex="-1"
           @click="activate(item)"
         >
           <span class="vdd-context-menu__icon" :aria-hidden="!simple(item).icon">

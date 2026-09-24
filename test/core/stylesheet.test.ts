@@ -112,3 +112,28 @@ describe('1.1.2 stylesheet fixes', () => {
     expect(rule('.vdd-taskbar-item-tooltip::before')!).toMatch(/height:\s*8px/)
   })
 })
+
+describe('one font token for all chrome (1.2.0)', () => {
+  // Four rules hard-coded three different stacks, and chrome rendered outside the workspace —
+  // teleported menus, flyouts and toasts, and modals and drawers mounted beside it — set none,
+  // so it took the host page's body font.
+  it('declares --vdd-font-family on :root', () => {
+    expect(rules).toMatch(/:root\s*\{[^}]*--vdd-font-family:/)
+  })
+
+  it('no rule hard-codes a family other than monospace or inherit', () => {
+    const families = Array.from(rules.matchAll(/(?<![\w-])font-family:\s*([^;]+);/g)).map(m => m[1]!.trim())
+    const hardCoded = families.filter(f => !/^var\(--vdd-font-family\)$|^monospace$|^inherit$/.test(f))
+    expect(hardCoded).toEqual([])
+  })
+
+  it.each([
+    '.vdd-workspace', '.vdd-taskbar-item-tooltip', '.vdd-floating-window-title', '.vdd-context-menu',
+    '.vdd-modal-overlay', '.vdd-side-panel', '.vdd-toast-container', '.vdd-toolbar-group-flyout',
+    '.vdd-panel-toolbar-search__dropdown', '.vdd-toolbar-strip', '.vdd-sidebar-layout',
+  ])('%s reads the token', (selector) => {
+    const esc = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const re = new RegExp(`(^|[},])\\s*[^{}]*${esc}(?![\\w-])[^{}]*\\{[^}]*font-family:\\s*var\\(--vdd-font-family\\)`)
+    expect(rules).toMatch(re)
+  })
+})

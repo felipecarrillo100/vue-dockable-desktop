@@ -279,6 +279,11 @@ Pass `event` and the menu appears at the pointer, clamped to stay on screen; pas
 instead to place it yourself. It closes on Escape, on an outside click, and when an item
 runs.
 
+From the keyboard: the menu takes focus when it opens, ArrowDown and ArrowUp move between the
+items that are enabled, Enter or Space runs one, and Tab or Escape closes the menu. Closing
+from the keyboard, or by running an item, hands focus back to whatever had it before. A
+submenu opens on hover or on click.
+
 Four item kinds:
 
 | | |

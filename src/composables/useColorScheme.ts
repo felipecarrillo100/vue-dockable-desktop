@@ -4,7 +4,9 @@ import type { ComputedRef } from 'vue'
 /** What the workspace is currently rendering as. */
 export type ColorScheme = 'dark' | 'light'
 
+/** With no document — server rendering — there is no attribute to read, so: dark. */
 const read = (): ColorScheme =>
+  typeof document !== 'undefined' &&
   document.documentElement.getAttribute('data-color-scheme') === 'light' ? 'light' : 'dark'
 
 /**
@@ -27,9 +29,11 @@ export function useColorScheme(): ComputedRef<ColorScheme> {
 
   // A MutationObserver rather than a workspace subscription: the attribute is the contract,
   // so this works for a scheme set by the application itself, with no workspace involved.
-  const observer = new MutationObserver(() => { scheme.value = read() })
-  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-color-scheme'] })
-  onScopeDispose(() => observer.disconnect())
+  if (typeof document !== 'undefined') {
+    const observer = new MutationObserver(() => { scheme.value = read() })
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-color-scheme'] })
+    onScopeDispose(() => observer.disconnect())
+  }
 
   // A computed rather than the raw ref: reading the scheme is the whole API, and writing it
   // would set an attribute nobody is watching for.
