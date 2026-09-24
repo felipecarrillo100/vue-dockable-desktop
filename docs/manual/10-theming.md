@@ -26,6 +26,15 @@ Override the tokens. Anywhere that wins the cascade will do:
 }
 ```
 
+The chrome's font is a token too — one value for everything the library draws, including the
+parts teleported to `<body>`:
+
+```css
+:root { --vdd-font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+/* or follow your page: */
+:root { --vdd-font-family: inherit; }
+```
+
 Tokens are grouped by area, so you can retheme one part of the UI: `--vdd-window-*`,
 `--vdd-modal-*`, `--vdd-side-panel-*`, `--vdd-taskbar-*`, `--vdd-tab-*`,
 `--vdd-panel-toolbar-*`, `--vdd-panel-float-*`, `--vdd-scrollbar-*`.
@@ -198,6 +207,7 @@ directions, so a token cannot be added without a row here, and a row cannot outl
 | `--vdd-text-secondary` | `#94a3b8` | Muted text - hints, counts, placeholders. |
 | `--vdd-text-tab-active` | `#ffffff` | Label of the selected tab. |
 | `--vdd-text-tab-inactive` | `#858b99` | Label of an unselected tab. |
+| `--vdd-font-family` | `'Outfit', 'Inter', system-ui, -apple-system, sans-serif` | The font of all library chrome: the workspace, tabs and windows, the sidebar and toolbar, modals, side panels, toasts, menus and flyouts. Set it to `inherit` to use your page's font. |
 | `--vdd-text-tab-hover` | `#e2e8f0` | Label of a tab under the pointer. |
 
 ### Accent
