@@ -7,7 +7,7 @@
   "registry.test.ts": 9,
   "serializable.test.ts": 12,
   "stretch.test.ts": 12,
-  "stylesheet.test.ts": 10,
+  "stylesheet.test.ts": 23,
   "round-trip.test.ts": 27,
   "usePanel.test.ts": 18,
   "useWorkspace.test.ts": 9,
@@ -18,7 +18,7 @@
   "floatingWindows.test.ts": 25,
   "dragDock.test.ts": 27,
   "taskbar.test.ts": 20,
-  "contextMenu.test.ts": 36,
+  "contextMenu.test.ts": 42,
   "sidebar.test.ts": 91,
   "toolbar.test.ts": 44,
   "overlays.test.ts": 6,
@@ -34,5 +34,8 @@
   "selfDrop.test.ts": 20,
   "escapeRouting.test.ts": 10,
   "rtlGestures.test.ts": 10,
-  "eventTypes.test.ts": 1
+  "eventTypes.test.ts": 1,
+  "libraryLabels.test.ts": 4,
+  "tabsKeyboard.test.ts": 9,
+  "renderToString.test.ts": 3
 }
