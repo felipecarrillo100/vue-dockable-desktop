@@ -8,6 +8,10 @@
  */
 import type { SidebarTab } from '../core/sidebarTypes'
 import VddSidebarTabScope from './VddSidebarTabScope.vue'
+import { useLibraryMessage } from '../composables/useLibraryMessage'
+
+/** The library's own strings, translated when a workspace is present. */
+const message = useLibraryMessage()
 
 const props = defineProps<{
   tabs: SidebarTab[]
@@ -55,8 +59,8 @@ void props
           type="button"
           class="vdd-sidebar-drawer-close-button"
           data-vdd-sidebar-close
-          title="Close"
-          aria-label="Close"
+          :title="message('close')"
+          :aria-label="message('close')"
           @click="emit('close')"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">

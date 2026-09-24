@@ -36,6 +36,8 @@ export const defaultMessages = {
   scrollTabsRight: { id: 'vdd.scrollTabsRight', defaultMessage: 'Scroll tabs right' },
   moreActions: { id: 'vdd.moreActions', defaultMessage: 'More actions' },
   search: { id: 'vdd.search', defaultMessage: 'Search' },
+  notifications: { id: 'vdd.notifications', defaultMessage: 'Notifications' },
+  closeNotification: { id: 'vdd.closeNotification', defaultMessage: 'Close notification' },
 } as const satisfies Record<string, MessageDescriptor>
 
 /**

@@ -9,8 +9,12 @@
  */
 import { computed, onBeforeUnmount, toRaw, watch } from 'vue'
 import { removeToast, setToastAdapter, toastQueue } from '../core/toast'
+import { useLibraryMessage } from '../composables/useLibraryMessage'
 import type { ToastAdapter, ToastPosition } from '../core/toast'
 import VddToastItem from './VddToastItem.vue'
+
+/** The library's own strings, translated when a workspace is present. */
+const message = useLibraryMessage()
 
 const props = withDefaults(defineProps<{
   /** @default 'top-right' */
@@ -103,7 +107,7 @@ const isLeft = computed(() => props.position.endsWith('left'))
       ]"
       :style="{ width: `${width}px` }"
       role="region"
-      aria-label="Notifications"
+      :aria-label="message('notifications')"
       aria-live="polite"
       data-vdd-toasts
     >

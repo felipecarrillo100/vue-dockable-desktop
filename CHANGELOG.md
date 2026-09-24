@@ -11,6 +11,54 @@ correspondence lives, alongside the feature-by-feature map in [docs/PARITY.md](d
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-09-24
+
+**Parity: react-dockable-desktop 6.3.1.**
+
+The remaining items from the user bug report that 1.1.2 left for a minor release: they add
+behaviour, change a default, or extend a public type.
+
+### Added
+
+- **Tabs work from the keyboard.** Each tab group is one stop in the Tab order — its selected
+  tab. ArrowLeft and ArrowRight move to the previous or next tab and show it, wrapping, and
+  mirrored under RTL; Delete closes the focused tab, asking first if it has unsaved changes.
+  The tab strip is a `tablist` and the body a `tabpanel`; a tab's close × is hidden from
+  assistive technology, since Delete and the menu's Close cover it. A focus ring shows for
+  keyboard focus only.
+
+- **The context menu works from the keyboard.** It takes focus when it opens; ArrowDown and
+  ArrowUp move between enabled items, Enter or Space runs one, and Tab or Escape closes it.
+  Closing from the keyboard, or by running an item, hands focus back to whatever had it. A
+  submenu now also opens on click, which helps on touch screens. A custom menu slot manages
+  its own focus.
+
+- **`--vdd-font-family`, one token for the font of all library chrome.** Set it to change the
+  font of the workspace, sidebar, toolbar, modals, side panels, toasts, menus and flyouts in
+  one place, or to `inherit` to use your page's font. See the theming chapter.
+
+- **Two message keys: `notifications` and `closeNotification`.** The toast region's
+  accessible name and a toast's close button were hard-coded English, as was the sidebar
+  drawer's close button (now the existing `close` key). They go through the message table and
+  formatter like every other string, and fall back to English where there is no workspace.
+
+- **`<VddDesktop>` can be set up without a DOM.** Server-rendering it threw
+  `document is not defined` and took the whole page render down. It now renders the chrome and
+  leaves the panels to the client. `<ClientOnly>` remains the supported setup under Nuxt or
+  other SSR, and the getting-started chapter says so.
+
+### Changed
+
+- **The chrome's default font.** The context menu used the system font stack while the rest of
+  the chrome used the workspace's, and everything rendered outside the workspace — the sidebar
+  and toolbar around it, modals, side panels, toasts, menus and flyouts — took the host page's
+  body font. All of it now uses `--vdd-font-family`, which defaults to the workspace's stack.
+  To keep the page's font, set `--vdd-font-family: inherit`.
+
+- **`MessageKey` has two more keys.** A table typed `Record<MessageKey, string>`, as the i18n
+  chapter recommends, fails to compile until it adds `notifications` and `closeNotification`.
+  That is the check doing its job; partial `messages` overrides are unaffected.
+
 ## [1.1.2] — 2026-09-24
 
 **Parity: react-dockable-desktop 6.3.1.**
