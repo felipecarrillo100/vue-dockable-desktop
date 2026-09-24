@@ -375,12 +375,20 @@ directions, so a token cannot be added without a row here, and a row cannot outl
 | `--vdd-z-base` | `1000` | Base stacking level for floating windows and all chrome. Set it through `createWorkspace({ zIndexBase })`, not here. |
 | `--vdd-styles-loaded` | `1` | Sentinel the library checks on mount to detect a missing stylesheet import. Do not override. |
 
-### Skin-level knobs with no base default
+### Knobs with no base value
 
-These are read by the stylesheet and set by some built-in skins, but deliberately have no value
-on `:root`: they are read with no fallback in some rules and with differing fallbacks in others,
-so giving them a base value would change how the default skin paints. Set them in a skin if you
-want them; leaving them unset is the supported state.
+These are read by the stylesheet but set nowhere — not on `:root`, not by any built-in skin.
+Every rule that reads them supplies its own fallback, so leaving them unset is the supported
+state; set one in your own skin to change it. `--vdd-window-opacity` is the reason they are
+not given a base value: each skin reads it with a different fallback, so one value on `:root`
+would repaint every skin.
 
-| Token | What it paints |
-|---|---|
+| Token | Fallback | What it paints |
+|---|---|---|
+| `--vdd-window-opacity` | per skin, `0.7`–`1.0` (default skin `0.85`) | Alpha of a floating window's background |
+| `--vdd-sidebar-header-area-padding-top` | `8px` | Space above the sidebar rail's header slot |
+| `--vdd-sidebar-header-area-padding-bottom` | `8px` | Space below the sidebar rail's header slot |
+| `--vdd-sidebar-footer-area-padding-top` | `8px` | Space above the sidebar rail's footer slot |
+| `--vdd-sidebar-footer-area-padding-bottom` | `8px` | Space below the sidebar rail's footer slot |
+| `--vdd-toast-offset-top` | `0px` | Distance of a top-positioned toast stack from the viewport's top edge |
+| `--vdd-toast-offset-bottom` | `0px` | Distance of a bottom-positioned toast stack from the viewport's bottom edge |

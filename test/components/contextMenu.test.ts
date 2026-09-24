@@ -459,6 +459,57 @@ describe('a default slot replaces the built-in menu (rdd ContextMenuAdapter)', (
     expect(document.querySelector('[data-mine]')).toBeNull()
   })
 
+  it('a real click inside the slot reaches its item, pointerdown first', async () => {
+    // A mouse click is pointerdown → click. The capture-phase pointerdown dismissal used to
+    // treat the whole slot as outside, so the menu closed before the click could land.
+    const ws = createWorkspace({ panels: {} })
+    const action = vi.fn()
+    const wrapper = mount(VddContextMenu, {
+      global: { plugins: [ws] },
+      attachTo: document.body,
+      slots: {
+        default: `<ul data-mine><li v-for="(i, n) in items" :key="n">
+          <button data-mine-item @click="i.action()">{{ i.label }}</button></li></ul>`,
+      },
+    })
+    mounted.push(wrapper)
+
+    ws.showContextMenu({ x: 10, y: 10, items: [{ label: 'Go', action }] })
+    await nextTick()
+    document.querySelector('[data-mine-item]')!.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
+    await nextTick()
+    // Re-query: a detached button would still run its listener in jsdom, but in a browser a
+    // click never reaches an element that is no longer in the document.
+    const live = document.querySelector<HTMLButtonElement>('[data-mine-item]')
+    expect(live).not.toBeNull()
+    live!.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await nextTick()
+
+    expect(action).toHaveBeenCalledTimes(1)
+  })
+
+  it('a slot menu is still dismissed by a press outside it, and by Escape', async () => {
+    const ws = createWorkspace({ panels: {} })
+    const wrapper = mount(VddContextMenu, {
+      global: { plugins: [ws] },
+      attachTo: document.body,
+      slots: { default: '<ul data-mine><li>x</li></ul>' },
+    })
+    mounted.push(wrapper)
+
+    ws.showContextMenu({ x: 10, y: 10, items: [{ label: 'One' }] })
+    await nextTick()
+    document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
+    await nextTick()
+    expect(document.querySelector('[data-mine]')).toBeNull()
+
+    ws.showContextMenu({ x: 10, y: 10, items: [{ label: 'One' }] })
+    await nextTick()
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    await nextTick()
+    expect(document.querySelector('[data-mine]')).toBeNull()
+  })
+
   it('renders the built-in menu when no slot is given', async () => {
     const ws = createWorkspace({ panels: {} })
     const wrapper = mount(VddContextMenu, { global: { plugins: [ws] }, attachTo: document.body })
@@ -466,5 +517,25 @@ describe('a default slot replaces the built-in menu (rdd ContextMenuAdapter)', (
     ws.showContextMenu({ x: 5, y: 5, items: [{ label: 'Built in' }] })
     await nextTick()
     expect(document.querySelector('[data-vdd-menu]')).not.toBeNull()
+  })
+})
+
+describe('ARIA roles', () => {
+  it('a checkbox item is a menuitemcheckbox; aria-checked is not valid on a plain menuitem', async () => {
+    const { ws } = setup()
+    ws.showContextMenu({ x: 10, y: 10, items: [
+      { label: 'On', checkbox: { value: true } },
+      { label: 'Off', checkbox: { value: false } },
+      { label: 'Hidden', checkbox: { value: true, active: false } },
+      { label: 'Plain' },
+    ] })
+    await nextTick()
+    const role = (label: string) => document.querySelector(`[data-vdd-menu-item="${label}"]`)?.getAttribute('role')
+    expect(role('On')).toBe('menuitemcheckbox')
+    expect(role('Off')).toBe('menuitemcheckbox')
+    expect(role('Hidden')).toBe('menuitem')
+    expect(role('Plain')).toBe('menuitem')
+    expect(document.querySelector('[data-vdd-menu-item="Off"]')?.getAttribute('aria-checked')).toBe('false')
+    expect(document.querySelector('[data-vdd-menu-item="Plain"]')?.hasAttribute('aria-checked')).toBe(false)
   })
 })

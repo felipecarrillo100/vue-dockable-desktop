@@ -11,6 +11,7 @@
 import { computed, nextTick, onBeforeUnmount, ref, useTemplateRef } from 'vue'
 import type { Component } from 'vue'
 import { useWorkspace } from '../composables/useWorkspace'
+import { claimEscape, isEscapeClaimed } from '../core/escape'
 
 /** One row in the dropdown. */
 export interface SearchResult {
@@ -63,6 +64,13 @@ function collapse(): void {
   results.value = []
   dropdown.value = null
   reset()
+}
+
+/** Escape collapses the field, and claims the key so a modal or drawer around it stays open. */
+function onEscape(event: KeyboardEvent): void {
+  if (isEscapeClaimed(event)) return
+  claimEscape(event)
+  collapse()
 }
 
 function place(): void {
@@ -152,7 +160,7 @@ onBeforeUnmount(reset)
       autocomplete="off"
       data-vdd-search-input
       @input="onInput"
-      @keydown.esc="collapse"
+      @keydown.esc="onEscape"
     >
 
     <!--

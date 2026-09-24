@@ -41,6 +41,11 @@ never closes another, and a modal opened from inside a modal lands on top of it.
 **Escape** goes to the topmost modal, one modal per press. A modal opened with
 `closable: false` ignores it — which is how you make a dialog the user must answer.
 
+Something open *inside* a modal takes Escape first: a context menu, a toolbar flyout or a
+toolbar search closes, and the modal stays. Your own widgets can do the same — a combobox or
+date picker that closes its popup on Escape calls `event.preventDefault()`, and the modal
+leaves that press alone.
+
 The component you pass receives its props plus `panelId`, and can use `usePanel()` to close
 itself, rename its own header or mark itself dirty:
 
@@ -79,7 +84,10 @@ if (id === null) {
 A synchronous return would have to either ignore the guard or lie about the id.
 
 **Escape** closes a drawer only when no modal is open. A modal is always on top of a drawer,
-so it always gets the key first.
+so it always gets the key first — whichever was opened first. With a drawer open on each side,
+one press closes the one opened last, and the next press the other. As with modals, a menu,
+flyout or search box inside the drawer takes the key first, and so does a widget of yours that
+calls `event.preventDefault()`.
 
 ## Unsaved changes
 
@@ -127,8 +135,12 @@ panel.onBeforeClose(async () => {
 ```
 
 Return `false`, or a promise of `false`, to block. The guard is registered in `setup` and
-disposed with the component — there is nothing to unsubscribe. A guard takes precedence over
-the dirty check: if you have registered one, the built-in question is not asked.
+disposed with the component — there is nothing to unsubscribe. It covers every way the overlay
+can close: Escape, the backdrop, the × and `close()`.
+
+The guard runs **before** the dirty check, not instead of it. If the guard allows the close
+and the panel is dirty, the built-in question is still asked. To replace the question with
+your own, keep the panel clean and ask in the guard.
 
 ### Mount `<VddModals>`
 
@@ -224,6 +236,20 @@ const adapter: ToastAdapter = {
 Give `component` a component instead of `null` and `<VddToasts>` renders it, with a
 `position` prop, in place of the built-in list.
 
+What the adapter receives:
+
+- `show` for a toast it does not have yet, with every option filled in — `type`, and the
+  container's `defaultDuration` and `defaultClosable` where the call left them out.
+- `update` for a call that reuses the id of a toast it is showing, including the settled
+  message of a `toast.promise()`. `patch` holds only what the call passed.
+- `dismiss` for `toast.dismiss(id)`, or with no id for `toast.dismiss()`. An id dismissed and
+  then used again arrives as a new `show`.
+
+Toasts raised before `<VddToasts>` mounts its adapter are handed to it when it does. While an
+adapter is set, nothing is kept in the built-in queue: the adapter owns the toasts, their
+timers and their removal. Since it has no way to report a toast it removed by itself, a toast's
+`onClose` callback is not called in adapter mode.
+
 ## Context menus
 
 Mount `<VddContextMenu>` once, then open a menu from anywhere:
@@ -280,9 +306,11 @@ one:
 </VddContextMenu>
 ```
 
-Positioning and dismissal become yours — the built-in clamping, Escape and outside-click
-handling belong to the markup you are replacing. This is what rdd's `ContextMenuAdapter` did,
-minus the adapter object, the provider and the ref handshake.
+Positioning and keyboard navigation become yours — the built-in viewport clamping belongs to
+the markup you are replacing. Dismissal does not: Escape and a press outside your markup still
+close the menu, and a press inside it does not, so your items receive their clicks. Call
+`close` when an item has run. This is what rdd's `ContextMenuAdapter` did, minus the adapter
+object, the provider and the ref handshake.
 
 ## Coming from react-dockable-desktop
 

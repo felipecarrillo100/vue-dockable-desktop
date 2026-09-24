@@ -8,7 +8,7 @@
 import { computed } from 'vue'
 import type { LayoutNode } from '../types'
 import { useWorkspace } from '../composables/useWorkspace'
-import { startPointerDrag } from '../core/dragResize'
+import { isRtlElement, startPointerDrag } from '../core/dragResize'
 import VddLeafGroup from './VddLeafGroup.vue'
 
 const props = defineProps<{ node: LayoutNode; path: number[] }>()
@@ -25,6 +25,9 @@ function onDividerDown(index: number, event: PointerEvent): void {
     ? (isRow.value ? parent.clientWidth : parent.clientHeight)
     : (isRow.value ? 1000 : 800)
   const sizes = [...props.node.sizes]
+  // Sizes are in child order, which a row lays out right to left under RTL: there, moving
+  // the pointer right must shrink the child before the divider, not grow it.
+  const sign = isRow.value && isRtlElement(parent) ? -1 : 1
 
   startPointerDrag({
     element: divider,
@@ -37,7 +40,7 @@ function onDividerDown(index: number, event: PointerEvent): void {
       { el: document.body, classes: ['vdd-resizing-active', isRow.value ? 'vdd-resizing-col-active' : 'vdd-resizing-row-active'] },
     ],
     onMove: (dx, dy, start) => {
-      const delta = (isRow.value ? dx : dy) / extent
+      const delta = (isRow.value ? sign * dx : dy) / extent
       const next = [...start]
       next[index] = (start[index] ?? 0) + delta
       next[index + 1] = (start[index + 1] ?? 0) - delta

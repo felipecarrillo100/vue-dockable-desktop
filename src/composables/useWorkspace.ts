@@ -19,7 +19,7 @@ import type { Workspace } from '../core/workspace'
  * `subscribe()` is wrapped so a subscription made during `setup` is disposed with the
  * component. Outside a scope it behaves exactly like `workspace.subscribe`.
  */
-export function useWorkspace<TEvents extends Record<string, unknown> = Record<string, unknown>>(): Workspace<TEvents> {
+export function useWorkspace<TEvents extends object = Record<string, unknown>>(): Workspace<TEvents> {
   const workspace = inject(WORKSPACE_KEY, null) as Workspace<TEvents> | null
   if (!workspace) {
     throw new Error(

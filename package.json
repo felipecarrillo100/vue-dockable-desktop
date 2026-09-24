@@ -1,6 +1,6 @@
 {
   "name": "vue-dockable-desktop",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Vue 3 port of react-dockable-desktop \u2014 a dockable layout engine with split docking, tabbed groups, floating windows and zero-unmount panel persistence.",
   "type": "module",
   "license": "MIT",
