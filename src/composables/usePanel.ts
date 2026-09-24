@@ -14,6 +14,16 @@ export interface PanelContext {
   setIcon?: (icon: unknown) => void
   setDirty?: (dirty: boolean, options?: DirtyStateOptions) => void
   size?: Ref<{ width: number; height: number } | null>
+  /** Live title and dirty state, for a container whose panel is not in `ws.state.panels`. */
+  title?: Ref<Label>
+  dirty?: Ref<boolean>
+  /** Register a close guard with the container; returns its disposer. */
+  onBeforeClose?: (guard: () => boolean | Promise<boolean>) => () => void
+  /**
+   * Set by a modal or side panel: it is not part of the layout, so it has nothing to save
+   * and nowhere to minimise to. Lets `usePanel()` say so rather than call it standalone.
+   */
+  overlay?: boolean
 }
 
 export const PANEL_KEY = Symbol('vdd-panel') as InjectionKey<PanelContext>
@@ -95,18 +105,25 @@ export function usePanel(): UsePanelReturn {
     }
   }
 
+  /** For what a modal or side panel cannot do — accurate, where "standalone" would mislead. */
+  const warnOverlay = (what: string, why: string) => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn(`[vue-dockable-desktop] usePanel().${what} did nothing: ${why}`)
+    }
+  }
+
   const info = computed(() => (workspace ? workspace.state.panels[id] : undefined))
   const fallbackSize = ref<{ width: number; height: number } | null>(null)
 
   return {
     id,
-    title: computed(() => info.value?.title ?? id),
+    title: computed(() => ctx?.title?.value ?? info.value?.title ?? id),
     isActive: computed(() => !!workspace && workspace.state.activePanelId === id),
     isMinimized: computed(() => info.value?.state === 'minimized'),
     isFloating: computed(() => info.value?.state === 'floating'),
     containerType: computed(() => ctx?.containerType.value ?? NO_PANEL),
     size: computed(() => (ctx?.size ?? fallbackSize).value),
-    dirty: computed(() => info.value?.dirty === true),
+    dirty: computed(() => (ctx?.dirty ? ctx.dirty.value : info.value?.dirty === true)),
 
     setTitle: (title) => {
       if (ctx?.setTitle) ctx.setTitle(title)
@@ -129,15 +146,22 @@ export function usePanel(): UsePanelReturn {
     },
     minimize: () => {
       if (workspace && info.value) workspace.minimizePanel(id)
+      else if (ctx?.overlay) warnOverlay('minimize', 'modals and side panels cannot be minimised.')
       else warnStandalone('minimize')
     },
 
     onBeforeClose: (guard) => {
-      if (!workspace || !info.value) { warnStandalone('onBeforeClose'); return }
-      const off = workspace.registerCloseGuard(id, guard)
+      const off = ctx?.onBeforeClose
+        ? ctx.onBeforeClose(guard)
+        : workspace && info.value ? workspace.registerCloseGuard(id, guard) : null
+      if (!off) { warnStandalone('onBeforeClose'); return }
       if (getCurrentScope()) onScopeDispose(off)
     },
     onSaveState: (provider) => {
+      if (ctx?.overlay) {
+        warnOverlay('onSaveState', 'modals and side panels are not saved with the layout.')
+        return
+      }
       if (!workspace || !info.value) { warnStandalone('onSaveState'); return }
       const off = workspace.registerStateProvider(id, provider)
       if (getCurrentScope()) onScopeDispose(off)

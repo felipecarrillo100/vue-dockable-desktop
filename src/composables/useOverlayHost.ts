@@ -120,6 +120,12 @@ export function useOverlayHost(
     }),
     setIcon: (component) => { liveIcon.value = (component ?? null) as Component | null },
     setDirty: (dirty, dirtyOptions) => overlays.setDirty(current().id, dirty, dirtyOptions),
+    // An overlay's state lives on `ws.overlays`, not in `ws.state.panels`, so the container
+    // supplies it — `usePanel()` would otherwise find nothing and treat this as standalone.
+    title: computed(() => current().options.title ?? current().id),
+    dirty: computed(() => current().dirty),
+    onBeforeClose: (guard) => overlays.registerCloseGuard(current().id, guard),
+    overlay: true,
   })
 
   return {
