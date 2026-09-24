@@ -20,7 +20,9 @@ const workspace = createWorkspace({
 
 `loadLayout` replaces the entire workspace: panels not in the snapshot are closed. A
 malformed or unparseable string is rejected and returns `false`, leaving the current layout
-untouched — it never throws or half-applies.
+untouched — it never throws or half-applies. So is valid JSON that is not a whole layout: a
+snapshot needs `gridRoot`, `floating`, `minimized` and `panels`, and one missing any of them is
+refused with a development warning naming what is required.
 
 ## Autosave
 

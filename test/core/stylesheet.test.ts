@@ -85,3 +85,30 @@ describe('the styles-loaded sentinel is present', () => {
     expect(rules).toMatch(/--vdd-styles-loaded:\s*1/)
   })
 })
+
+describe('1.1.2 stylesheet fixes', () => {
+  it('.vdd-fill-viewport also works on <VddDesktop> itself, where .vdd-workspace sets height: 100%', () => {
+    // Same specificity, and `.vdd-workspace` comes later, so the bare class lost on the
+    // component's own root. The compound selector outranks it.
+    const m = rules.match(/([^{}]*)\{[^}]*height:\s*100vh[^}]*\}/)
+    expect(m).not.toBeNull()
+    expect(m![1]).toMatch(/\.vdd-workspace\.vdd-fill-viewport/)
+  })
+
+  it('a collapsed toolbar strip drops its edge border', () => {
+    expect(rules).toMatch(/\.vdd-toolbar-strip\.vdd-toolbar-strip--collapsed\s*\{[^}]*border-width:\s*0/)
+  })
+
+  it('the taskbar preview fades in from above, never over its icon', () => {
+    // It rests at translateY(-100%), 8px above the icon, with a bridge filling the gap.
+    // Starting at -90% put its bottom edge ~18px lower — over the icon — for the first
+    // frames, so a quick click hit the preview. Any start below rest drags the bridge over the
+    // icon, so it must start above.
+    const kf = rules.match(/@keyframes vdd-tooltip-fade-in\s*\{[\s\S]*?\n\}/)
+    expect(kf).not.toBeNull()
+    expect(kf![0]).not.toMatch(/translateY\(-90%\)/)
+    expect(kf![0]).toMatch(/from\s*\{[^}]*translateY\(calc\(-100% - \d+px\)\)/)
+    // The hover bridge spans the 8px gap and no more.
+    expect(rule('.vdd-taskbar-item-tooltip::before')!).toMatch(/height:\s*8px/)
+  })
+})

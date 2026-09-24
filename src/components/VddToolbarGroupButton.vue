@@ -9,6 +9,8 @@ import { computed, nextTick, onBeforeUnmount, ref, useTemplateRef } from 'vue'
 import type { ToolbarGroupItem } from '../core/toolbarTypes'
 import { flyoutPlacement, isSubItem } from '../core/toolbarTypes'
 import { useWorkspace } from '../composables/useWorkspace'
+import { claimEscape, isEscapeClaimed } from '../core/escape'
+import { isRtlElement } from '../core/dragResize'
 
 const props = defineProps<{
   item: ToolbarGroupItem
@@ -37,20 +39,22 @@ async function toggle(): Promise<void> {
   if (open.value) { open.value = false; return }
   const rect = button.value?.getBoundingClientRect()
   if (rect) {
+    // The strip's own direction, not the workspace's: the strip sits outside the workspace
+    // and follows the host page, so the two can differ.
     placement.value = flyoutPlacement(rect, props.position,
-      { width: window.innerWidth, height: window.innerHeight }, ws.state.isRtl)
+      { width: window.innerWidth, height: window.innerHeight }, isRtlElement(button.value))
   }
   open.value = true
   await nextTick()
   clampIntoView()
   document.addEventListener('pointerdown', onOutside, { capture: true })
-  document.addEventListener('keydown', onKey)
+  document.addEventListener('keydown', onKey, { capture: true })
 }
 
 function close(): void {
   open.value = false
   document.removeEventListener('pointerdown', onOutside, { capture: true })
-  document.removeEventListener('keydown', onKey)
+  document.removeEventListener('keydown', onKey, { capture: true })
 }
 
 /** Nudge the flyout back on screen. It is positioned before it has a size, so this is a second pass. */
@@ -73,8 +77,12 @@ function onOutside(event: Event): void {
   if (button.value?.contains(target) || flyout.value?.contains(target)) return
   close()
 }
+/**
+ * Capture phase and a claim, so Escape closes the flyout and nothing else — a modal or drawer
+ * the strip sits in listens on `document` too (see `../core/escape`).
+ */
 function onKey(event: KeyboardEvent): void {
-  if (event.key === 'Escape') close()
+  if (event.key === 'Escape' && !isEscapeClaimed(event)) { claimEscape(event); close() }
 }
 
 function select(id: string, onActivate?: (id: string) => void): void {
@@ -126,8 +134,8 @@ const style = computed(() => {
           class="vdd-toolbar-group-flyout-item"
           :class="{ 'vdd-active': activeId === entry.id }"
           :disabled="entry.disabled"
-          role="menuitem"
-          :aria-pressed="activeId === entry.id"
+          role="menuitemradio"
+          :aria-checked="activeId === entry.id"
           :data-vdd-flyout-item="entry.id"
           @click="select(entry.id, entry.onActivate)"
         >

@@ -8,7 +8,7 @@
  * Brought forward from M6 deliberately — docs/decisions/0009-layout-json-compatibility.md is
  * a hard requirement, and a requirement is worth failing early.
  */
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { defineComponent, h } from 'vue'
@@ -167,6 +167,25 @@ describe('loadLayout', () => {
       expect(w.loadLayout(bad)).toBe(false)
     }
     expect(w.isOpen('keep')).toBe(true)
+  })
+
+  it('rejects a payload missing floating, minimized or panels, and leaves the layout untouched', () => {
+    // These used to parse to an *empty* workspace, which loadLayout applied and reported as
+    // success — every open panel gone, and `true` returned.
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const w = createWorkspace({ panels: { map: { component: P } } })
+    w.openPanel('keep', 'map')
+    const full = JSON.parse(w.saveLayout()) as Record<string, unknown>
+    for (const missing of ['floating', 'minimized', 'panels']) {
+      const partial = { ...full }
+      delete partial[missing]
+      warn.mockClear()
+      expect(w.loadLayout(JSON.stringify(partial))).toBe(false)
+      expect(w.isOpen('keep')).toBe(true)
+      expect(warn).toHaveBeenCalledTimes(1)
+      expect(String(warn.mock.calls[0]![0])).toContain('not a layout')
+    }
+    warn.mockRestore()
   })
 
   it('publishes layout:changed so an autosave sees the restore', () => {

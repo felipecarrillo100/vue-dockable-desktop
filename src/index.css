@@ -194,7 +194,11 @@
  *
  * See docs/PARITY.md section 4, divergence D8.
  */
-.vdd-fill-viewport {
+/* The compound selector is for `<VddDesktop class="vdd-fill-viewport">`: there the class sits
+   on the same element as `.vdd-workspace`, whose `height: 100%` comes later in this file with
+   equal specificity and would otherwise win. */
+.vdd-fill-viewport,
+.vdd-workspace.vdd-fill-viewport {
   height: 100vh;
   overflow: hidden;
 }
@@ -587,10 +591,15 @@ body.vdd-resizing-col-active * {
   display: block;
 }
 
+/* It rests 8px above its icon at translateY(-100%), with an 8px hover bridge filling the gap.
+   It enters from *above* its resting place: rising from below — as it used to, from -90% —
+   put the preview, and then its bridge, over the icon for the first frames, so a quick click
+   meant for the icon landed on the preview. Measured in Chrome: from below, even a 6px offset
+   left the bridge over the icon's top 6px. */
 @keyframes vdd-tooltip-fade-in {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(-90%);
+    transform: translateX(-50%) translateY(calc(-100% - 6px));
   }
   to {
     opacity: 1;
@@ -626,14 +635,15 @@ body.vdd-resizing-col-active * {
   gap: 0.25rem;
 }
 
-/* Invisible bridge so mouse transitions smoothly to tooltip */
+/* Invisible bridge so mouse transitions smoothly to tooltip. It spans the 8px gap exactly;
+   any taller and it covers the top of the icon. */
 .vdd-taskbar-item-tooltip::before {
   content: '';
   position: absolute;
   top: 100%;
   left: 0;
   width: 100%;
-  height: 12px;
+  height: 8px;
   background: transparent;
 }
 
@@ -2555,7 +2565,8 @@ html.vdd-no-animations [class*="vdd-"]::after {
 }
 
 /* ── Sidebar strips — separator border, accent indicator, drawer shadow ──
-   direction: rtl (inherited from workspace root) reverses the flex row so
+   direction: rtl (inherited from the host page — the sidebar is an ancestor of the
+   workspace, so the workspace's own dir does not reach it) reverses the flex row so
    `vdd-left` strips move visually to the RIGHT and `vdd-right` strips to the LEFT.
    All physical border-left/border-right and box-shadow directions must swap. */
 
@@ -2872,6 +2883,8 @@ html.vdd-no-animations [class*="vdd-"]::after {
 .vdd-toolbar-strip.vdd-right { border-left:   1px solid var(--vdd-sidebar-border); }
 .vdd-toolbar-strip.vdd-top   { border-bottom: 1px solid var(--vdd-sidebar-border); }
 .vdd-toolbar-strip.vdd-bottom{ border-top:    1px solid var(--vdd-sidebar-border); }
+/* Collapsed to zero size: without this the edge border stays behind as a 1px line. */
+.vdd-toolbar-strip.vdd-toolbar-strip--collapsed { border-width: 0; }
 
 /* Base button */
 .vdd-toolbar-btn {

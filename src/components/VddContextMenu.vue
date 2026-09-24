@@ -13,6 +13,7 @@ import { computed, nextTick, onBeforeUnmount, ref, useTemplateRef, watch } from 
 import type { ContextMenuItem, ContextMenuSimpleItem, ContextMenuSubMenu } from '../core/contextMenu'
 import { clampToViewport, isSeparator, isSubMenu } from '../core/contextMenu'
 import { useWorkspace } from '../composables/useWorkspace'
+import { claimEscape, isEscapeClaimed } from '../core/escape'
 
 withDefaults(defineProps<{
   /** Visual theme hook, mirrored onto the menu's class. @default 'dark' */
@@ -28,8 +29,9 @@ defineSlots<{
    * and it needs no provider, no ref handshake and no adapter object.
    *
    * `items` is the pending menu, `x`/`y` the requested position, and `close` dismisses it.
-   * Positioning and dismissal are then yours: the built-in clamping, Escape handling and
-   * outside-click handling belong to the built-in markup this replaces.
+   * Positioning and keyboard navigation are then yours: the built-in viewport clamping
+   * belongs to the markup this replaces. Dismissal is not — Escape and a press outside the
+   * slot still close the menu, and a press inside it does not.
    */
   default?: (props: { items: ContextMenuItem[]; x: number; y: number; close: () => void }) => unknown
 }>()
@@ -42,6 +44,7 @@ const SUBMENU_CLOSE_MS = 200
 const ws = useWorkspace()
 const root = useTemplateRef<HTMLDivElement>('root')
 const submenuRoot = useTemplateRef<HTMLDivElement>('submenuRoot')
+const customRoot = useTemplateRef<HTMLDivElement>('customRoot')
 
 const request = computed(() => ws.contextMenu.value)
 const position = ref({ x: 0, y: 0 })
@@ -88,11 +91,11 @@ watch(request, (next) => {
   if (next) {
     document.addEventListener('pointerdown', onOutside, { capture: true })
     window.addEventListener('click', onOutside)
-    document.addEventListener('keydown', onKey)
+    document.addEventListener('keydown', onKey, { capture: true })
   } else {
     document.removeEventListener('pointerdown', onOutside, { capture: true })
     window.removeEventListener('click', onOutside)
-    document.removeEventListener('keydown', onKey)
+    document.removeEventListener('keydown', onKey, { capture: true })
   }
 })
 
@@ -102,18 +105,24 @@ function onOutside(event: Event): void {
   // be one — a click dispatched on `window` is the common case. If we cannot tell whether it
   // was inside, it was not the menu, so dismiss: closing is the safe default.
   if (!(target instanceof Node)) { close(); return }
-  if (root.value?.contains(target) || submenuRoot.value?.contains(target)) return
+  if (root.value?.contains(target) || submenuRoot.value?.contains(target)
+    || customRoot.value?.contains(target)) return
   close()
 }
+/**
+ * Capture phase, so the menu answers before any modal or drawer it was opened over — their
+ * listeners are on `document` too, and bubble-phase listeners there run in registration
+ * order, which puts the menu last. Claiming tells them it is taken.
+ */
 function onKey(event: KeyboardEvent): void {
-  if (event.key === 'Escape') { event.stopPropagation(); close() }
+  if (event.key === 'Escape' && !isEscapeClaimed(event)) { claimEscape(event); close() }
 }
 
 onBeforeUnmount(() => {
   clearTimers()
   document.removeEventListener('pointerdown', onOutside, { capture: true })
   window.removeEventListener('click', onOutside)
-  document.removeEventListener('keydown', onKey)
+  document.removeEventListener('keydown', onKey, { capture: true })
 })
 
 // ── items ──────────────────────────────────────────────────────────────────
@@ -187,13 +196,21 @@ const submenuStyle = computed(() => ws.state.isRtl
 
 <template>
   <Teleport v-if="request" to="body">
-    <slot
+    <!-- A box around the slot so dismissal can tell a press inside it from one outside.
+         `display: contents` keeps it out of the slot's layout. -->
+    <div
       v-if="$slots.default"
-      :items="request.items"
-      :x="position.x"
-      :y="position.y"
-      :close="() => ws.closeContextMenu()"
-    />
+      ref="customRoot"
+      data-vdd-menu-custom
+      style="display: contents"
+    >
+      <slot
+        :items="request.items"
+        :x="position.x"
+        :y="position.y"
+        :close="close"
+      />
+    </div>
 
     <div
       v-else
@@ -238,7 +255,7 @@ const submenuStyle = computed(() => ws.state.isRtl
           :title="simple(item).title ? ws.format(simple(item).title) : undefined"
           :data-cy-action="simple(item).cyAction"
           :data-vdd-menu-item="ws.format(simple(item).label)"
-          role="menuitem"
+          :role="showsCheckbox(item) ? 'menuitemcheckbox' : 'menuitem'"
           :aria-checked="showsCheckbox(item) ? isChecked(item) : undefined"
           @click="activate(item)"
           @pointerenter="onItemEnter(index, item)"

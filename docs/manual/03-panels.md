@@ -88,6 +88,11 @@ watch(isFloating,  floating => console.log(floating ? 'window' : 'docked'))
 `'floating-window'`, `'modal'`, `'left-panel'`, `'right-panel'` or `'standalone'`. The same
 component can be opened as a panel *and* as a modal; this is how it adapts.
 
+Inside a modal or a side panel, `usePanel()` works the same way: `title` and `dirty` follow
+the overlay, and `setTitle`, `setDirty`, `close` and `onBeforeClose` act on it. Two things
+have no meaning there and warn in development instead: `minimize()` (an overlay has nowhere to
+minimise to) and `onSaveState()` (overlays are not part of a saved layout).
+
 ### Unsaved changes
 
 ```ts
@@ -117,7 +122,10 @@ onBeforeClose(async () => {
 ```
 
 Registered in `setup`, disposed automatically with the component. There is no unsubscribe to
-remember.
+remember. It works the same in a docked panel, a floating window, a modal and a side panel.
+
+The guard runs first. If it allows the close and the panel is dirty, the unsaved-changes
+question is still asked.
 
 ### Contributing live state to a saved layout
 
@@ -141,17 +149,16 @@ close({ force: true })   // skips both
 minimize()
 ```
 
-## Header actions
+## Panel actions
 
-To put your own controls in a panel's tab or title bar:
+There is no slot for adding controls to a panel's tab or title bar. Put a panel's own actions
+where the panel already renders:
 
-```vue
-<VddDesktop>
-  <template #panel-actions="{ panelId }">
-    <button v-if="panelId.startsWith('doc-')" @click="save(panelId)">Save</button>
-  </template>
-</VddDesktop>
-```
+- in an overlay toolbar on the panel's edge — see
+  [Inside a panel](07-panel-overlay.md);
+- in the application toolbar, contributed only while the panel is active — see
+  [Panel contributions](09-contributions.md);
+- in the panel's context menu, below.
 
 ## Panel context menu
 

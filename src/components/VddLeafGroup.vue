@@ -11,6 +11,7 @@ import type { LayoutLeafNode } from '../types'
 import { useWorkspace } from '../composables/useWorkspace'
 import { useDragDock } from '../composables/useDragDock'
 import { buildPanelMenu } from '../core/panelMenu'
+import { tabSide } from '../core/dragResize'
 import VddPanelSlot from './VddPanelSlot.vue'
 import VddDropZones from './VddDropZones.vue'
 
@@ -39,7 +40,7 @@ function openMenu(panelId: string, event: MouseEvent | PointerEvent): void {
 function onTabPointerMove(leafId: string, panelId: string, index: number, event: PointerEvent): void {
   if (!drag?.dragging.value || event.pointerType === 'touch') return
   const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
-  drag.hoverTab({ leafId, panelId, index, side: event.clientX - rect.left < rect.width / 2 ? 'left' : 'right' })
+  drag.hoverTab({ leafId, panelId, index, side: tabSide(event.clientX, rect, ws.state.isRtl) })
 }
 
 const tabs = computed(() => props.leaf.panels.flatMap((id) => {

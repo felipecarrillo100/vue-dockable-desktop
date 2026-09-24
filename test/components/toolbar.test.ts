@@ -520,3 +520,29 @@ describe('TB34-TB36: Controlled toggle mode', () => {
     expect(btn.attributes('aria-pressed')).toBe('false')
   })
 })
+
+describe('1.1.2: collapse and roles', () => {
+  it('a collapsed strip is inert and carries the collapsed class; an open one is not', async () => {
+    // Collapsing only set width: 0, so the buttons stayed in the Tab order.
+    const { wrapper } = mountToolbar({ items: [{ type: 'action', id: 'a', label: 'A', icon: Icon, onClick: () => {} }], visible: false })
+    expect(strip(wrapper).hasAttribute('inert')).toBe(true)
+    expect(strip(wrapper).classList.contains('vdd-toolbar-strip--collapsed')).toBe(true)
+    await wrapper.setProps({ visible: true })
+    expect(strip(wrapper).hasAttribute('inert')).toBe(false)
+    expect(strip(wrapper).classList.contains('vdd-toolbar-strip--collapsed')).toBe(false)
+  })
+
+  it('flyout tools are menuitemradio with aria-checked, not menuitem with aria-pressed', async () => {
+    const { wrapper } = mountToolbar({ items: [{
+      type: 'group', id: 'g', label: 'G', defaultIcon: Icon,
+      items: [{ id: 'one', label: 'One', icon: Icon }, { id: 'two', label: 'Two', icon: Icon }],
+    }] })
+    await click(wrapper.get('.vdd-toolbar-btn-group').element)
+    await click(flyoutItems()[0]!)
+    await click(wrapper.get('.vdd-toolbar-btn-group').element)
+    const items = flyoutItems()
+    expect(items.map(i => i.getAttribute('role'))).toEqual(['menuitemradio', 'menuitemradio'])
+    expect(items.map(i => i.getAttribute('aria-checked'))).toEqual(['true', 'false'])
+    expect(items.some(i => i.hasAttribute('aria-pressed'))).toBe(false)
+  })
+})

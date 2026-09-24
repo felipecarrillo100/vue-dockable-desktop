@@ -14,7 +14,7 @@
  * shifted from it when a toast finished exiting; here every toast goes in one list and the
  * container renders a `computed` slice of it, so promotion is not code at all.
  */
-import { reactive } from 'vue'
+import { reactive, toRaw } from 'vue'
 import type { Component } from 'vue'
 
 export type ToastType = 'info' | 'success' | 'warning' | 'error'
@@ -80,17 +80,65 @@ export interface ToastAdapter {
   component: Component | null
 }
 
+/** What `<VddToasts>` would fill in for an option the caller left out. */
+export interface ToastDefaults {
+  duration: number
+  closable: boolean
+}
+
+const DEFAULTS: ToastDefaults = { duration: 5000, closable: true }
+
 /** The live queue. Exported for `<VddToasts>` and for tests; applications use `toast`. */
-export const toastQueue = reactive<{ items: ToastRecord[]; adapter: ToastAdapter | null }>({
+export const toastQueue = reactive<{
+  items: ToastRecord[]
+  adapter: ToastAdapter | null
+  /** The container's defaults, so an adapter receives options with every default filled in. */
+  defaults: ToastDefaults
+}>({
   items: [],
   adapter: null,
+  defaults: { ...DEFAULTS },
 })
 
+/**
+ * The ids an adapter is currently showing. While an adapter is set nothing goes into `items`:
+ * the adapter renders, and nothing would ever remove a record, so they would pile up and all
+ * appear at once if the adapter were later unset. This set is only what dedup needs — whether
+ * a call is a new toast (`show`) or an update of one the adapter already has (`update`).
+ */
+const adapterIds = new Set<string>()
+
 let counter = 0
+
+/** The options with `undefined` values dropped, so they cannot overwrite a default. */
+function defined(options: ToastOptions): ToastOptions {
+  return Object.fromEntries(Object.entries(options).filter(([, v]) => v !== undefined)) as ToastOptions
+}
+
+function showViaAdapter(adapter: ToastAdapter, id: string, message: string, options: ToastOptions): void {
+  const given = defined(options)
+  if (adapterIds.has(id)) {
+    adapter.update(id, message, { ...given, id } as Partial<ResolvedToastOptions>)
+    return
+  }
+  adapterIds.add(id)
+  adapter.show(id, message, {
+    type: 'info',
+    duration: toastQueue.defaults.duration,
+    closable: toastQueue.defaults.closable,
+    ...given,
+    id,
+  } as ResolvedToastOptions)
+}
 
 function show(message: string, options: ToastOptions = {}): string {
   const id = options.id ?? `vdd-toast-${++counter}`
   const resolved = { ...options, id }
+
+  if (toastQueue.adapter) {
+    showViaAdapter(toastQueue.adapter, id, message, options)
+    return id
+  }
 
   const existing = toastQueue.items.find(t => t.id === id)
   if (existing) {
@@ -100,7 +148,6 @@ function show(message: string, options: ToastOptions = {}): string {
     existing.options = { ...existing.options, ...resolved }
     existing.exiting = false
     existing.revision++
-    toastQueue.adapter?.update(id, message, resolved as Partial<ResolvedToastOptions>)
     return id
   }
 
@@ -131,7 +178,12 @@ export function removeToast(id: string): void {
  * the container drops it outright.
  */
 function dismiss(id?: string): void {
-  if (toastQueue.adapter) { toastQueue.adapter.dismiss(id); return }
+  if (toastQueue.adapter) {
+    if (id === undefined) adapterIds.clear()
+    else adapterIds.delete(id)
+    toastQueue.adapter.dismiss(id)
+    return
+  }
   if (id === undefined) {
     for (const t of [...toastQueue.items]) startExit(t.id)
     return
@@ -195,4 +247,24 @@ export const toast: ToastFunction = Object.assign(
 export function resetToasts(): void {
   toastQueue.items.splice(0)
   toastQueue.adapter = null
+  toastQueue.defaults = { ...DEFAULTS }
+  adapterIds.clear()
+}
+
+/**
+ * Hand `toast.*` to an adapter, or take it back with `null`. Used by `<VddToasts>`.
+ *
+ * Toasts raised before an adapter arrives are waiting in `items`; they are handed to it, so a
+ * toast raised during start-up is not lost. The adapter's ids are forgotten when it changes —
+ * a new adapter has shown none of them.
+ */
+export function setToastAdapter(adapter: ToastAdapter | null, defaults: ToastDefaults): void {
+  toastQueue.defaults = { ...defaults }
+  // The store is reactive, so it hands back a proxy of the adapter: compare the raw objects.
+  if (toRaw(toastQueue.adapter) === toRaw(adapter)) return
+  toastQueue.adapter = adapter
+  adapterIds.clear()
+  if (!adapter) return
+  const waiting = toastQueue.items.splice(0).filter(t => !t.exiting)
+  for (const t of waiting) showViaAdapter(adapter, t.id, t.message, t.options)
 }

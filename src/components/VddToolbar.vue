@@ -54,8 +54,9 @@ function flipToggle(item: Extract<ToolbarItem, { type: 'toggle' }>): void {
 <template>
   <div
     class="vdd-toolbar-strip"
-    :class="`vdd-${position}`"
+    :class="[`vdd-${position}`, { 'vdd-toolbar-strip--collapsed': visible === false }]"
     :style="collapseStyle"
+    :inert="visible === false || undefined"
     :data-vdd-toolbar="position"
     role="toolbar"
     :aria-orientation="isVertical ? 'vertical' : 'horizontal'"
