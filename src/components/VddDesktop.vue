@@ -142,8 +142,8 @@ watch(viewportEl, (el) => {
         `In CSS, height: 100% only resolves when every ancestor has a real height. If any one ` +
         `of them is height: auto (a div's default), the chain breaks.\n\n` +
         `Give the workspace's container a height — 100vh, or flex: 1 with min-height: 0 inside ` +
-        `a flex column. The library deliberately does not style your page; .vdd-fill-viewport ` +
-        `is available if you want the simple case.`,
+        `a flex column. The library deliberately does not style your page; for the simple case, ` +
+        `the .vdd-fill-viewport class works on <VddDesktop> itself or on its container.`,
       )
     }
   })

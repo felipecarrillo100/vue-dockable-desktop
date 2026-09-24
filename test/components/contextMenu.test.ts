@@ -519,3 +519,23 @@ describe('a default slot replaces the built-in menu (rdd ContextMenuAdapter)', (
     expect(document.querySelector('[data-vdd-menu]')).not.toBeNull()
   })
 })
+
+describe('ARIA roles', () => {
+  it('a checkbox item is a menuitemcheckbox; aria-checked is not valid on a plain menuitem', async () => {
+    const { ws } = setup()
+    ws.showContextMenu({ x: 10, y: 10, items: [
+      { label: 'On', checkbox: { value: true } },
+      { label: 'Off', checkbox: { value: false } },
+      { label: 'Hidden', checkbox: { value: true, active: false } },
+      { label: 'Plain' },
+    ] })
+    await nextTick()
+    const role = (label: string) => document.querySelector(`[data-vdd-menu-item="${label}"]`)?.getAttribute('role')
+    expect(role('On')).toBe('menuitemcheckbox')
+    expect(role('Off')).toBe('menuitemcheckbox')
+    expect(role('Hidden')).toBe('menuitem')
+    expect(role('Plain')).toBe('menuitem')
+    expect(document.querySelector('[data-vdd-menu-item="Off"]')?.getAttribute('aria-checked')).toBe('false')
+    expect(document.querySelector('[data-vdd-menu-item="Plain"]')?.hasAttribute('aria-checked')).toBe(false)
+  })
+})

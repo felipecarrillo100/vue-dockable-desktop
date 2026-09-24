@@ -93,7 +93,7 @@ const info = usePanelFloatingWindow()
 
 ```vue
 <!-- vdd -->
-<VddFloatingWidget id="info" v-model:open="showInfo" … />
+<VddFloatingWidget widget-id="info" v-model:open="showInfo" … />
 ```
 
 ## Things that no longer exist

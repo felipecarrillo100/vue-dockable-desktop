@@ -386,3 +386,12 @@ describe('adapter mode', () => {
     expect(toastQueue.items).toHaveLength(0)
   })
 })
+
+describe('the container is a named region', () => {
+  it('has role="region", so its aria-label is not ignored', () => {
+    // aria-label is prohibited on a generic div with no role; assistive tech drops it.
+    mountContainer()
+    expect(host()!.getAttribute('role')).toBe('region')
+    expect(host()!.getAttribute('aria-label')).toBe('Notifications')
+  })
+})

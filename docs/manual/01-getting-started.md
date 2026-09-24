@@ -77,6 +77,13 @@ Give the wrapper a real height (`100vh`, or `flex: 1; min-height: 0` inside a fl
 The library detects a zero-height workspace in development and tells you which ancestor
 broke the chain.
 
+For the simplest case — a workspace that fills the window — add the `vdd-fill-viewport`
+class, to `<VddDesktop>` itself or to its wrapper:
+
+```vue
+<VddDesktop class="vdd-fill-viewport" />
+```
+
 ## Open a panel
 
 From a component:

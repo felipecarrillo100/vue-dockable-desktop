@@ -194,7 +194,11 @@
  *
  * See docs/PARITY.md section 4, divergence D8.
  */
-.vdd-fill-viewport {
+/* The compound selector is for `<VddDesktop class="vdd-fill-viewport">`: there the class sits
+   on the same element as `.vdd-workspace`, whose `height: 100%` comes later in this file with
+   equal specificity and would otherwise win. */
+.vdd-fill-viewport,
+.vdd-workspace.vdd-fill-viewport {
   height: 100vh;
   overflow: hidden;
 }
@@ -587,10 +591,13 @@ body.vdd-resizing-col-active * {
   display: block;
 }
 
+/* It rests 8px above its icon at translateY(-100%). The entry offset stays inside that gap:
+   starting any lower put the preview over the icon for the first frames, so a quick click
+   meant for the icon landed on the preview. */
 @keyframes vdd-tooltip-fade-in {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(-90%);
+    transform: translateX(-50%) translateY(calc(-100% + 6px));
   }
   to {
     opacity: 1;
@@ -626,14 +633,15 @@ body.vdd-resizing-col-active * {
   gap: 0.25rem;
 }
 
-/* Invisible bridge so mouse transitions smoothly to tooltip */
+/* Invisible bridge so mouse transitions smoothly to tooltip. It spans the 8px gap exactly;
+   any taller and it covers the top of the icon. */
 .vdd-taskbar-item-tooltip::before {
   content: '';
   position: absolute;
   top: 100%;
   left: 0;
   width: 100%;
-  height: 12px;
+  height: 8px;
   background: transparent;
 }
 
@@ -2873,6 +2881,8 @@ html.vdd-no-animations [class*="vdd-"]::after {
 .vdd-toolbar-strip.vdd-right { border-left:   1px solid var(--vdd-sidebar-border); }
 .vdd-toolbar-strip.vdd-top   { border-bottom: 1px solid var(--vdd-sidebar-border); }
 .vdd-toolbar-strip.vdd-bottom{ border-top:    1px solid var(--vdd-sidebar-border); }
+/* Collapsed to zero size: without this the edge border stays behind as a 1px line. */
+.vdd-toolbar-strip.vdd-toolbar-strip--collapsed { border-width: 0; }
 
 /* Base button */
 .vdd-toolbar-btn {

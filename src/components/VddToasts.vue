@@ -102,6 +102,7 @@ const isLeft = computed(() => props.position.endsWith('left'))
         newestOnTop ? 'vdd-toast-container--newest-top' : 'vdd-toast-container--newest-bottom',
       ]"
       :style="{ width: `${width}px` }"
+      role="region"
       aria-label="Notifications"
       aria-live="polite"
       data-vdd-toasts

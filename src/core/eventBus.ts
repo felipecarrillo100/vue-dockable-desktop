@@ -37,7 +37,7 @@ export interface BuiltInEvents {
 
 type Listener = (data: unknown) => void
 
-export class EventBus<TEvents extends Record<string, unknown> = Record<string, unknown>> {
+export class EventBus<TEvents extends object = Record<string, unknown>> {
   private listeners = new Map<string, Set<Listener>>()
 
   subscribe<K extends keyof (TEvents & BuiltInEvents) & string>(
