@@ -29,7 +29,10 @@ const toolbarVisible = ref(true)
 // The workspace toolbar's edge, and the animations opt-out: both have their own rules, and
 // neither is reachable without being switchable from the outside.
 const toolbarPosition = ref<'left' | 'right' | 'top' | 'bottom'>('left')
-const animations = ref(true)
+// `?anim=0` starts with animations off and `?skin=NAME` picks the skin (the M15 branding gate).
+const params = new URLSearchParams(location.search)
+const animations = ref(params.get('anim') !== '0')
+const skin = ref(params.get('skin') ?? 'vscode')
 // The toast container's own options, so the gate can reach every position and the progress
 // bar — one mount can only render one position at a time.
 const toastPosition = ref<'top-right' | 'top-left' | 'bottom-left' | 'bottom-right'>('top-right')
@@ -57,7 +60,7 @@ const toolbarItems = ref<ToolbarItem[]>([
 ;(window as unknown as Record<string, unknown>).__taskbar = taskbar
 ;(window as unknown as Record<string, unknown>).__app = {
   taskbar, sidebarTabs, openTab, secondaryTab, toolbarVisible, toolbarItems, Glyph,
-  toastPosition, toastProgress, toastMax, toolbarPosition, animations,
+  toastPosition, toastProgress, toastMax, toolbarPosition, animations, skin,
   toast,
   // Each alert type has its own rule, so the gate needs to reach all four.
   openConfirm: (alertType: 'info' | 'warning' | 'success' | 'danger') => ws.overlays.openModal(
@@ -144,6 +147,7 @@ const toolbarItems = ref<ToolbarItem[]>([
             <VddDesktop
               :taskbar="taskbar"
               :animations="animations"
+              :skin="skin"
             />
           </div>
         </div>

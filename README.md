@@ -23,8 +23,8 @@ so a layout saved by either library loads in the other.
 > **Versioning.** vdd follows its own semver, independently of `react-dockable-desktop`:
 > matching the two numbers would be a promise that breaks the first time either library needs
 > a breaking change the other does not. Which rdd release a given version corresponds to is
-> stated per release in [CHANGELOG.md](CHANGELOG.md) — this one tracks **rdd 6.3.0** — and
-> feature by feature in [docs/PARITY.md](docs/PARITY.md).
+> stated per release in [CHANGELOG.md](CHANGELOG.md) — this one tracks **rdd 6.3.1**, plus
+> rdd 7.2.0's skin branding — and feature by feature in [docs/PARITY.md](docs/PARITY.md).
 
 ## Install
 
@@ -32,9 +32,10 @@ so a layout saved by either library loads in the other.
 npm install vue-dockable-desktop
 ```
 
-Requires Vue 3.4+. No other runtime dependencies. The published package is
+Requires Vue 3.4+, and a browser with CSS `color-mix()` (Chrome / Edge 111, Safari 16.2,
+Firefox 113 or later). No other runtime dependencies. The published package is
 [`vue-dockable-desktop`](https://www.npmjs.com/package/vue-dockable-desktop); the public API
-is pinned by `api-surface.json` and covered by 730 tests.
+is pinned by `api-surface.json` and covered by 846 tests.
 
 ## Quick start
 
@@ -103,7 +104,21 @@ localStorage.setItem('layout', ws.saveLayout())
 - **Panel overlay** — anchored toolbars and floating widgets inside a single panel
 - **Overlays** — side panels, a modal stack, dirty-close confirmation, and toasts
 - **Layout serialisation** — save and restore the whole workspace as a JSON string
-- **Theming** — built-in skins, light/dark colour schemes, all `--vdd-*` CSS variables
+- **Theming** — built-in skins, each with its own font, light/dark colour schemes, all
+  `--vdd-*` CSS variables
+- **Branding** — your company's colour and font on any built-in skin, from three variables:
+
+  ```css
+  :root {
+    --vdd-brand-accent: #e4002b;                 /* every accent use, in every skin, dark and light */
+    --vdd-brand-on-accent: #ffffff;              /* text on a brand-coloured fill — a dark one for light brands */
+    --vdd-font-family: 'Acme Sans', sans-serif;  /* your font (the library loads none) */
+  }
+  ```
+
+  Point them at your UI framework's theme to follow it — `var(--p-primary-color)` (PrimeVue),
+  `var(--bs-primary)` (Bootstrap). See
+  [Brand your app](docs/manual/10-theming.md#brand-your-app)
 - **i18n and RTL** — every string is a message key; `dir="rtl"` flips the whole workspace
 - **TypeScript-first** — complete types, no separate `@types` package
 

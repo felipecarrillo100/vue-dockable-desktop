@@ -5,6 +5,14 @@ import App from './App.vue'
 import HostilePanel from './HostilePanel.vue'
 import OverlayPanel from './OverlayPanel.vue'
 
+// Set before mount, as an application would (the M15 branding gate): `?cs=light` puts
+// `data-color-scheme="light"` on <html> (dark is the attribute's absence); `?ba=HEX` / `?bon=HEX`
+// set `--vdd-brand-accent` / `--vdd-brand-on-accent` on :root (hex without `#`).
+const params = new URLSearchParams(location.search)
+if (params.get('cs') === 'light') document.documentElement.setAttribute('data-color-scheme', 'light')
+if (params.get('ba')) document.documentElement.style.setProperty('--vdd-brand-accent', `#${params.get('ba')}`)
+if (params.get('bon')) document.documentElement.style.setProperty('--vdd-brand-on-accent', `#${params.get('bon')}`)
+
 const workspace = createWorkspace({
   panels: {
     hostile: { component: HostilePanel, defaultOptions: { title: 'Hostile' } },

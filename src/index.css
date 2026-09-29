@@ -16,8 +16,13 @@
  */
 
 :root {
-  /* The font of all the library's chrome. `inherit` hands it to the host page instead. */
-  --vdd-font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+  /* The font of all the library's chrome. `inherit` hands it to the host page instead.
+     Neither Outfit nor Inter is loaded by the library: load one yourself, or override this on
+     :root (menus, flyouts and toasts teleport to <body>, so :root is what reaches everything).
+     A skin picks its own font through --vdd-skin-font-family, never by declaring --vdd-font-family
+     itself: that would override the consumer's :root value on the element carrying data-vdd-skin.
+     This resolves on <html>, which <VddDesktop> gives data-vdd-skin too. */
+  --vdd-font-family: var(--vdd-skin-font-family, 'Outfit', 'Inter', system-ui, -apple-system, sans-serif);
   --vdd-styles-loaded: 1; /* sentinel — checked at mount to detect missing CSS import */
   --vdd-z-base: 1000; /* base for floating windows + all chrome overlays; override via WindowManagerProvider's zIndexBase */
   --vdd-bg-primary: #090b11;
@@ -27,8 +32,12 @@
   --vdd-text-primary: #f1f5f9;
   --vdd-text-secondary: #94a3b8;
   --vdd-border-color: rgba(255, 255, 255, 0.08);
-  --vdd-accent-color: #38bdf8; /* Modern Cyan/Sky-blue accent */
-  --vdd-accent-glow: rgba(56, 189, 248, 0.15);
+  /* Branding: an app sets --vdd-brand-accent / --vdd-brand-on-accent on :root, and every skin reads
+     them first (var(--vdd-brand-accent, <skin colour>)). The library only reads them — declared
+     here or in a skin, they would override the app's value on the element carrying data-vdd-skin.
+     Every tint of the accent is a color-mix() of --vdd-accent-color, never a copied rgba(). */
+  --vdd-accent-color: var(--vdd-brand-accent, #38bdf8); /* Modern Cyan/Sky-blue accent */
+  --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
   --vdd-header-button-gap: 4px; /* Configurable gap spacing between titlebar action buttons */
   /* Window skins variables */
   --vdd-window-bg: rgba(20, 22, 28, var(--vdd-window-opacity, 0.85));
@@ -127,27 +136,27 @@
   --vdd-sidebar-border: rgba(255, 255, 255, 0.08);
   --vdd-sidebar-card-bg: rgba(255, 255, 255, 0.03);
   --vdd-sidebar-card-border: rgba(255, 255, 255, 0.08);
-  --vdd-sidebar-card-active-bg: rgba(56, 189, 248, 0.06);
-  --vdd-sidebar-card-active-border: rgba(56, 189, 248, 0.3);
+  --vdd-sidebar-card-active-bg: color-mix(in srgb, var(--vdd-accent-color) 6%, transparent);
+  --vdd-sidebar-card-active-border: color-mix(in srgb, var(--vdd-accent-color) 30%, transparent);
   --vdd-sidebar-text-title: #f8f9fa;
   --vdd-sidebar-text-muted: #8a90a0;
   --vdd-sidebar-badge-bg: #2d3139;
   --vdd-sidebar-badge-text: #b0b5c0;
-  --vdd-sidebar-btn-front-border: #38bdf8;
-  --vdd-sidebar-btn-front-text: #38bdf8;
+  --vdd-sidebar-btn-front-border: var(--vdd-accent-color);
+  --vdd-sidebar-btn-front-text: var(--vdd-accent-color);
   --vdd-sidebar-btn-front-bg: transparent;
-  --vdd-sidebar-btn-front-hover-bg: rgba(56, 189, 248, 0.1);
-  --vdd-tab-icon-active: #38bdf8;
+  --vdd-sidebar-btn-front-hover-bg: color-mix(in srgb, var(--vdd-accent-color) 10%, transparent);
+  --vdd-tab-icon-active: var(--vdd-accent-color);
   --vdd-tab-icon-inactive: #9ea4b0;
   --vdd-tab-btn-active-bg: #1e2024; /* Seamless merge look */
   --vdd-sidebar-btn-hover-bg: rgba(255, 255, 255, 0.05);
-  --vdd-sidebar-card-hover-border: rgba(56, 189, 248, 0.25);
+  --vdd-sidebar-card-hover-border: color-mix(in srgb, var(--vdd-accent-color) 25%, transparent);
   --vdd-sidebar-card-hover-bg: rgba(255, 255, 255, 0.04);
-  --vdd-sidebar-card-active-shadow: rgba(56, 189, 248, 0.08);
+  --vdd-sidebar-card-active-shadow: color-mix(in srgb, var(--vdd-accent-color) 8%, transparent);
   --vdd-sidebar-drawer-header-bg: rgba(0, 0, 0, 0.12);
   --vdd-toolbar-btn-hover-bg: rgba(255, 255, 255, 0.06);
-  --vdd-toolbar-btn-radio-active-bg: rgba(56, 189, 248, 0.14);
-  --vdd-toolbar-btn-toggle-active-bg: rgba(56, 189, 248, 0.08);
+  --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 14%, transparent);
+  --vdd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--vdd-accent-color) 8%, transparent);
   --vdd-toolbar-separator-color: rgba(255, 255, 255, 0.09);
   /* Sidebar active-tab design tokens */
   --vdd-tab-btn-active-shadow: none;
@@ -203,6 +212,14 @@
 .vdd-workspace.vdd-fill-viewport {
   height: 100vh;
   overflow: hidden;
+}
+
+/* Form controls don't inherit a font by default. Only the library's own controls (those with a
+   vdd- class) are told to, never the consumer's inputs and buttons inside a panel. Without it the
+   rail and toolbar buttons kept the browser's button font whatever --vdd-font-family said
+   (rdd 6.4.0; found by the M15 branding gate). */
+:where(button, input, select, textarea)[class*="vdd-"] {
+  font-family: inherit;
 }
 
 /* Cosmetic properties are scoped to the library's own root element only — never
@@ -592,7 +609,7 @@ body.vdd-resizing-col-active * {
 .vdd-taskbar-glassmorphic-item:hover {
   background: var(--vdd-taskbar-item-hover-bg) !important;
   border-color: var(--vdd-accent-color, #38bdf8) !important;
-  box-shadow: 0 6px 16px rgba(56, 189, 248, 0.15);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
 }
 
 /* Minimalist Taskbar Icon-Only & Premium Tooltip Rules */
@@ -1001,7 +1018,7 @@ body.vdd-resizing-col-active * {
 /* Translucent overlay preview highlighting the grid section about to split */
 .vdd-dock-preview-highlight {
   position: absolute;
-  background-color: rgba(56, 189, 248, 0.2) !important; /* neon cyan overlay */
+  background-color: color-mix(in srgb, var(--vdd-accent-color) 20%, transparent) !important; /* accent overlay */
   border: 1.5px dashed var(--vdd-accent-color) !important;
   transition: all 0.1s ease-out;
   pointer-events: none;
@@ -1037,7 +1054,7 @@ body.vdd-resizing-col-active * {
 .vdd-dock-target-box--active {
   background-color: var(--vdd-accent-color) !important;
   border-color: #ffffff !important;
-  color: #090b11 !important;
+  color: var(--vdd-brand-on-accent, #090b11) !important;
   transform: scale(1.12);
   box-shadow: 0 0 12px var(--vdd-accent-color);
 }
@@ -1118,6 +1135,8 @@ body.vdd-dragging-active {
 
 
 [data-color-scheme="light"] {
+  /* The default skin's light-mode accent (the blue its light tokens were already drawn in). */
+  --vdd-accent-color: var(--vdd-brand-accent, #0066cc);
   --vdd-bg-primary: #f8f9fa;
   --vdd-bg-workspace: #f1f5f9;
   --vdd-bg-panel: #ffffff;
@@ -1131,27 +1150,27 @@ body.vdd-dragging-active {
   --vdd-sidebar-border: rgba(0, 0, 0, 0.08);
   --vdd-sidebar-card-bg: #ffffff;
   --vdd-sidebar-card-border: rgba(0, 0, 0, 0.08);
-  --vdd-sidebar-card-active-bg: rgba(0, 102, 204, 0.05);
-  --vdd-sidebar-card-active-border: rgba(0, 102, 204, 0.3);
+  --vdd-sidebar-card-active-bg: color-mix(in srgb, var(--vdd-accent-color) 5%, transparent);
+  --vdd-sidebar-card-active-border: color-mix(in srgb, var(--vdd-accent-color) 30%, transparent);
   --vdd-sidebar-text-title: #212529;
   --vdd-sidebar-text-muted: #6c757d;
   --vdd-sidebar-badge-bg: #e9ecef;
   --vdd-sidebar-badge-text: #495057;
-  --vdd-sidebar-btn-front-border: #0066cc;
-  --vdd-sidebar-btn-front-text: #0066cc;
+  --vdd-sidebar-btn-front-border: var(--vdd-accent-color);
+  --vdd-sidebar-btn-front-text: var(--vdd-accent-color);
   --vdd-sidebar-btn-front-bg: transparent;
-  --vdd-sidebar-btn-front-hover-bg: rgba(0, 102, 204, 0.08);
-  --vdd-tab-icon-active: #0066cc;
+  --vdd-sidebar-btn-front-hover-bg: color-mix(in srgb, var(--vdd-accent-color) 8%, transparent);
+  --vdd-tab-icon-active: var(--vdd-accent-color);
   --vdd-tab-icon-inactive: #555c66;
   --vdd-tab-btn-active-bg: #f8f9fa; /* Seamless merge look */
   --vdd-sidebar-btn-hover-bg: rgba(0, 0, 0, 0.05);
-  --vdd-sidebar-card-hover-border: rgba(0, 102, 204, 0.3);
+  --vdd-sidebar-card-hover-border: color-mix(in srgb, var(--vdd-accent-color) 30%, transparent);
   --vdd-sidebar-card-hover-bg: rgba(0, 0, 0, 0.03);
-  --vdd-sidebar-card-active-shadow: rgba(0, 102, 204, 0.08);
+  --vdd-sidebar-card-active-shadow: color-mix(in srgb, var(--vdd-accent-color) 8%, transparent);
   --vdd-sidebar-drawer-header-bg: rgba(0, 0, 0, 0.04);
   --vdd-toolbar-btn-hover-bg: rgba(0, 0, 0, 0.05);
-  --vdd-toolbar-btn-radio-active-bg: rgba(0, 102, 204, 0.1);
-  --vdd-toolbar-btn-toggle-active-bg: rgba(0, 102, 204, 0.06);
+  --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 10%, transparent);
+  --vdd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--vdd-accent-color) 6%, transparent);
   --vdd-toolbar-separator-color: rgba(0, 0, 0, 0.1);
   /* Light skin window overrides */
   --vdd-window-bg: rgba(243, 244, 246, var(--vdd-window-opacity, 0.9));
@@ -1186,7 +1205,7 @@ body.vdd-dragging-active {
   --vdd-close-btn-hover-color: #212529;
   --vdd-close-btn-color: #6c757d;
   --vdd-close-btn-active-color: #212529;
-  --vdd-tab-indicator-focused: #0066cc;
+  --vdd-tab-indicator-focused: var(--vdd-accent-color);
   --vdd-tab-indicator-unfocused: rgba(0, 0, 0, 0.25);
   --vdd-tab-bg-active-focused: var(--vdd-bg-panel);
   --vdd-tab-bg-active-unfocused: rgba(220, 224, 230, 0.65);
@@ -1204,7 +1223,7 @@ body.vdd-dragging-active {
   --vdd-taskbar-item-bg: rgba(255, 255, 255, 0.65);
   --vdd-taskbar-item-hover-bg: rgba(255, 255, 255, 0.85);
   --vdd-taskbar-item-border: rgba(0, 0, 0, 0.08);
-  --vdd-taskbar-item-text: #0066cc;
+  --vdd-taskbar-item-text: var(--vdd-accent-color);
   /* Light skin scrollbar theme variables */
   --vdd-scrollbar-thumb: rgba(0, 0, 0, 0.15);
   --vdd-scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
@@ -1213,7 +1232,7 @@ body.vdd-dragging-active {
   --vdd-panel-card-bg: rgba(0, 0, 0, 0.03);
   --vdd-panel-card-border: rgba(0, 0, 0, 0.08);
   --vdd-panel-text: #212529;
-  --vdd-panel-title-color: #0066cc;
+  --vdd-panel-title-color: var(--vdd-accent-color);
   /* ── Panel Overlay — Toolbar (light) ── */
   --vdd-panel-toolbar-fg: rgba(0, 0, 0, 0.55);
   --vdd-panel-toolbar-fg-hover: rgba(0, 0, 0, 0.85);
@@ -1234,27 +1253,29 @@ body.vdd-dragging-active {
    SKIN 1: VS Code (Default Variables matching :root)
    -------------------------------------------------------------------------- */
 [data-vdd-skin="vscode"] {
-  /* Inherits everything from :root */
+  --vdd-skin-font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif; /* VS Code's workbench font */
+  /* Otherwise inherits everything from :root */
 }
 
 /* --------------------------------------------------------------------------
    SKIN 2: macOS / Glassmorphic Preset
    -------------------------------------------------------------------------- */
 [data-vdd-skin="macos"] {
+  --vdd-skin-font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif; /* San Francisco */
   --vdd-bg-workspace: #1a1a24;
   --vdd-bg-panel: rgba(30, 30, 40, 0.45);
   --vdd-bg-tab-bar: rgba(18, 18, 24, 0.3);
   --vdd-window-bg: rgba(25, 25, 35, var(--vdd-window-opacity, 0.7));
   --vdd-window-border: rgba(255, 255, 255, 0.1);
   --vdd-window-header-bg: rgba(0, 0, 0, 0.15);
-  --vdd-accent-color: #38bdf8;
-  --vdd-accent-glow: rgba(56, 189, 248, 0.25);
+  --vdd-accent-color: var(--vdd-brand-accent, #38bdf8);
+  --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 25%, transparent);
   --vdd-border-panel: rgba(255, 255, 255, 0.08);
   --vdd-bg-tab-inactive: transparent;
   --vdd-text-tab-inactive: #94a3b8;
   --vdd-text-tab-active: #ffffff;
   --vdd-window-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
-  --vdd-window-shadow-focused: 0 24px 50px rgba(56, 189, 248, 0.15);
+  --vdd-window-shadow-focused: 0 24px 50px color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
   --vdd-panel-card-bg: rgba(255, 255, 255, 0.03);
   --vdd-panel-card-border: rgba(255, 255, 255, 0.08);
 }
@@ -1267,19 +1288,19 @@ body.vdd-dragging-active {
   --vdd-window-bg: rgba(255, 255, 255, var(--vdd-window-opacity, 0.85));
   --vdd-window-border: rgba(0, 0, 0, 0.12);
   --vdd-window-header-bg: rgba(243, 244, 246, 0.5);
-  --vdd-accent-color: #0066cc;
-  --vdd-accent-glow: rgba(0, 102, 204, 0.15);
+  --vdd-accent-color: var(--vdd-brand-accent, #0066cc);
+  --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
   --vdd-border-panel: rgba(0, 0, 0, 0.1);
   --vdd-bg-tab-inactive: transparent;
   --vdd-text-tab-inactive: #4b5563;
   --vdd-text-tab-active: #111827;
   --vdd-window-text: #111827;
   --vdd-window-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-  --vdd-window-shadow-focused: 0 16px 36px rgba(0, 102, 204, 0.18);
+  --vdd-window-shadow-focused: 0 16px 36px color-mix(in srgb, var(--vdd-accent-color) 18%, transparent);
   --vdd-panel-card-bg: rgba(0, 0, 0, 0.04);
   --vdd-panel-card-border: rgba(0, 0, 0, 0.08);
   --vdd-panel-text: #111827;
-  --vdd-panel-title-color: #0066cc;
+  --vdd-panel-title-color: var(--vdd-accent-color);
   --vdd-close-btn-color: #4b5563;
   --vdd-close-btn-active-color: #111827;
 }
@@ -1389,14 +1410,15 @@ body.vdd-dragging-active {
    SKIN 3: Chrome / Browser-Style Preset
    -------------------------------------------------------------------------- */
 [data-vdd-skin="chrome"] {
+  --vdd-skin-font-family: 'Google Sans Text', 'Google Sans', Roboto, system-ui, -apple-system, 'Segoe UI', sans-serif; /* Google's UI fonts */
   --vdd-bg-workspace: #202124;
   --vdd-bg-panel: #292a2d;
   --vdd-bg-tab-bar: #202124;
   --vdd-window-bg: rgba(41, 42, 45, var(--vdd-window-opacity, 1.0));
   --vdd-window-border: #3c4043;
   --vdd-window-header-bg: #202124;
-  --vdd-accent-color: #8ab4f8;
-  --vdd-accent-glow: rgba(138, 180, 248, 0.15);
+  --vdd-accent-color: var(--vdd-brand-accent, #8ab4f8);
+  --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
   --vdd-border-panel: #3c4043;
   --vdd-bg-tab-inactive: #202124;
   --vdd-text-tab-inactive: #9aa0a6;
@@ -1405,9 +1427,9 @@ body.vdd-dragging-active {
   --vdd-panel-card-border: #3c4043;
   --vdd-window-text: #ffffff;
   --vdd-panel-text: #e8eaed;
-  --vdd-tab-icon-active: #8ab4f8;
-  --vdd-toolbar-btn-radio-active-bg: rgba(138, 180, 248, 0.14);
-  --vdd-toolbar-btn-toggle-active-bg: rgba(138, 180, 248, 0.08);
+  --vdd-tab-icon-active: var(--vdd-accent-color);
+  --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 14%, transparent);
+  --vdd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--vdd-accent-color) 8%, transparent);
 }
 
 [data-vdd-skin="chrome"][data-color-scheme="light"] {
@@ -1417,8 +1439,8 @@ body.vdd-dragging-active {
   --vdd-window-bg: rgba(255, 255, 255, var(--vdd-window-opacity, 1.0));
   --vdd-window-border: #cbd5e1;
   --vdd-window-header-bg: #dee1e6;
-  --vdd-accent-color: #1a73e8;
-  --vdd-accent-glow: rgba(26, 115, 232, 0.15);
+  --vdd-accent-color: var(--vdd-brand-accent, #1a73e8);
+  --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
   --vdd-border-panel: #dadce0;
   --vdd-bg-tab-inactive: #dee1e6;
   --vdd-text-tab-inactive: #474747;
@@ -1427,12 +1449,12 @@ body.vdd-dragging-active {
   --vdd-panel-card-border: #dadce0;
   --vdd-window-text: #1f1f1f;
   --vdd-panel-text: #1f1f1f;
-  --vdd-panel-title-color: #1a73e8;
+  --vdd-panel-title-color: var(--vdd-accent-color);
   --vdd-close-btn-color: #474747;
   --vdd-close-btn-active-color: #1f1f1f;
-  --vdd-tab-icon-active: #1a73e8;
-  --vdd-toolbar-btn-radio-active-bg: rgba(26, 115, 232, 0.12);
-  --vdd-toolbar-btn-toggle-active-bg: rgba(26, 115, 232, 0.07);
+  --vdd-tab-icon-active: var(--vdd-accent-color);
+  --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 12%, transparent);
+  --vdd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--vdd-accent-color) 7%, transparent);
 }
 
 /* Chrome tab angled geometry shapes */
@@ -1453,14 +1475,15 @@ body.vdd-dragging-active {
    SKIN 4: Fluent Slate Preset
    -------------------------------------------------------------------------- */
 [data-vdd-skin="slate"] {
+  --vdd-skin-font-family: 'Segoe UI Variable Text', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', sans-serif; /* Fluent's stack */
   --vdd-bg-workspace: #0f172a;
   --vdd-bg-panel: #1e293b;
   --vdd-bg-tab-bar: #0f172a;
   --vdd-window-bg: rgba(30, 41, 59, var(--vdd-window-opacity, 1.0));
   --vdd-window-border: #334155;
   --vdd-window-header-bg: #1e293b;
-  --vdd-accent-color: #38bdf8;
-  --vdd-accent-glow: rgba(56, 189, 248, 0.15);
+  --vdd-accent-color: var(--vdd-brand-accent, #38bdf8);
+  --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
   --vdd-border-panel: #334155;
   --vdd-bg-tab-inactive: #1e293b;
   --vdd-text-tab-inactive: #64748b;
@@ -1478,8 +1501,8 @@ body.vdd-dragging-active {
   --vdd-window-bg: rgba(255, 255, 255, var(--vdd-window-opacity, 1.0));
   --vdd-window-border: #cbd5e1;
   --vdd-window-header-bg: #f8fafc;
-  --vdd-accent-color: #0078d4;
-  --vdd-accent-glow: rgba(0, 120, 212, 0.15);
+  --vdd-accent-color: var(--vdd-brand-accent, #0078d4);
+  --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
   --vdd-border-panel: #e2e8f0;
   --vdd-bg-tab-inactive: #f8fafc;
   --vdd-text-tab-inactive: #475569;
@@ -1488,12 +1511,12 @@ body.vdd-dragging-active {
   --vdd-panel-card-border: #cbd5e1;
   --vdd-window-text: #0f172a;
   --vdd-panel-text: #0f172a;
-  --vdd-panel-title-color: #0078d4;
+  --vdd-panel-title-color: var(--vdd-accent-color);
   --vdd-close-btn-color: #475569;
   --vdd-close-btn-active-color: #0f172a;
-  --vdd-tab-icon-active: #0078d4;
-  --vdd-toolbar-btn-radio-active-bg: rgba(0, 120, 212, 0.10);
-  --vdd-toolbar-btn-toggle-active-bg: rgba(0, 120, 212, 0.06);
+  --vdd-tab-icon-active: var(--vdd-accent-color);
+  --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 10%, transparent);
+  --vdd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--vdd-accent-color) 6%, transparent);
 }
 
 [data-vdd-skin="slate"] .vdd-workspace-tab.vdd-active::before {
@@ -1506,14 +1529,15 @@ body.vdd-dragging-active {
    SKIN 5: Nordic Frost Preset (Nord Theme)
    -------------------------------------------------------------------------- */
 [data-vdd-skin="nord"] {
+  --vdd-skin-font-family: 'Avenir Next', 'Nunito', 'Segoe UI', system-ui, sans-serif; /* no official font: a softer humanist sans */
   --vdd-bg-workspace: #2e3440;
   --vdd-bg-panel: #3b4252;
   --vdd-bg-tab-bar: #2e3440;
   --vdd-window-bg: rgba(59, 66, 82, var(--vdd-window-opacity, 1.0));
   --vdd-window-border: #434c5e;
   --vdd-window-header-bg: #2e3440;
-  --vdd-accent-color: #88c0d0;
-  --vdd-accent-glow: rgba(136, 192, 208, 0.2);
+  --vdd-accent-color: var(--vdd-brand-accent, #88c0d0);
+  --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 20%, transparent);
   --vdd-border-panel: #434c5e;
   --vdd-bg-tab-inactive: #2e3440;
   --vdd-text-tab-inactive: #d8dee9;
@@ -1521,14 +1545,14 @@ body.vdd-dragging-active {
   --vdd-panel-card-bg: #2e3440;
   --vdd-panel-card-border: #4c566a;
   --vdd-close-btn-color: #d8dee9;
-  --vdd-close-btn-active-color: #88c0d0;
-  --vdd-scrollbar-thumb: rgba(136, 192, 208, 0.25);
-  --vdd-scrollbar-thumb-hover: rgba(136, 192, 208, 0.4);
+  --vdd-close-btn-active-color: var(--vdd-accent-color);
+  --vdd-scrollbar-thumb: color-mix(in srgb, var(--vdd-accent-color) 25%, transparent);
+  --vdd-scrollbar-thumb-hover: color-mix(in srgb, var(--vdd-accent-color) 40%, transparent);
   --vdd-window-text: #eceff4;
   --vdd-panel-text: #eceff4;
-  --vdd-tab-icon-active: #88c0d0;
-  --vdd-toolbar-btn-radio-active-bg: rgba(136, 192, 208, 0.14);
-  --vdd-toolbar-btn-toggle-active-bg: rgba(136, 192, 208, 0.08);
+  --vdd-tab-icon-active: var(--vdd-accent-color);
+  --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 14%, transparent);
+  --vdd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--vdd-accent-color) 8%, transparent);
 }
 
 [data-vdd-skin="nord"][data-color-scheme="light"] {
@@ -1538,8 +1562,8 @@ body.vdd-dragging-active {
   --vdd-window-bg: rgba(236, 239, 244, var(--vdd-window-opacity, 1.0));
   --vdd-window-border: #d8dee9;
   --vdd-window-header-bg: #e5e9f0;
-  --vdd-accent-color: #5e81ac;
-  --vdd-accent-glow: rgba(94, 129, 172, 0.15);
+  --vdd-accent-color: var(--vdd-brand-accent, #5e81ac);
+  --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
   --vdd-border-panel: #d8dee9;
   --vdd-bg-tab-inactive: #e5e9f0;
   --vdd-text-tab-inactive: #4c566a;
@@ -1547,15 +1571,15 @@ body.vdd-dragging-active {
   --vdd-panel-card-bg: #e5e9f0;
   --vdd-panel-card-border: #d8dee9;
   --vdd-close-btn-color: #4c566a;
-  --vdd-close-btn-active-color: #5e81ac;
-  --vdd-scrollbar-thumb: rgba(94, 129, 172, 0.2);
-  --vdd-scrollbar-thumb-hover: rgba(94, 129, 172, 0.35);
+  --vdd-close-btn-active-color: var(--vdd-accent-color);
+  --vdd-scrollbar-thumb: color-mix(in srgb, var(--vdd-accent-color) 20%, transparent);
+  --vdd-scrollbar-thumb-hover: color-mix(in srgb, var(--vdd-accent-color) 35%, transparent);
   --vdd-window-text: #2e3440;
   --vdd-panel-text: #2e3440;
-  --vdd-panel-title-color: #5e81ac;
-  --vdd-tab-icon-active: #5e81ac;
-  --vdd-toolbar-btn-radio-active-bg: rgba(94, 129, 172, 0.12);
-  --vdd-toolbar-btn-toggle-active-bg: rgba(94, 129, 172, 0.07);
+  --vdd-panel-title-color: var(--vdd-accent-color);
+  --vdd-tab-icon-active: var(--vdd-accent-color);
+  --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 12%, transparent);
+  --vdd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--vdd-accent-color) 7%, transparent);
 }
 
 /* --------------------------------------------------------------------------
@@ -1569,8 +1593,8 @@ body.vdd-dragging-active {
   --vdd-window-border: #1a1a1a;
   --vdd-window-border-focused: #333333;
   --vdd-window-header-bg: #000000;
-  --vdd-accent-color: #ffffff;
-  --vdd-accent-glow: rgba(255, 255, 255, 0.08);
+  --vdd-accent-color: var(--vdd-brand-accent, #ffffff);
+  --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 8%, transparent);
   --vdd-border-panel: #1a1a1a;
   --vdd-bg-tab-inactive: #000000;
   --vdd-text-tab-inactive: #737373;
@@ -1583,9 +1607,9 @@ body.vdd-dragging-active {
   --vdd-scrollbar-thumb-hover: rgba(255, 255, 255, 0.35);
   --vdd-window-text: #ffffff;
   --vdd-panel-text: #ffffff;
-  --vdd-tab-icon-active: #ffffff;
-  --vdd-toolbar-btn-radio-active-bg: rgba(255, 255, 255, 0.10);
-  --vdd-toolbar-btn-toggle-active-bg: rgba(255, 255, 255, 0.06);
+  --vdd-tab-icon-active: var(--vdd-accent-color);
+  --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 10%, transparent);
+  --vdd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--vdd-accent-color) 6%, transparent);
 }
 
 [data-vdd-skin="obsidian"][data-color-scheme="light"] {
@@ -1596,8 +1620,8 @@ body.vdd-dragging-active {
   --vdd-window-border: #e5e5e5;
   --vdd-window-border-focused: #a3a3a3;
   --vdd-window-header-bg: #ffffff;
-  --vdd-accent-color: #000000;
-  --vdd-accent-glow: rgba(0, 0, 0, 0.05);
+  --vdd-accent-color: var(--vdd-brand-accent, #000000);
+  --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 5%, transparent);
   --vdd-border-panel: #eaeaea;
   --vdd-bg-tab-inactive: #ffffff;
   --vdd-text-tab-inactive: #737373;
@@ -1610,10 +1634,10 @@ body.vdd-dragging-active {
   --vdd-scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
   --vdd-window-text: #000000;
   --vdd-panel-text: #000000;
-  --vdd-panel-title-color: #000000;
-  --vdd-tab-icon-active: #000000;
-  --vdd-toolbar-btn-radio-active-bg: rgba(0, 0, 0, 0.10);
-  --vdd-toolbar-btn-toggle-active-bg: rgba(0, 0, 0, 0.06);
+  --vdd-panel-title-color: var(--vdd-accent-color);
+  --vdd-tab-icon-active: var(--vdd-accent-color);
+  --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 10%, transparent);
+  --vdd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--vdd-accent-color) 6%, transparent);
 }
 
 /* Obsidian custom borderless panel elevations */
@@ -1622,7 +1646,7 @@ body.vdd-dragging-active {
   border-radius: 6px;
 }
 [data-vdd-skin="obsidian"] .vdd-floating-window.vdd-window-focused {
-  box-shadow: 0 24px 50px rgba(255, 255, 255, 0.06), 0 0 1px rgba(255, 255, 255, 0.4) !important;
+  box-shadow: 0 24px 50px color-mix(in srgb, var(--vdd-accent-color) 6%, transparent), 0 0 1px color-mix(in srgb, var(--vdd-accent-color) 40%, transparent) !important;
 }
 [data-vdd-skin="obsidian"][data-color-scheme="light"] .vdd-floating-window {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08), 0 0 1px rgba(0, 0, 0, 0.1) !important;
@@ -1635,15 +1659,16 @@ body.vdd-dragging-active {
    SKIN 7: Tokyo Night Preset
    -------------------------------------------------------------------------- */
 [data-vdd-skin="tokyo"] {
+  --vdd-skin-font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; /* no official font: a terminal/editor feel */
   --vdd-bg-workspace: #1a1b26;
   --vdd-bg-panel: #24283c;
   --vdd-bg-tab-bar: #1f2335;
   --vdd-window-bg: rgba(36, 40, 60, var(--vdd-window-opacity, 1.0));
   --vdd-window-border: #383e5a;
-  --vdd-window-border-focused: #7aa2f7;
+  --vdd-window-border-focused: var(--vdd-accent-color);
   --vdd-window-header-bg: #1f2335;
-  --vdd-accent-color: #bb9af7;
-  --vdd-accent-glow: rgba(187, 154, 247, 0.25);
+  --vdd-accent-color: var(--vdd-brand-accent, #bb9af7);
+  --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 25%, transparent);
   --vdd-border-panel: #383e5a;
   --vdd-bg-tab-inactive: #1f2335;
   --vdd-text-tab-inactive: #787c99;
@@ -1651,14 +1676,14 @@ body.vdd-dragging-active {
   --vdd-panel-card-bg: #1a1b26;
   --vdd-panel-card-border: #383e5a;
   --vdd-close-btn-color: #787c99;
-  --vdd-close-btn-active-color: #7aa2f7;
-  --vdd-scrollbar-thumb: rgba(122, 162, 247, 0.25);
-  --vdd-scrollbar-thumb-hover: rgba(187, 154, 247, 0.4);
+  --vdd-close-btn-active-color: var(--vdd-accent-color);
+  --vdd-scrollbar-thumb: color-mix(in srgb, var(--vdd-accent-color) 25%, transparent);
+  --vdd-scrollbar-thumb-hover: color-mix(in srgb, var(--vdd-accent-color) 40%, transparent);
   --vdd-window-text: #c0caf5;
   --vdd-panel-text: #c0caf5;
-  --vdd-tab-icon-active: #7aa2f7;
-  --vdd-toolbar-btn-radio-active-bg: rgba(122, 162, 247, 0.14);
-  --vdd-toolbar-btn-toggle-active-bg: rgba(122, 162, 247, 0.08);
+  --vdd-tab-icon-active: var(--vdd-accent-color);
+  --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 14%, transparent);
+  --vdd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--vdd-accent-color) 8%, transparent);
 }
 
 [data-vdd-skin="tokyo"][data-color-scheme="light"] {
@@ -1667,10 +1692,10 @@ body.vdd-dragging-active {
   --vdd-bg-tab-bar: #d5d6db;
   --vdd-window-bg: rgba(242, 244, 248, var(--vdd-window-opacity, 1.0));
   --vdd-window-border: #b4b5b9;
-  --vdd-window-border-focused: #385af6;
+  --vdd-window-border-focused: var(--vdd-accent-color);
   --vdd-window-header-bg: #d5d6db;
-  --vdd-accent-color: #9854f1;
-  --vdd-accent-glow: rgba(152, 84, 241, 0.15);
+  --vdd-accent-color: var(--vdd-brand-accent, #9854f1);
+  --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
   --vdd-border-panel: #b4b5b9;
   --vdd-bg-tab-inactive: #d5d6db;
   --vdd-text-tab-inactive: #565a6e;
@@ -1678,15 +1703,15 @@ body.vdd-dragging-active {
   --vdd-panel-card-bg: #e1e2e7;
   --vdd-panel-card-border: #b4b5b9;
   --vdd-close-btn-color: #565a6e;
-  --vdd-close-btn-active-color: #385af6;
-  --vdd-scrollbar-thumb: rgba(56, 90, 246, 0.2);
-  --vdd-scrollbar-thumb-hover: rgba(152, 84, 241, 0.35);
+  --vdd-close-btn-active-color: var(--vdd-accent-color);
+  --vdd-scrollbar-thumb: color-mix(in srgb, var(--vdd-accent-color) 20%, transparent);
+  --vdd-scrollbar-thumb-hover: color-mix(in srgb, var(--vdd-accent-color) 35%, transparent);
   --vdd-window-text: #383e56;
   --vdd-panel-text: #383e56;
-  --vdd-panel-title-color: #9854f1;
-  --vdd-tab-icon-active: #385af6;
-  --vdd-toolbar-btn-radio-active-bg: rgba(56, 90, 246, 0.12);
-  --vdd-toolbar-btn-toggle-active-bg: rgba(56, 90, 246, 0.07);
+  --vdd-panel-title-color: var(--vdd-accent-color);
+  --vdd-tab-icon-active: var(--vdd-accent-color);
+  --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 12%, transparent);
+  --vdd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--vdd-accent-color) 7%, transparent);
 }
 
 /* ==========================================================================
@@ -1730,11 +1755,11 @@ body.vdd-dragging-active {
    slate — Fluent Pill (floating capsule, accent-tinted)
    -------------------------------------------------------------------------- */
 [data-vdd-skin="slate"] {
-  --vdd-tab-btn-active-bg: rgba(96, 165, 250, 0.14);
+  --vdd-tab-btn-active-bg: color-mix(in srgb, var(--vdd-accent-color) 14%, transparent);
   --vdd-tab-btn-active-width: 36px;
   --vdd-tab-btn-active-radius: 8px;
   --vdd-tab-accent-bar-width: 0px;
-  --vdd-toolbar-btn-radio-active-bg: rgba(96, 165, 250, 0.14);
+  --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 14%, transparent);
   --vdd-toolbar-accent-bar-width: 0px;
 }
 [data-vdd-skin="slate"] .vdd-sidebar-tab-btn.vdd-active {
@@ -1747,8 +1772,8 @@ body.vdd-dragging-active {
   border-radius: 8px !important;
 }
 [data-vdd-skin="slate"][data-color-scheme="light"] {
-  --vdd-tab-btn-active-bg: rgba(0, 120, 212, 0.12);
-  --vdd-toolbar-btn-radio-active-bg: rgba(0, 120, 212, 0.12);
+  --vdd-tab-btn-active-bg: color-mix(in srgb, var(--vdd-accent-color) 12%, transparent);
+  --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 12%, transparent);
 }
 
 /* --------------------------------------------------------------------------
@@ -1819,78 +1844,78 @@ body.vdd-dragging-active {
    obsidian — Deep Glow (near-black fill, 2 px bar, inner glow, icon shadow)
    -------------------------------------------------------------------------- */
 [data-vdd-skin="obsidian"] {
-  --vdd-tab-btn-active-bg: rgba(255, 255, 255, 0.03);
-  --vdd-tab-btn-active-shadow: inset 0 0 12px rgba(255, 255, 255, 0.06);
-  --vdd-tab-btn-active-glow: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
+  --vdd-tab-btn-active-bg: color-mix(in srgb, var(--vdd-accent-color) 3%, transparent);
+  --vdd-tab-btn-active-shadow: inset 0 0 12px color-mix(in srgb, var(--vdd-accent-color) 6%, transparent);
+  --vdd-tab-btn-active-glow: drop-shadow(0 0 5px color-mix(in srgb, var(--vdd-accent-color) 50%, transparent));
   --vdd-tab-accent-bar-width: 2px;
-  --vdd-toolbar-btn-radio-active-bg: rgba(255, 255, 255, 0.03);
-  --vdd-toolbar-btn-active-shadow: inset 0 0 12px rgba(255, 255, 255, 0.06);
-  --vdd-toolbar-btn-active-glow: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
+  --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 3%, transparent);
+  --vdd-toolbar-btn-active-shadow: inset 0 0 12px color-mix(in srgb, var(--vdd-accent-color) 6%, transparent);
+  --vdd-toolbar-btn-active-glow: drop-shadow(0 0 5px color-mix(in srgb, var(--vdd-accent-color) 50%, transparent));
   --vdd-toolbar-accent-bar-width: 2px;
 }
 [data-vdd-skin="obsidian"] .vdd-sidebar-tabs-strip.vdd-left .vdd-sidebar-tab-btn.vdd-active {
-  box-shadow: var(--vdd-tab-btn-active-shadow), inset 3px 0 8px rgba(255, 255, 255, 0.08) !important;
+  box-shadow: var(--vdd-tab-btn-active-shadow), inset 3px 0 8px color-mix(in srgb, var(--vdd-accent-color) 8%, transparent) !important;
 }
 [data-vdd-skin="obsidian"] .vdd-sidebar-tabs-strip.vdd-right .vdd-sidebar-tab-btn.vdd-active {
-  box-shadow: var(--vdd-tab-btn-active-shadow), inset -3px 0 8px rgba(255, 255, 255, 0.08) !important;
+  box-shadow: var(--vdd-tab-btn-active-shadow), inset -3px 0 8px color-mix(in srgb, var(--vdd-accent-color) 8%, transparent) !important;
 }
 [data-vdd-skin="obsidian"] .vdd-toolbar-strip.vdd-left .vdd-toolbar-btn-radio.vdd-active,
 [data-vdd-skin="obsidian"] .vdd-toolbar-strip.vdd-left .vdd-toolbar-btn-group.vdd-active {
-  box-shadow: var(--vdd-toolbar-btn-active-shadow), inset 3px 0 8px rgba(255, 255, 255, 0.08) !important;
+  box-shadow: var(--vdd-toolbar-btn-active-shadow), inset 3px 0 8px color-mix(in srgb, var(--vdd-accent-color) 8%, transparent) !important;
 }
 [data-vdd-skin="obsidian"] .vdd-toolbar-strip.vdd-right .vdd-toolbar-btn-radio.vdd-active,
 [data-vdd-skin="obsidian"] .vdd-toolbar-strip.vdd-right .vdd-toolbar-btn-group.vdd-active {
-  box-shadow: var(--vdd-toolbar-btn-active-shadow), inset -3px 0 8px rgba(255, 255, 255, 0.08) !important;
+  box-shadow: var(--vdd-toolbar-btn-active-shadow), inset -3px 0 8px color-mix(in srgb, var(--vdd-accent-color) 8%, transparent) !important;
 }
 [data-vdd-skin="obsidian"] .vdd-toolbar-strip.vdd-top .vdd-toolbar-btn-radio.vdd-active,
 [data-vdd-skin="obsidian"] .vdd-toolbar-strip.vdd-top .vdd-toolbar-btn-group.vdd-active {
-  box-shadow: var(--vdd-toolbar-btn-active-shadow), inset 0 -3px 8px rgba(255, 255, 255, 0.08) !important;
+  box-shadow: var(--vdd-toolbar-btn-active-shadow), inset 0 -3px 8px color-mix(in srgb, var(--vdd-accent-color) 8%, transparent) !important;
 }
 [data-vdd-skin="obsidian"] .vdd-toolbar-strip.vdd-bottom .vdd-toolbar-btn-radio.vdd-active,
 [data-vdd-skin="obsidian"] .vdd-toolbar-strip.vdd-bottom .vdd-toolbar-btn-group.vdd-active {
-  box-shadow: var(--vdd-toolbar-btn-active-shadow), inset 0 3px 8px rgba(255, 255, 255, 0.08) !important;
+  box-shadow: var(--vdd-toolbar-btn-active-shadow), inset 0 3px 8px color-mix(in srgb, var(--vdd-accent-color) 8%, transparent) !important;
 }
 [data-vdd-skin="obsidian"][data-color-scheme="light"] {
-  --vdd-tab-btn-active-shadow: inset 0 0 12px rgba(0, 0, 0, 0.06);
-  --vdd-tab-btn-active-glow: drop-shadow(0 0 4px rgba(0, 0, 0, 0.4));
-  --vdd-toolbar-btn-active-shadow: inset 0 0 12px rgba(0, 0, 0, 0.06);
-  --vdd-toolbar-btn-active-glow: drop-shadow(0 0 4px rgba(0, 0, 0, 0.4));
+  --vdd-tab-btn-active-shadow: inset 0 0 12px color-mix(in srgb, var(--vdd-accent-color) 6%, transparent);
+  --vdd-tab-btn-active-glow: drop-shadow(0 0 4px color-mix(in srgb, var(--vdd-accent-color) 40%, transparent));
+  --vdd-toolbar-btn-active-shadow: inset 0 0 12px color-mix(in srgb, var(--vdd-accent-color) 6%, transparent);
+  --vdd-toolbar-btn-active-glow: drop-shadow(0 0 4px color-mix(in srgb, var(--vdd-accent-color) 40%, transparent));
 }
 
 /* --------------------------------------------------------------------------
    tokyo — Neon Pulse (accent-blue tint, vivid neon glow)
    -------------------------------------------------------------------------- */
 [data-vdd-skin="tokyo"] {
-  --vdd-tab-btn-active-bg: rgba(122, 162, 247, 0.10);
-  --vdd-tab-btn-active-shadow: inset 0 0 16px rgba(122, 162, 247, 0.12);
-  --vdd-tab-btn-active-glow: drop-shadow(0 0 6px rgba(122, 162, 247, 0.65));
+  --vdd-tab-btn-active-bg: color-mix(in srgb, var(--vdd-accent-color) 10%, transparent);
+  --vdd-tab-btn-active-shadow: inset 0 0 16px color-mix(in srgb, var(--vdd-accent-color) 12%, transparent);
+  --vdd-tab-btn-active-glow: drop-shadow(0 0 6px color-mix(in srgb, var(--vdd-accent-color) 65%, transparent));
   --vdd-tab-accent-bar-width: 2px;
-  --vdd-toolbar-btn-radio-active-bg: rgba(122, 162, 247, 0.10);
-  --vdd-toolbar-btn-active-shadow: inset 0 0 16px rgba(122, 162, 247, 0.12);
-  --vdd-toolbar-btn-active-glow: drop-shadow(0 0 6px rgba(122, 162, 247, 0.65));
+  --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 10%, transparent);
+  --vdd-toolbar-btn-active-shadow: inset 0 0 16px color-mix(in srgb, var(--vdd-accent-color) 12%, transparent);
+  --vdd-toolbar-btn-active-glow: drop-shadow(0 0 6px color-mix(in srgb, var(--vdd-accent-color) 65%, transparent));
   --vdd-toolbar-accent-bar-width: 2px;
 }
 [data-vdd-skin="tokyo"] .vdd-sidebar-tabs-strip.vdd-left .vdd-sidebar-tab-btn.vdd-active {
-  box-shadow: var(--vdd-tab-btn-active-shadow), inset 3px 0 12px rgba(122, 162, 247, 0.18) !important;
+  box-shadow: var(--vdd-tab-btn-active-shadow), inset 3px 0 12px color-mix(in srgb, var(--vdd-accent-color) 18%, transparent) !important;
 }
 [data-vdd-skin="tokyo"] .vdd-sidebar-tabs-strip.vdd-right .vdd-sidebar-tab-btn.vdd-active {
-  box-shadow: var(--vdd-tab-btn-active-shadow), inset -3px 0 12px rgba(122, 162, 247, 0.18) !important;
+  box-shadow: var(--vdd-tab-btn-active-shadow), inset -3px 0 12px color-mix(in srgb, var(--vdd-accent-color) 18%, transparent) !important;
 }
 [data-vdd-skin="tokyo"] .vdd-toolbar-strip.vdd-left .vdd-toolbar-btn-radio.vdd-active,
 [data-vdd-skin="tokyo"] .vdd-toolbar-strip.vdd-left .vdd-toolbar-btn-group.vdd-active {
-  box-shadow: var(--vdd-toolbar-btn-active-shadow), inset 3px 0 12px rgba(122, 162, 247, 0.18) !important;
+  box-shadow: var(--vdd-toolbar-btn-active-shadow), inset 3px 0 12px color-mix(in srgb, var(--vdd-accent-color) 18%, transparent) !important;
 }
 [data-vdd-skin="tokyo"] .vdd-toolbar-strip.vdd-right .vdd-toolbar-btn-radio.vdd-active,
 [data-vdd-skin="tokyo"] .vdd-toolbar-strip.vdd-right .vdd-toolbar-btn-group.vdd-active {
-  box-shadow: var(--vdd-toolbar-btn-active-shadow), inset -3px 0 12px rgba(122, 162, 247, 0.18) !important;
+  box-shadow: var(--vdd-toolbar-btn-active-shadow), inset -3px 0 12px color-mix(in srgb, var(--vdd-accent-color) 18%, transparent) !important;
 }
 [data-vdd-skin="tokyo"] .vdd-toolbar-strip.vdd-top .vdd-toolbar-btn-radio.vdd-active,
 [data-vdd-skin="tokyo"] .vdd-toolbar-strip.vdd-top .vdd-toolbar-btn-group.vdd-active {
-  box-shadow: var(--vdd-toolbar-btn-active-shadow), inset 0 -3px 12px rgba(122, 162, 247, 0.18) !important;
+  box-shadow: var(--vdd-toolbar-btn-active-shadow), inset 0 -3px 12px color-mix(in srgb, var(--vdd-accent-color) 18%, transparent) !important;
 }
 [data-vdd-skin="tokyo"] .vdd-toolbar-strip.vdd-bottom .vdd-toolbar-btn-radio.vdd-active,
 [data-vdd-skin="tokyo"] .vdd-toolbar-strip.vdd-bottom .vdd-toolbar-btn-group.vdd-active {
-  box-shadow: var(--vdd-toolbar-btn-active-shadow), inset 0 3px 12px rgba(122, 162, 247, 0.18) !important;
+  box-shadow: var(--vdd-toolbar-btn-active-shadow), inset 0 3px 12px color-mix(in srgb, var(--vdd-accent-color) 18%, transparent) !important;
 }
 
 /* --------------------------------------------------------------------------
@@ -1899,12 +1924,12 @@ body.vdd-dragging-active {
    A contained chip that floats inside the strip — not an edge-connecting bridge.
    -------------------------------------------------------------------------- */
 [data-vdd-skin="macos"] {
-  --vdd-tab-btn-active-bg: rgba(56, 189, 248, 0.2);
+  --vdd-tab-btn-active-bg: color-mix(in srgb, var(--vdd-accent-color) 20%, transparent);
   --vdd-tab-btn-active-width: 36px;
   --vdd-tab-btn-active-radius: 10px;
   --vdd-tab-btn-active-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
   --vdd-tab-accent-bar-width: 0px;
-  --vdd-toolbar-btn-radio-active-bg: rgba(56, 189, 248, 0.2);
+  --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 20%, transparent);
   --vdd-toolbar-btn-active-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
   --vdd-toolbar-accent-bar-width: 0px;
 }
@@ -1918,10 +1943,10 @@ body.vdd-dragging-active {
   border-radius: 10px !important;
 }
 [data-vdd-skin="macos"][data-color-scheme="light"] {
-  --vdd-tab-btn-active-bg: rgba(0, 102, 204, 0.16);
-  --vdd-tab-btn-active-shadow: inset 0 0 0 1px rgba(0, 102, 204, 0.3);
-  --vdd-toolbar-btn-radio-active-bg: rgba(0, 102, 204, 0.16);
-  --vdd-toolbar-btn-active-shadow: inset 0 0 0 1px rgba(0, 102, 204, 0.3);
+  --vdd-tab-btn-active-bg: color-mix(in srgb, var(--vdd-accent-color) 16%, transparent);
+  --vdd-tab-btn-active-shadow: inset 0 0 0 1px color-mix(in srgb, var(--vdd-accent-color) 30%, transparent);
+  --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 16%, transparent);
+  --vdd-toolbar-btn-active-shadow: inset 0 0 0 1px color-mix(in srgb, var(--vdd-accent-color) 30%, transparent);
 }
 
 /* ─── Sidebar structure ──────────────────────────────────────────────────────
@@ -2466,7 +2491,7 @@ html.vdd-no-animations [class*="vdd-"]::after {
   height: 80px;
   border: 2px dashed var(--vdd-accent-color, #38bdf8);
   border-radius: 8px;
-  background: rgba(56, 189, 248, 0.06);
+  background: color-mix(in srgb, var(--vdd-accent-color) 6%, transparent);
   pointer-events: auto;
   z-index: calc(var(--vdd-z-base, 1000) + 9000);
   opacity: 0.55;
@@ -2478,7 +2503,7 @@ html.vdd-no-animations [class*="vdd-"]::after {
 .vdd-corner-zone--bottom-right { bottom: 0; right: 0; }
 .vdd-corner-zone--hovered {
   opacity: 1;
-  background: rgba(56, 189, 248, 0.18);
+  background: color-mix(in srgb, var(--vdd-accent-color) 18%, transparent);
   border-style: solid;
 }
 
@@ -2628,16 +2653,16 @@ html.vdd-no-animations [class*="vdd-"]::after {
 
 /* obsidian & tokyo — flip the inset glow X offset sign */
 [dir="rtl"] [data-vdd-skin="obsidian"] .vdd-sidebar-tabs-strip.vdd-left .vdd-sidebar-tab-btn.vdd-active {
-  box-shadow: var(--vdd-tab-btn-active-shadow), inset -3px 0 8px rgba(255, 255, 255, 0.08) !important;
+  box-shadow: var(--vdd-tab-btn-active-shadow), inset -3px 0 8px color-mix(in srgb, var(--vdd-accent-color) 8%, transparent) !important;
 }
 [dir="rtl"] [data-vdd-skin="obsidian"] .vdd-sidebar-tabs-strip.vdd-right .vdd-sidebar-tab-btn.vdd-active {
-  box-shadow: var(--vdd-tab-btn-active-shadow), inset 3px 0 8px rgba(255, 255, 255, 0.08) !important;
+  box-shadow: var(--vdd-tab-btn-active-shadow), inset 3px 0 8px color-mix(in srgb, var(--vdd-accent-color) 8%, transparent) !important;
 }
 [dir="rtl"] [data-vdd-skin="tokyo"] .vdd-sidebar-tabs-strip.vdd-left .vdd-sidebar-tab-btn.vdd-active {
-  box-shadow: var(--vdd-tab-btn-active-shadow), inset -3px 0 12px rgba(122, 162, 247, 0.18) !important;
+  box-shadow: var(--vdd-tab-btn-active-shadow), inset -3px 0 12px color-mix(in srgb, var(--vdd-accent-color) 18%, transparent) !important;
 }
 [dir="rtl"] [data-vdd-skin="tokyo"] .vdd-sidebar-tabs-strip.vdd-right .vdd-sidebar-tab-btn.vdd-active {
-  box-shadow: var(--vdd-tab-btn-active-shadow), inset 3px 0 12px rgba(122, 162, 247, 0.18) !important;
+  box-shadow: var(--vdd-tab-btn-active-shadow), inset 3px 0 12px color-mix(in srgb, var(--vdd-accent-color) 18%, transparent) !important;
 }
 
 /* chrome — swap the capsule border-radius when strips change sides */
@@ -3165,7 +3190,7 @@ html.vdd-no-animations [class*="vdd-"]::after {
 .vdd-btn-primary {
   background: var(--vdd-accent-color, #38bdf8);
   border: 1px solid var(--vdd-accent-color, #38bdf8);
-  color: #090b11;
+  color: var(--vdd-brand-on-accent, #090b11);
 }
 
 .vdd-btn-primary:hover {
@@ -3173,7 +3198,7 @@ html.vdd-no-animations [class*="vdd-"]::after {
 }
 
 [data-color-scheme="light"] .vdd-btn-primary {
-  color: #ffffff;
+  color: var(--vdd-brand-on-accent, #ffffff);
 }
 
 /* ============================================================
@@ -3336,23 +3361,23 @@ html.vdd-no-animations [class*="vdd-"]::after {
 }
 
 [data-vdd-skin="slate"] {
-  --vdd-panel-toolbar-btn-active-color: #60a5fa;
-  --vdd-panel-toolbar-btn-active-bg: rgba(96, 165, 250, 0.15);
+  --vdd-panel-toolbar-btn-active-color: var(--vdd-accent-color);
+  --vdd-panel-toolbar-btn-active-bg: color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
 }
 
 [data-vdd-skin="nord"] {
-  --vdd-panel-toolbar-btn-active-color: #88c0d0;
-  --vdd-panel-toolbar-btn-active-bg: rgba(136, 192, 208, 0.15);
+  --vdd-panel-toolbar-btn-active-color: var(--vdd-accent-color);
+  --vdd-panel-toolbar-btn-active-bg: color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
 }
 
 [data-vdd-skin="obsidian"] {
-  --vdd-panel-toolbar-btn-active-color: #a78bfa;
-  --vdd-panel-toolbar-btn-active-bg: rgba(167, 139, 250, 0.15);
+  --vdd-panel-toolbar-btn-active-color: var(--vdd-accent-color);
+  --vdd-panel-toolbar-btn-active-bg: color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
 }
 
 [data-vdd-skin="tokyo"] {
-  --vdd-panel-toolbar-btn-active-color: #7aa2f7;
-  --vdd-panel-toolbar-btn-active-bg: rgba(122, 162, 247, 0.15);
+  --vdd-panel-toolbar-btn-active-color: var(--vdd-accent-color);
+  --vdd-panel-toolbar-btn-active-bg: color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
 }
 
 /* ==========================================================================
@@ -3767,7 +3792,7 @@ html.vdd-no-animations [class*="vdd-"]::after {
   height: 80px;
   border: 2px dashed var(--vdd-accent-color, #38bdf8);
   border-radius: 8px;
-  background: rgba(56, 189, 248, 0.06);
+  background: color-mix(in srgb, var(--vdd-accent-color) 6%, transparent);
   pointer-events: none;
   z-index: 200;
   opacity: 0.55;
@@ -3776,7 +3801,7 @@ html.vdd-no-animations [class*="vdd-"]::after {
 
 .vdd-panel-float-dropzone--hovered {
   opacity: 1;
-  background: rgba(56, 189, 248, 0.18);
+  background: color-mix(in srgb, var(--vdd-accent-color) 18%, transparent);
   border-style: solid;
 }
 
