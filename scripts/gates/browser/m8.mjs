@@ -10,7 +10,7 @@
 import { chromium } from 'playwright-core'
 import { mkdirSync, writeFileSync } from 'node:fs'
 
-const APP = 'http://localhost:5188/'
+const APP = process.env.VDD_APP_URL ?? 'http://localhost:5188/'
 const OUT = 'artifacts/M8'
 mkdirSync(OUT, { recursive: true })
 
