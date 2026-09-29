@@ -429,7 +429,7 @@ check('M14 catches an attribute selector no component emits', 'src/index.css',
   'node scripts/gates/m14.mjs')
 
 check('M14 catches a token declared on :root but not documented', 'src/index.css',
-  s => s.replace('  --vdd-accent-color: #38bdf8;', '  --vdd-accent-color: #38bdf8;\n  --vdd-undocumented-token: #f00;'),
+  s => s.replace('  --vdd-accent-color: var(--vdd-brand-accent, #38bdf8);', '  --vdd-accent-color: var(--vdd-brand-accent, #38bdf8);\n  --vdd-undocumented-token: #f00;'),
   'node scripts/gates/m14.mjs')
 
 check('M14 catches a documented token that does not exist', 'docs/manual/10-theming.md',
@@ -441,6 +441,16 @@ check('M14 catches a token whose only home is a colour-scheme block', 'src/index
   s => s.replace('  --vdd-sidebar-tabs-bg: #141619;\n', '')
         .replace('[data-color-scheme="light"] {', '[data-color-scheme="light"] {\n  --vdd-sidebar-tabs-bg: #e9ecef;'),
   'node scripts/gates/m14.mjs')
+
+// The 1.3.0 branding rules: the manual's skin-font table follows the stylesheet, and the browser
+// minimum is stated where a consumer reads it first.
+check('M15 catches a skin font changed without the manual', 'src/index.css',
+  s => s.replace("--vdd-skin-font-family: 'Avenir Next',", "--vdd-skin-font-family: 'Gill Sans', 'Avenir Next',"),
+  'node scripts/gates/m15.mjs')
+
+check('M15 catches a wrong browser minimum in chapter 1', 'docs/manual/01-getting-started.md',
+  s => s.replace('Safari 16.2', 'Safari 15'),
+  'node scripts/gates/m15.mjs')
 
 // M1: hide a build artefact the exports map promises
 const hidden = 'dist/styles.css'

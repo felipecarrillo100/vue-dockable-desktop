@@ -346,11 +346,23 @@ single piece.
 opens every panel type, docks, floats, minimises, restores, saves, reloads and restores,
 asserting no console errors throughout. Screenshots to `artifacts/M14/`.
 
+### M15 — Skin branding (1.3.0) · S
+
+Added after the 1.2.0 release: react-dockable-desktop 7.2.0's skin branding, ported
+([0017](decisions/0017-brand-variables.md)), as angular-dockable-desktop 1.1.0 ported it.
+`--vdd-brand-accent` / `--vdd-brand-on-accent` read by every skin, every accent tint a
+`color-mix()` of `--vdd-accent-color`, per-skin fonts through `--vdd-skin-font-family`.
+
+**Gate** — standing gate; M15 rules (release files, ADR, manual ↔ stylesheet, browser minimum,
+PARITY, baseline present); **browser:** every skin × scheme against a 1.2.0 baseline allowing
+only the intended fixes, a red brand with no trace of any original accent, on-accent text, skin
+and brand fonts on every chrome root, and a `--control` run that must fail.
+
 ---
 
 ## 4. Totals
 
-15 milestones. **468 assertions** to reach, of which ~31 are pure-logic (M2) and 133 land in
+15 milestones for 1.0.0 (M15 added for 1.3.0). **468 assertions** to reach, of which ~31 are pure-logic (M2) and 133 land in
 a single milestone (M9). Two milestones are stop-or-go on architecture (M0) or format
 compatibility (M13).
 

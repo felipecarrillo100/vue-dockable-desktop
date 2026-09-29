@@ -11,6 +11,104 @@ correspondence lives, alongside the feature-by-feature map in [docs/PARITY.md](d
 
 ## [Unreleased]
 
+## [1.3.0] — 2026-09-29
+
+**Parity: react-dockable-desktop 6.3.1, plus react-dockable-desktop 7.2.0's skin branding**
+(the same port angular-dockable-desktop 1.1.0 made). Put your company's colour and font on any
+built-in skin with a few CSS variables — no skin of your own needed. See
+[Brand your app](docs/manual/10-theming.md#brand-your-app).
+
+### Added
+
+- **`--vdd-brand-accent`**: set on `:root`, it replaces the accent of every built-in skin in dark
+  and light — tab indicators, active sidebar tabs and toolbar buttons, hover and active tints,
+  glows, the focused window's glow, the taskbar, the drop and snap highlights, the primary
+  button. Unset, each skin keeps its own accent.
+- **`--vdd-brand-on-accent`**: the text colour on a solid accent fill (the confirm dialog's
+  primary button, the highlighted dock target), for light brand colours such as yellow — in both
+  schemes. Defaults as before: `#090b11`, and `#ffffff` on the primary button in light mode.
+- **Per-skin fonts** through `--vdd-skin-font-family`: `vscode` uses VS Code's workbench font,
+  `macos` San Francisco, `chrome` Google's UI fonts, `slate` Fluent's Segoe UI stack, `nord` a
+  humanist sans (Avenir Next) and `tokyo` a monospace (JetBrains Mono); `obsidian` keeps the
+  library stack. All are system font stacks — the library still loads no fonts — and your own
+  `--vdd-font-family` replaces them all, teleported chrome included. `:root` now declares
+  `--vdd-font-family` as `var(--vdd-skin-font-family, 'Outfit', 'Inter', system-ui,
+  -apple-system, sans-serif)`.
+- Manual: **Brand your app** — the brand variables, a per-scheme brand colour, loading your own
+  font, following a UI framework's theme (PrimeVue, Bootstrap, Tailwind, shadcn-vue), where to
+  put a logo (a custom `headerAction` entry on `<VddSidebar>`), and how to keep a custom skin
+  brandable.
+
+### Changed
+
+- **Browser minimum**: CSS `color-mix()` — Chrome / Edge 111, Safari 16.2, Firefox 113 (all
+  2023). In an older browser the tinted hover and active highlights lose their colour; layout and
+  behaviour are unaffected.
+- **The default skin's font** is VS Code's workbench stack (`-apple-system, BlinkMacSystemFont,
+  'Segoe WPC', 'Segoe UI', …`) instead of `'Outfit', 'Inter', …`, which is now the fallback for
+  skins that set no font (`obsidian`, and custom skins). If you loaded Outfit for the library,
+  set `--vdd-font-family` to it. In `tokyo`, `nord`, `macos`, `chrome` and `slate` the font changes
+  too — and panel content inherits it, so in `tokyo` your panels turn monospace unless they set a
+  font of their own.
+- **Every tint of the accent is derived from it** (`color-mix()` of `--vdd-accent-color`) instead
+  of a hand-copied `rgba()`. With the built-in skins and no brand set, the look is unchanged
+  except for the fixes below.
+- `vscode` light mode has an accent of its own, `#0066cc` — the blue its light-mode tokens
+  already used. The primary button, the taskbar's peek handle and the other accent uses, which
+  were cyan on a light background, are that blue now. A custom skin that sets no accent gets it
+  in light mode too.
+- **Set the accent with `--vdd-brand-accent`, not `--vdd-accent-color`.** Every skin and the light
+  scheme declare `--vdd-accent-color` with a selector that also matches the workspace element, so
+  a `:root` override of it is replaced inside the workspace — now in `vscode` light mode as well,
+  where 1.2.0 had no light accent to replace it with.
+
+### Fixed
+
+- **Overriding `--vdd-accent-color` on `:root` had no effect in 6 of the 7 skins**: each skin
+  redeclared it on the workspace element. `--vdd-brand-accent`, which every skin reads first, is
+  the supported way to rebrand.
+- **Changing the accent left the old colour behind**: 142 hover, active and glow colours were
+  copies of a skin's accent written as fixed `rgba()` values. They follow the accent now.
+- **Skins showed colours that weren't theirs**: the default cyan (and `#0066cc` in light mode)
+  left in other skins — the taskbar hover glow, the dock preview and corner-snap highlights, the
+  floating-widget drop zones, the light-mode focused-tab indicator and taskbar text, the
+  `--vdd-sidebar-card-*` and `--vdd-sidebar-btn-front-*` tokens — now show each skin's own
+  accent. `slate` and `tokyo` drew their active states in a blue that wasn't their accent, and
+  `obsidian`'s panel toolbar in a violet; they use their accent now. `obsidian`'s dark-mode white
+  glows no longer show in light mode, where its accent is black.
+- **The rail and toolbar buttons ignored `--vdd-font-family`**: a `<button>` does not inherit a
+  font, so they drew their labels and badges in the browser's button font (Arial in Chrome) in
+  every skin. The library's own form controls inherit the chrome font now, as in rdd 6.4.0; your
+  own inputs and buttons inside a panel are left alone. Found by the M15 font check.
+
+### Tests
+
+- **M15 browser gate** (`scripts/gates/browser/m15.mjs`, real Chrome): with no brand set, the
+  computed colours of every library element, its pseudo-elements, 8 hover states and every token
+  (inside the workspace, in the toolbar outside it, and on `<body>`), in all 7 skins × dark/light
+  with the chrome opened, match a 1.2.0 baseline — except exactly the fixes above; with a brand
+  set, no trace of any original accent remains; a light brand with a dark on-accent colour is
+  readable on the primary button in dark and light; each skin's font reaches every piece of
+  chrome, and a brand font set on `:root` wins in every skin, teleported chrome included. Its
+  `--control` run (a skin that redeclares its accent and its font) is rejected.
+- `test/core/stylesheet.test.ts`, ported from rdd 7.2.0's branding contract: every
+  `--vdd-accent-color` reads `--vdd-brand-accent` first, nothing in the library declares a
+  `--vdd-brand-*` variable, no accent colour is written as a literal outside its one declaration,
+  only `:root` declares `--vdd-font-family`, and text on accent fills reads
+  `--vdd-brand-on-accent`.
+- M15 rules (`scripts/gates/m15.mjs`): the release files, ADR 0017, the manual's skin-font table
+  against the stylesheet, the browser minimum in the README and chapter 1, and PARITY.md.
+- The playground takes `?skin=`, `?cs=light`, `?ba=` / `?bon=` (brand variables before mount)
+  and `?anim=0`.
+
+### Documentation
+
+- Theming chapter: **Brand your app**, **Skin fonts**, brandable custom skins (the demo's `mono`
+  skin now reads `--vdd-brand-accent` too), and the token reference (a branding table; tints
+  listed as "the accent at N%").
+- The browser minimum in the README and chapter 1; a Branding item in the README's features;
+  the rdd 7.2.0 names in the migration chapter; ADR 0017; PARITY.md.
+
 ## [1.2.0] — 2026-09-24
 
 **Parity: react-dockable-desktop 6.3.1.**

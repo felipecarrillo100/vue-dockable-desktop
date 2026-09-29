@@ -11,13 +11,16 @@ framework. Vuetify, PrimeVue, Naive UI, Tailwind, or plain CSS: none of them col
 `vdd-`, and nothing here redefines a generic class like `.active` or a bare element
 selector.
 
+To put your company's colour and font on a built-in skin you need no skin of your own — see
+[Brand your app](#brand-your-app).
+
 ## Retheming
 
 Override the tokens. Anywhere that wins the cascade will do:
 
 ```css
 :root {
-  --vdd-accent-color:  #7c3aed;
+  --vdd-brand-accent:  #7c3aed;
   --vdd-bg-primary:    #0b0b12;
   --vdd-bg-workspace:  #12121c;
   --vdd-bg-panel:      #181826;
@@ -27,7 +30,7 @@ Override the tokens. Anywhere that wins the cascade will do:
 ```
 
 The chrome's font is a token too — one value for everything the library draws, including the
-parts teleported to `<body>`:
+parts teleported to `<body>`, in every skin (see [Your brand font](#your-brand-font)):
 
 ```css
 :root { --vdd-font-family: 'IBM Plex Sans', system-ui, sans-serif; }
@@ -39,10 +42,167 @@ Tokens are grouped by area, so you can retheme one part of the UI: `--vdd-window
 `--vdd-modal-*`, `--vdd-side-panel-*`, `--vdd-taskbar-*`, `--vdd-tab-*`,
 `--vdd-panel-toolbar-*`, `--vdd-panel-float-*`, `--vdd-scrollbar-*`.
 
+The accent is set through `--vdd-brand-accent`, not `--vdd-accent-color`. Six of the seven
+skins (all but `vscode`), and the light scheme, declare `--vdd-accent-color` themselves, with a
+selector that also matches the workspace element, so a `:root` value of it is replaced there —
+in every skin in light mode, and in all but `vscode` in dark. A skin's light block replaces it on
+`<html>` as well, being more specific than `:root`. The same goes for any other token a skin
+declares; a skin that should look different is the [skin of your own](#defining-your-own).
+
 > Tokens live on `:root` by design, not by accident. The context menu, toasts, toolbar
 > flyouts and the overlay search dropdown all teleport to `document.body`, and `<VddSidebar>`
 > is normally an *ancestor* of `<VddDesktop>` — CSS variables only cascade downward, so
 > scoping them to the workspace element would leave those parts unthemed.
+
+## Brand your app
+
+Every built-in skin, in dark and light, takes your company's colour and font from three
+variables set on `:root`:
+
+```css
+/* your stylesheet, imported after vue-dockable-desktop/styles.css */
+:root {
+  --vdd-brand-accent: #e4002b;                 /* your brand colour */
+  --vdd-brand-on-accent: #ffffff;              /* text on a brand-coloured fill (see below) */
+  --vdd-font-family: 'Acme Sans', sans-serif;  /* your brand font */
+}
+```
+
+That is all. Leave a variable unset and the skin keeps its own value.
+
+| Variable | What follows it | Default |
+|---|---|---|
+| `--vdd-brand-accent` | Everything a skin draws in its accent: tab indicators, the active sidebar tab and toolbar button, hover and active tints, glows, the focused window's glow, the taskbar, the drop and snap highlights, the primary button. | Each skin's own accent |
+| `--vdd-brand-on-accent` | Text drawn on a solid accent fill, in both schemes: the confirm dialog's primary button and the highlighted dock target while you drag. | `#090b11`; `#ffffff` on the primary button in light mode |
+| `--vdd-font-family` | Every piece of chrome — tabs, title bars, toolbar, sidebar, menus, flyouts, toasts, drawers, modals — and panel content, which inherits the workspace font. | Each skin's own font |
+
+Set them on `:root`, not on a wrapper around the workspace: the context menu, the toolbar
+flyout, modals, drawers and toasts teleport to `document.body`, so a value set on a wrapper does
+not reach them. And import your stylesheet after the library's, as for any token override: the
+library's own `:root` block declares `--vdd-font-family`, and the tie is settled by order.
+
+The library itself only ever *reads* `--vdd-brand-accent` and `--vdd-brand-on-accent`. Every
+skin declares its accent as `var(--vdd-brand-accent, <its own colour>)`, and every tint of it —
+hover fills, glows, the sidebar's card tokens — is a `color-mix()` of `--vdd-accent-color` at a
+fixed percentage, so one colour drives them all.
+
+> **Light brand colours.** The library cannot tell whether your colour is light or dark. With a
+> light brand colour — yellow, lime, a pale cyan — set `--vdd-brand-on-accent` to a dark colour,
+> so text on a brand-coloured button stays readable:
+>
+> ```css
+> :root {
+>   --vdd-brand-accent: #facc15;
+>   --vdd-brand-on-accent: #1a1a1a;
+> }
+> ```
+>
+> It applies in both schemes. Unset, the defaults are as before: `#090b11`, and `#ffffff` on the
+> primary button in light mode.
+
+### A different brand colour for light mode
+
+One brand colour applies to both schemes. If yours needs a darker shade on a light background,
+scope a second value to the light scheme — the attribute your application already sets on
+`<html>` (see [Light and dark](#light-and-dark)):
+
+```css
+:root                            { --vdd-brand-accent: #ff5a5f; }
+:root[data-color-scheme="light"] { --vdd-brand-accent: #d93b40; }
+```
+
+### Your brand font
+
+The library never loads a font. Load your company font the way you already do — an
+`@font-face` rule, a `<link>` to your font provider in `index.html`, your design system's font
+package imported in `main.ts` — and name it in `--vdd-font-family`, followed by fallbacks:
+
+```css
+@font-face {
+  font-family: 'Acme Sans';
+  src: url('/fonts/acme-sans.woff2') format('woff2');
+  font-display: swap;
+}
+:root {
+  --vdd-font-family: 'Acme Sans', system-ui, sans-serif;
+}
+```
+
+It replaces every skin's own font. A skin never declares `--vdd-font-family` itself (it sets
+`--vdd-skin-font-family`, which the `:root` value falls back to), so yours wins in every skin,
+teleported chrome included.
+
+To use your page's own font instead, set `--vdd-font-family: inherit` on `:root`, or
+`--vdd-font-family: initial` on `<body>`. Both leave the token without a value, and the chrome
+then inherits the page's font. (`inherit` works only on `:root`: below it, a custom property set
+to `inherit` just copies the skin's stack down. `initial` on a wrapper reaches only the chrome
+inside that wrapper.)
+
+### Use your UI framework's theme
+
+The library depends on no UI framework, so it cannot read your theme by itself — but most
+frameworks' themes are already CSS variables on the page, so pointing the brand variables at
+them is one line each, and the workspace then follows your theme, including when it changes at
+runtime:
+
+| Framework | Brand colour | Text on it | Font |
+|---|---|---|---|
+| PrimeVue 4 (styled mode) | `var(--p-primary-color)` | `var(--p-primary-contrast-color)` | your font |
+| Bootstrap 5.3 | `var(--bs-primary)` | — | `var(--bs-body-font-family)` |
+| Tailwind CSS v4 | a theme colour, e.g. `var(--color-indigo-600)` | — | `var(--font-sans)` |
+| shadcn-vue | `var(--primary)` — or `hsl(var(--primary))` in versions that store it as HSL numbers | `var(--primary-foreground)` (same rule) | your font |
+
+With PrimeVue, for example:
+
+```css
+/* your stylesheet, after the library's */
+:root {
+  --vdd-brand-accent: var(--p-primary-color);
+  --vdd-brand-on-accent: var(--p-primary-contrast-color);
+}
+```
+
+The variable you point at must be defined on `:root` (or `<html>`), where the brand variables
+are read. A framework that declares its theme variables on an element of its own instead —
+Vuetify's `.v-theme--light` / `.v-theme--dark` on `<v-app>` — cannot be followed this way from
+`:root`; set the brand colour to the same value your theme uses.
+
+### Your logo
+
+The library draws no logo of its own — where one goes is your application's decision. Two
+natural places:
+
+- **Your own header or toolbar content**, outside the workspace — it is your markup, so anything
+  goes.
+- **The top of the `<VddSidebar>` rail**, where VS Code, Slack and Teams put theirs. A custom
+  rail entry in `headerAction` renders your component as-is
+  ([chapter 6](06-sidebar-toolbar.md#pinned-rail-entries)):
+
+```vue
+<script setup lang="ts">
+import { VddDesktop, VddSidebar } from 'vue-dockable-desktop'
+import type { SidebarRailEntry } from 'vue-dockable-desktop'
+import AcmeLogo from './AcmeLogo.vue'   // <img src="/acme-mark.svg" alt="Acme" class="acme-logo" />
+
+const logo: SidebarRailEntry = { id: 'logo', custom: true, component: AcmeLogo }
+</script>
+
+<template>
+  <VddSidebar :tabs="[]" :header-action="logo">
+    <VddDesktop class="vdd-fill-viewport" />
+  </VddSidebar>
+</template>
+```
+
+The rail is narrow, so a square mark fits better than a wide wordmark. Adjust its spacing with
+`--vdd-sidebar-header-area-padding-top` and `--vdd-sidebar-header-area-padding-bottom` (both
+`8px`).
+
+### Browser support
+
+Branding relies on CSS `color-mix()`, available since Chrome 111, Edge 111, Safari 16.2 and
+Firefox 113 (all 2023). In an older browser the tinted hover and active highlights lose their
+colour; layout and behaviour are unaffected.
 
 ## Skins
 
@@ -54,6 +214,30 @@ A skin is a preset of tokens, selected by prop:
 
 Built in: `vscode` (the default), `macos`, `chrome`, `slate`, `nord`, `obsidian`, `tokyo`. Each
 ships a dark and a light variant.
+
+### Skin fonts
+
+Each skin also brings its own font, the platform's UI font where it has a known one. They are
+system font stacks — the library loads none of them, so each machine uses the first one it has —
+and your `--vdd-font-family` replaces them all ([Your brand font](#your-brand-font)):
+
+| Skin | Font (`--vdd-skin-font-family`) |
+|---|---|
+| `vscode` | VS Code's workbench font: `-apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif` |
+| `macos` | San Francisco: `-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif` |
+| `chrome` | Google's UI fonts: `'Google Sans Text', 'Google Sans', Roboto, system-ui, -apple-system, 'Segoe UI', sans-serif` |
+| `slate` | Fluent's stack: `'Segoe UI Variable Text', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', sans-serif` |
+| `nord` | No official font; a softer humanist sans: `'Avenir Next', 'Nunito', 'Segoe UI', system-ui, sans-serif` |
+| `obsidian` | The library's fallback stack: `'Outfit', 'Inter', system-ui, -apple-system, sans-serif` |
+| `tokyo` | No official font; a terminal/editor feel: `'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace` |
+
+Panel content inherits the workspace font, so in `tokyo` your own panels turn monospace too
+unless they set a font of their own.
+
+A skin's font reaches the sidebar, the toolbar and everything teleported to `document.body` for
+the same reason its colours do: `data-vdd-skin` is mirrored onto `<html>` (below), where `:root`
+resolves `--vdd-font-family` from the skin's `--vdd-skin-font-family`, and every element inherits
+the result.
 
 The name is mirrored as `data-vdd-skin` onto **two** elements: `document.documentElement`, so the
 chrome that teleports to `document.body` (menus, toasts, flyouts) picks up the skin's variables
@@ -69,7 +253,8 @@ Scope tokens to your skin's name and pass it as the prop. Nothing has to be regi
 [data-vdd-skin="mono"] {
   --vdd-bg-panel: #1a1a1a;
   --vdd-bg-tab-bar: #0f0f0f;
-  --vdd-accent-color: #e5e5e5;
+  --vdd-accent-color: var(--vdd-brand-accent, #e5e5e5);
+  --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 18%, transparent);
   --vdd-tab-indicator-focused: #ffffff;
   --vdd-panel-float-radius: 0;
 }
@@ -77,7 +262,8 @@ Scope tokens to your skin's name and pass it as the prop. Nothing has to be regi
 [data-vdd-skin="mono"][data-color-scheme="light"] {
   --vdd-bg-panel: #ffffff;
   --vdd-bg-tab-bar: #e4e4e4;
-  --vdd-accent-color: #171717;
+  --vdd-accent-color: var(--vdd-brand-accent, #171717);
+  --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 12%, transparent);
   --vdd-tab-indicator-focused: #171717;
 }
 ```
@@ -105,6 +291,22 @@ and your skin can add rules of that kind against `vdd-` classes if it wants them
 
 The demo ships `mono` as a worked example: see the bottom of `demo/src/demo.css`, and pick it from
 the skin dropdown to see it in both schemes.
+
+> **Let your skin take a brand, as the built-in ones do.** Three habits keep a skin brandable
+> with [`--vdd-brand-accent`](#brand-your-app):
+>
+> - Declare the accent as `var(--vdd-brand-accent, <your colour>)`, never as a bare colour.
+> - Write every tint of it as `color-mix(in srgb, var(--vdd-accent-color) N%, transparent)`
+>   instead of an `rgba()` of the same colour — then one accent drives them all.
+> - Give your skin a font with `--vdd-skin-font-family`, never `--vdd-font-family`: declared in a
+>   skin, `--vdd-font-family` would override the one an application sets on `:root`. Likewise,
+>   never declare `--vdd-brand-accent` or `--vdd-brand-on-accent` in a skin — those belong to the
+>   application.
+>
+> A skin that sets no accent of its own gets the default skin's (`#38bdf8` dark, `#0066cc` light),
+> and one that sets no font gets the library's fallback stack. The library's own tints, the
+> active tab icon and the sidebar's accent tokens all follow `--vdd-accent-color`, so a skin that
+> sets only its accent is recoloured throughout.
 
 ## Light and dark
 
@@ -183,7 +385,20 @@ inside the library's markup and that you otherwise cannot reach.
 Every token the library declares on `:root`, with its default. This is the complete surface a
 skin or a retheme can override — a gate checks this table against the stylesheet in both
 directions, so a token cannot be added without a row here, and a row cannot outlive its token.
+Where a default below is "the accent at N%", it is `color-mix(in srgb, var(--vdd-accent-color)
+N%, transparent)`.
 
+### Branding — set by your application
+
+Never declared by the library, only read. See [Brand your app](#brand-your-app).
+
+| Token | Default | What it paints |
+|---|---|---|
+| `--vdd-brand-accent` | *(unset)* | Replaces every skin's accent, in dark and light. |
+| `--vdd-brand-on-accent` | *(unset — `#090b11`; `#ffffff` on the primary button in light mode)* | Text on a solid accent fill, in both schemes: the primary button, the active dock target. |
+
+A skin sets its own font as `--vdd-skin-font-family` — declared by each built-in skin (see
+[Skin fonts](#skin-fonts)), never on `:root` — which `--vdd-font-family` falls back to.
 
 ### Surfaces
 
@@ -207,15 +422,15 @@ directions, so a token cannot be added without a row here, and a row cannot outl
 | `--vdd-text-secondary` | `#94a3b8` | Muted text - hints, counts, placeholders. |
 | `--vdd-text-tab-active` | `#ffffff` | Label of the selected tab. |
 | `--vdd-text-tab-inactive` | `#858b99` | Label of an unselected tab. |
-| `--vdd-font-family` | `'Outfit', 'Inter', system-ui, -apple-system, sans-serif` | The font of all library chrome: the workspace, tabs and windows, the sidebar and toolbar, modals, side panels, toasts, menus and flyouts. Set it to `inherit` to use your page's font. |
+| `--vdd-font-family` | `var(--vdd-skin-font-family, 'Outfit', 'Inter', system-ui, -apple-system, sans-serif)` | The font of all library chrome: the workspace, tabs and windows, the sidebar and toolbar, modals, side panels, toasts, menus and flyouts. Set it to `inherit` to use your page's font. |
 | `--vdd-text-tab-hover` | `#e2e8f0` | Label of a tab under the pointer. |
 
 ### Accent
 
 | Token | Default | What it paints |
 |---|---|---|
-| `--vdd-accent-color` | `#38bdf8` | The one colour that carries selection and focus throughout. |
-| `--vdd-accent-glow` | `rgba(56, 189, 248, 0.15)` | Translucent halo behind accented elements. |
+| `--vdd-accent-color` | `var(--vdd-brand-accent, #38bdf8)` (light: `#0066cc`) | The one colour that carries selection and focus throughout. Every tint of it in the library is a `color-mix()` of this token. |
+| `--vdd-accent-glow` | the accent at 15% | Translucent halo behind accented elements. |
 
 ### Tabs
 
@@ -348,7 +563,7 @@ directions, so a token cannot be added without a row here, and a row cannot outl
 | `--vdd-sidebar-text-title` | `#f8f9fa` | Headings inside the drawer. |
 | `--vdd-sidebar-text-muted` | `#8a90a0` | Secondary text inside the drawer. |
 | `--vdd-tab-icon-inactive` | `#9ea4b0` | Icon of an unselected rail button. |
-| `--vdd-tab-icon-active` | `#38bdf8` | Icon of the selected rail button, and of an active toolbar button. |
+| `--vdd-tab-icon-active` | `var(--vdd-accent-color)` | Icon of the selected rail button, and of an active toolbar button. |
 | `--vdd-tab-btn-active-bg` | `#1e2024` | The selected rail button behind its icon. |
 | `--vdd-tab-btn-active-shadow` | `none` | Shadow behind it. |
 | `--vdd-sidebar-btn-hover-bg` | `rgba(255, 255, 255, 0.05)` | A rail button under the pointer. |
@@ -357,22 +572,22 @@ directions, so a token cannot be added without a row here, and a row cannot outl
 | `--vdd-sidebar-card-bg` | `rgba(255, 255, 255, 0.03)` | Card surface offered to drawer content. |
 | `--vdd-sidebar-card-border` | `rgba(255, 255, 255, 0.08)` | That card border. |
 | `--vdd-sidebar-card-hover-bg` | `rgba(255, 255, 255, 0.04)` | That card on hover. |
-| `--vdd-sidebar-card-hover-border` | `rgba(56, 189, 248, 0.25)` | Its border on hover. |
-| `--vdd-sidebar-card-active-bg` | `rgba(56, 189, 248, 0.06)` | That card when selected. |
-| `--vdd-sidebar-card-active-border` | `rgba(56, 189, 248, 0.3)` | Its border when selected. |
-| `--vdd-sidebar-card-active-shadow` | `rgba(56, 189, 248, 0.08)` | Its glow when selected. |
+| `--vdd-sidebar-card-hover-border` | the accent at 25% | Its border on hover. |
+| `--vdd-sidebar-card-active-bg` | the accent at 6% | That card when selected. |
+| `--vdd-sidebar-card-active-border` | the accent at 30% | Its border when selected. |
+| `--vdd-sidebar-card-active-shadow` | the accent at 8% | Its glow when selected. |
 | `--vdd-sidebar-btn-front-bg` | `transparent` | Primary-button style offered to drawer content. |
-| `--vdd-sidebar-btn-front-border` | `#38bdf8` | Its border. |
-| `--vdd-sidebar-btn-front-text` | `#38bdf8` | Its label. |
-| `--vdd-sidebar-btn-front-hover-bg` | `rgba(56, 189, 248, 0.1)` | Its background on hover. |
+| `--vdd-sidebar-btn-front-border` | `var(--vdd-accent-color)` | Its border. |
+| `--vdd-sidebar-btn-front-text` | `var(--vdd-accent-color)` | Its label. |
+| `--vdd-sidebar-btn-front-hover-bg` | the accent at 10% | Its background on hover. |
 
 ### Workspace toolbar
 
 | Token | Default | What it paints |
 |---|---|---|
 | `--vdd-toolbar-btn-hover-bg` | `rgba(255, 255, 255, 0.06)` | A workspace-toolbar button under the pointer. |
-| `--vdd-toolbar-btn-radio-active-bg` | `rgba(56, 189, 248, 0.14)` | The selected radio button in a workspace toolbar. |
-| `--vdd-toolbar-btn-toggle-active-bg` | `rgba(56, 189, 248, 0.08)` | An engaged toggle in a workspace toolbar. |
+| `--vdd-toolbar-btn-radio-active-bg` | the accent at 14% | The selected radio button in a workspace toolbar. |
+| `--vdd-toolbar-btn-toggle-active-bg` | the accent at 8% | An engaged toggle in a workspace toolbar. |
 | `--vdd-toolbar-btn-active-glow` | `none` | Halo behind an active workspace-toolbar button. |
 | `--vdd-toolbar-btn-active-shadow` | `none` | Shadow behind either of those. |
 | `--vdd-toolbar-accent-bar-width` | `3px` | Thickness of the accent bar on an active workspace-toolbar button. |

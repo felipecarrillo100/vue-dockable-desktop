@@ -132,7 +132,9 @@ body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
       element, so the pair matches there as well as on the root — a custom skin gets dark/light
       for free, exactly like a built-in.
    3. Tokens only, no element rules. Recolouring the whole workspace needs nothing else; the
-      built-ins' structural flourishes (macOS's blur, the accent bars) are the tier above. */
+      built-ins' structural flourishes (macOS's blur, the accent bars) are the tier above.
+   4. Brandable, as the built-ins are (1.3.0): the accent reads an application's
+      --vdd-brand-accent first, and its glow is a color-mix() of the accent, not a copied rgba(). */
 
 [data-vdd-skin="mono"] {
   --vdd-bg-primary: #0b0b0b;
@@ -145,8 +147,8 @@ body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
   --vdd-text-secondary: #9a9a9a;
   --vdd-text-tab-active: #ffffff;
   --vdd-text-tab-inactive: #8a8a8a;
-  --vdd-accent-color: #e5e5e5;
-  --vdd-accent-glow: rgba(229, 229, 229, 0.18);
+  --vdd-accent-color: var(--vdd-brand-accent, #e5e5e5);
+  --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 18%, transparent);
   --vdd-border-color: rgba(255, 255, 255, 0.1);
   --vdd-border-panel: rgba(255, 255, 255, 0.1);
   --vdd-window-bg: rgba(20, 20, 20, 0.92);
@@ -172,8 +174,8 @@ body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
   --vdd-text-secondary: #5f5f5f;
   --vdd-text-tab-active: #000000;
   --vdd-text-tab-inactive: #6b6b6b;
-  --vdd-accent-color: #171717;
-  --vdd-accent-glow: rgba(23, 23, 23, 0.12);
+  --vdd-accent-color: var(--vdd-brand-accent, #171717);
+  --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 12%, transparent);
   --vdd-border-color: rgba(0, 0, 0, 0.12);
   --vdd-border-panel: rgba(0, 0, 0, 0.12);
   --vdd-window-bg: rgba(255, 255, 255, 0.95);

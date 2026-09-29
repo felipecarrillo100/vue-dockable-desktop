@@ -8,6 +8,10 @@ npm install vue-dockable-desktop
 
 Requires **Vue 3.4+**. The library has no other runtime dependencies.
 
+It needs a browser with CSS `color-mix()`: Chrome / Edge 111, Safari 16.2, Firefox 113 or later
+(all 2023). In an older browser the tinted hover and active highlights lose their colour; layout
+and behaviour are unaffected.
+
 ## Set up
 
 Two things: import the stylesheet, and create a workspace.
