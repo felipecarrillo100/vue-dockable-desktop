@@ -25,12 +25,12 @@
   --vdd-font-family: var(--vdd-skin-font-family, 'Outfit', 'Inter', system-ui, -apple-system, sans-serif);
   --vdd-styles-loaded: 1; /* sentinel — checked at mount to detect missing CSS import */
   --vdd-z-base: 1000; /* base for floating windows + all chrome overlays; override via WindowManagerProvider's zIndexBase */
-  --vdd-bg-primary: #090b11;
-  --vdd-bg-workspace: #0f111a;
-  --vdd-bg-panel: #141722;
-  --vdd-bg-tab-bar: #0d0f16;
-  --vdd-text-primary: #f1f5f9;
-  --vdd-text-secondary: #94a3b8;
+  --vdd-bg-primary: var(--vdd--b-bg-primary, #090b11);
+  --vdd-bg-workspace: var(--vdd--b-bg-workspace, #0f111a);
+  --vdd-bg-panel: var(--vdd--b-bg-panel, #141722);
+  --vdd-bg-tab-bar: var(--vdd--b-bg-tab-bar, #0d0f16);
+  --vdd-text-primary: var(--vdd--b-text-primary, #f1f5f9);
+  --vdd-text-secondary: var(--vdd--b-text-secondary, #94a3b8);
   --vdd-border-color: rgba(255, 255, 255, 0.08);
   /* Branding: an app sets --vdd-brand-accent / --vdd-brand-on-accent on :root, and every skin reads
      them first (var(--vdd-brand-accent, <skin colour>)). The library only reads them — declared
@@ -40,55 +40,55 @@
   --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
   --vdd-header-button-gap: 4px; /* Configurable gap spacing between titlebar action buttons */
   /* Window skins variables */
-  --vdd-window-bg: rgba(20, 22, 28, var(--vdd-window-opacity, 0.85));
+  --vdd-window-bg: color-mix(in srgb, var(--vdd--b-window-bg, rgb(20 22 28)) calc(var(--vdd-window-opacity, 0.85) * 100%), transparent);
   --vdd-window-border: rgba(255, 255, 255, 0.08);
   --vdd-window-border-focused: rgba(255, 255, 255, 0.28);
   --vdd-window-header-bg: rgba(0, 0, 0, 0.25);
-  --vdd-window-text: #f8f9fa;
+  --vdd-window-text: var(--vdd--b-window-text, #f8f9fa);
   --vdd-window-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
   --vdd-window-shadow-focused: 0 24px 50px rgba(0, 0, 0, 0.55);
   /* Modal theme variables */
-  --vdd-modal-curtain-bg: rgba(9, 11, 17, 0.65);
-  --vdd-modal-bg: rgba(20, 23, 34, 0.95);
+  --vdd-modal-curtain-bg: color-mix(in srgb, var(--vdd--b-modal-curtain-bg, rgb(9 11 17)) 65%, transparent);
+  --vdd-modal-bg: color-mix(in srgb, var(--vdd--b-modal-bg, rgb(20 23 34)) 95%, transparent);
   --vdd-modal-border: rgba(255, 255, 255, 0.08);
   --vdd-modal-header-bg: rgba(0, 0, 0, 0.15);
   --vdd-modal-header-border: rgba(255, 255, 255, 0.06);
-  --vdd-modal-close-hover-color: #ffffff;
-  --vdd-side-panel-bg: rgba(20, 23, 34, 0.88);
+  --vdd-modal-close-hover-color: var(--vdd--b-modal-close-hover-color, #ffffff);
+  --vdd-side-panel-bg: color-mix(in srgb, var(--vdd--b-side-panel-bg, rgb(20 23 34)) 88%, transparent);
   --vdd-side-panel-border: rgba(255, 255, 255, 0.08);
   --vdd-side-panel-header-bg: rgba(0, 0, 0, 0.15);
   --vdd-side-panel-header-border: rgba(255, 255, 255, 0.06);
-  --vdd-side-panel-close-hover-color: #ffffff;
+  --vdd-side-panel-close-hover-color: var(--vdd--b-side-panel-close-hover-color, #ffffff);
   /* Grid/Docked panel theme variables */
   --vdd-border-panel: rgba(255, 255, 255, 0.08);
-  --vdd-bg-tab-inactive: #0c0d12;
-  --vdd-text-tab-inactive: #858b99;
-  --vdd-text-tab-active: #ffffff;
+  --vdd-bg-tab-inactive: var(--vdd--b-bg-tab-inactive, #0c0d12);
+  --vdd-text-tab-inactive: var(--vdd--b-text-tab-inactive, #858b99);
+  --vdd-text-tab-active: var(--vdd--b-text-tab-active, #ffffff);
   /* Tab and control button hover colors */
-  --vdd-bg-tab-hover: #171a22;
-  --vdd-text-tab-hover: #e2e8f0;
+  --vdd-bg-tab-hover: var(--vdd--b-bg-tab-hover, #171a22);
+  --vdd-text-tab-hover: var(--vdd--b-text-tab-hover, #e2e8f0);
   --vdd-close-btn-hover-bg: rgba(255, 255, 255, 0.12);
-  --vdd-close-btn-hover-color: #ffffff;
-  --vdd-close-btn-color: #858b99;
-  --vdd-close-btn-active-color: #e2e8f0;
+  --vdd-close-btn-hover-color: var(--vdd--b-close-btn-hover-color, #ffffff);
+  --vdd-close-btn-color: var(--vdd--b-close-btn-color, #858b99);
+  --vdd-close-btn-active-color: var(--vdd--b-close-btn-active-color, #e2e8f0);
   /* Tab focus states */
   --vdd-tab-indicator-focused: var(--vdd-accent-color, #38bdf8);
   --vdd-tab-indicator-unfocused: rgba(255, 255, 255, 0.3);
   --vdd-tab-bg-active-focused: var(--vdd-bg-panel);
-  --vdd-tab-bg-active-unfocused: rgba(20, 23, 34, 0.55);
+  --vdd-tab-bg-active-unfocused: color-mix(in srgb, var(--vdd--b-tab-bg-active-unfocused, rgb(20 23 34)) 55%, transparent);
   --vdd-tab-text-active-focused: var(--vdd-text-tab-active, #ffffff);
   --vdd-tab-text-active-unfocused: rgba(255, 255, 255, 0.65);
   --vdd-resizer-bg: rgba(255, 255, 255, 0.08);
   --vdd-custom-btn-bg: rgba(255, 255, 255, 0.03);
   --vdd-custom-btn-border: rgba(255, 255, 255, 0.05);
   --vdd-custom-btn-hover-bg: rgba(255, 255, 255, 0.12);
-  --vdd-custom-btn-hover-color: #ffffff;
+  --vdd-custom-btn-hover-color: var(--vdd--b-custom-btn-hover-color, #ffffff);
   /* Taskbar theme variables */
   --vdd-taskbar-bg: rgba(0, 0, 0, 0.75);
   --vdd-taskbar-border: rgba(255, 255, 255, 0.1);
   --vdd-taskbar-nav-color: rgba(255, 255, 255, 0.5);
-  --vdd-taskbar-item-bg: rgba(15, 23, 42, 0.6);
-  --vdd-taskbar-item-hover-bg: rgba(15, 23, 42, 0.8);
+  --vdd-taskbar-item-bg: color-mix(in srgb, var(--vdd--b-taskbar-item-bg, rgb(15 23 42)) 60%, transparent);
+  --vdd-taskbar-item-hover-bg: color-mix(in srgb, var(--vdd--b-taskbar-item-hover-bg, rgb(15 23 42)) 80%, transparent);
   --vdd-taskbar-item-border: rgba(255, 255, 255, 0.08);
   --vdd-taskbar-item-text: var(--vdd-accent-color, #38bdf8);
   /* Scrollbar theme variables */
@@ -112,7 +112,7 @@
   --vdd-panel-toolbar-btn-active-color: var(--vdd-tab-icon-active, #38bdf8);
   --vdd-panel-toolbar-separator-color: var(--vdd-toolbar-separator-color, rgba(255, 255, 255, 0.09));
   /* ── Panel Overlay — Floating Window ── */
-  --vdd-panel-float-bg: rgba(22, 24, 34, 0.92);
+  --vdd-panel-float-bg: color-mix(in srgb, var(--vdd--b-panel-float-bg, rgb(22 24 34)) 92%, transparent);
   --vdd-panel-float-border: rgba(255, 255, 255, 0.1);
   --vdd-panel-float-radius: 8px;
   --vdd-panel-float-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
@@ -131,24 +131,24 @@
      with no background and inherited text in dark mode; the selected rail icon had no colour at
      all. `[data-color-scheme="light"]` overrides these, which is all a scheme block should ever
      do, and a gate rule now rejects a token whose only home is such a block. */
-  --vdd-sidebar-bg: #1e2024;
-  --vdd-sidebar-tabs-bg: #141619;
+  --vdd-sidebar-bg: var(--vdd--b-sidebar-bg, #1e2024);
+  --vdd-sidebar-tabs-bg: var(--vdd--b-sidebar-tabs-bg, #141619);
   --vdd-sidebar-border: rgba(255, 255, 255, 0.08);
   --vdd-sidebar-card-bg: rgba(255, 255, 255, 0.03);
   --vdd-sidebar-card-border: rgba(255, 255, 255, 0.08);
   --vdd-sidebar-card-active-bg: color-mix(in srgb, var(--vdd-accent-color) 6%, transparent);
   --vdd-sidebar-card-active-border: color-mix(in srgb, var(--vdd-accent-color) 30%, transparent);
-  --vdd-sidebar-text-title: #f8f9fa;
-  --vdd-sidebar-text-muted: #8a90a0;
-  --vdd-sidebar-badge-bg: #2d3139;
-  --vdd-sidebar-badge-text: #b0b5c0;
+  --vdd-sidebar-text-title: var(--vdd--b-sidebar-text-title, #f8f9fa);
+  --vdd-sidebar-text-muted: var(--vdd--b-sidebar-text-muted, #8a90a0);
+  --vdd-sidebar-badge-bg: var(--vdd--b-sidebar-badge-bg, #2d3139);
+  --vdd-sidebar-badge-text: var(--vdd--b-sidebar-badge-text, #b0b5c0);
   --vdd-sidebar-btn-front-border: var(--vdd-accent-color);
   --vdd-sidebar-btn-front-text: var(--vdd-accent-color);
   --vdd-sidebar-btn-front-bg: transparent;
   --vdd-sidebar-btn-front-hover-bg: color-mix(in srgb, var(--vdd-accent-color) 10%, transparent);
   --vdd-tab-icon-active: var(--vdd-accent-color);
-  --vdd-tab-icon-inactive: #9ea4b0;
-  --vdd-tab-btn-active-bg: #1e2024; /* Seamless merge look */
+  --vdd-tab-icon-inactive: var(--vdd--b-tab-icon-inactive, #9ea4b0);
+  --vdd-tab-btn-active-bg: var(--vdd--b-tab-btn-active-bg, #1e2024); /* Seamless merge look */
   --vdd-sidebar-btn-hover-bg: rgba(255, 255, 255, 0.05);
   --vdd-sidebar-card-hover-border: color-mix(in srgb, var(--vdd-accent-color) 25%, transparent);
   --vdd-sidebar-card-hover-bg: rgba(255, 255, 255, 0.04);
@@ -171,6 +171,66 @@
   --vdd-tab-btn-active-width: 100%;
   --vdd-toolbar-accent-bar-width: 3px;
   --vdd-toolbar-btn-active-glow: none;
+}
+
+/* Brand surfaces (7.3.0): each surface a skin declares reads --vdd--b-<token> first. These are
+   mixes of the application's --vdd-brand-surface and --vdd-brand-text. --vdd--b-base is the surface,
+   written as a mix with the text so that it is valid only when *both* are set; every other value is
+   built on it and has no fallback. While either input is unset they are all invalid, and every
+   surface falls back to the skin's own colour. Internal, not API — declared only here, where :root
+   resolves the brand variables. */
+:root {
+  --vdd--b-base: color-mix(in srgb, var(--vdd-brand-surface) 100%, var(--vdd-brand-text));
+  --vdd--b-bg-panel: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 6%);
+  --vdd--b-bg-primary: var(--vdd--b-base);
+  --vdd--b-bg-tab-bar: color-mix(in srgb, var(--vdd--b-base), black 10%);
+  --vdd--b-bg-tab-hover: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 10%);
+  --vdd--b-bg-tab-inactive: color-mix(in srgb, var(--vdd--b-base), black 10%);
+  --vdd--b-bg-workspace: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 3%);
+  --vdd--b-border-panel: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 14%);
+  --vdd--b-close-btn-active-color: color-mix(in srgb, var(--vdd-brand-text) 100%, var(--vdd--b-base));
+  --vdd--b-close-btn-color: color-mix(in srgb, var(--vdd-brand-text) 62%, var(--vdd--b-base));
+  --vdd--b-close-btn-hover-color: color-mix(in srgb, var(--vdd-brand-text) 100%, var(--vdd--b-base));
+  --vdd--b-custom-btn-hover-color: color-mix(in srgb, var(--vdd-brand-text) 100%, var(--vdd--b-base));
+  --vdd--b-dock-target-bg: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 6%);
+  --vdd--b-dock-target-center-bg: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 12%);
+  --vdd--b-modal-bg: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 6%);
+  --vdd--b-modal-close-hover-color: color-mix(in srgb, var(--vdd-brand-text) 100%, var(--vdd--b-base));
+  --vdd--b-modal-curtain-bg: color-mix(in srgb, var(--vdd--b-base), black 20%);
+  --vdd--b-panel-card-bg: color-mix(in srgb, var(--vdd--b-base), black 6%);
+  --vdd--b-panel-card-border: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 16%);
+  --vdd--b-panel-float-bg: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 6%);
+  --vdd--b-panel-text: color-mix(in srgb, var(--vdd-brand-text) 100%, var(--vdd--b-base));
+  --vdd--b-panel-toolbar-frosted-bg: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 6%);
+  --vdd--b-placeholder-bg: color-mix(in srgb, var(--vdd-brand-text) 62%, var(--vdd--b-base));
+  --vdd--b-side-panel-bg: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 6%);
+  --vdd--b-side-panel-close-hover-color: color-mix(in srgb, var(--vdd-brand-text) 100%, var(--vdd--b-base));
+  --vdd--b-sidebar-badge-bg: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 16%);
+  --vdd--b-sidebar-badge-text: color-mix(in srgb, var(--vdd-brand-text) 62%, var(--vdd--b-base));
+  --vdd--b-sidebar-bg: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 4%);
+  --vdd--b-sidebar-card-bg: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 8%);
+  --vdd--b-sidebar-tabs-bg: color-mix(in srgb, var(--vdd--b-base), black 10%);
+  --vdd--b-sidebar-text-muted: color-mix(in srgb, var(--vdd-brand-text) 62%, var(--vdd--b-base));
+  --vdd--b-sidebar-text-title: color-mix(in srgb, var(--vdd-brand-text) 100%, var(--vdd--b-base));
+  --vdd--b-tab-bg-active-unfocused: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 3%);
+  --vdd--b-tab-btn-active-bg: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 9%);
+  --vdd--b-tab-icon-inactive: color-mix(in srgb, var(--vdd-brand-text) 62%, var(--vdd--b-base));
+  --vdd--b-tab-text-active-focused: color-mix(in srgb, var(--vdd-brand-text) 100%, var(--vdd--b-base));
+  --vdd--b-tab-text-active-unfocused: color-mix(in srgb, var(--vdd-brand-text) 62%, var(--vdd--b-base));
+  --vdd--b-taskbar-bg: color-mix(in srgb, var(--vdd--b-base), black 10%);
+  --vdd--b-taskbar-item-bg: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 6%);
+  --vdd--b-taskbar-item-hover-bg: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 12%);
+  --vdd--b-text-primary: color-mix(in srgb, var(--vdd-brand-text) 100%, var(--vdd--b-base));
+  --vdd--b-text-secondary: color-mix(in srgb, var(--vdd-brand-text) 62%, var(--vdd--b-base));
+  --vdd--b-text-tab-active: color-mix(in srgb, var(--vdd-brand-text) 100%, var(--vdd--b-base));
+  --vdd--b-text-tab-hover: color-mix(in srgb, var(--vdd-brand-text) 100%, var(--vdd--b-base));
+  --vdd--b-text-tab-inactive: color-mix(in srgb, var(--vdd-brand-text) 62%, var(--vdd--b-base));
+  --vdd--b-toast-bg: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 10%);
+  --vdd--b-window-bg: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 6%);
+  --vdd--b-window-border: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 14%);
+  --vdd--b-window-border-focused: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 30%);
+  --vdd--b-window-header-bg: color-mix(in srgb, var(--vdd--b-base), black 10%);
+  --vdd--b-window-text: color-mix(in srgb, var(--vdd-brand-text) 100%, var(--vdd--b-base));
 }
 
 /* Every element the library renders carries an vdd- prefixed class (see
@@ -388,7 +448,7 @@
   opacity: 0; /* hidden by default on inactive tabs, allows hover/active overrides */
   transition: opacity 0.12s ease, background-color 0.12s ease, color 0.12s ease;
   margin-left: 8px;
-  border-radius: 3px;
+  border-radius: calc(3px * var(--vdd-radius-scale, 1));
   color: var(--vdd-close-btn-color) !important;
   display: flex;
   align-items: center;
@@ -488,7 +548,7 @@ body.vdd-resizing-col-active * {
   font-size: 9px;
   width: 18px;
   height: 18px;
-  border-radius: 4px;
+  border-radius: calc(4px * var(--vdd-radius-scale, 1));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -602,7 +662,7 @@ body.vdd-resizing-col-active * {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  border-radius: calc(4px * var(--vdd-radius-scale, 1));
   cursor: pointer;
 }
 
@@ -664,7 +724,7 @@ body.vdd-resizing-col-active * {
   background: var(--vdd-bg-panel, #1e1e1e) !important;
   color: var(--vdd-text-primary, #ffffff) !important;
   padding: 8px !important;
-  border-radius: 6px;
+  border-radius: calc(6px * var(--vdd-radius-scale, 1));
   font-size: 11px !important;
   font-family: var(--vdd-font-family);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
@@ -714,7 +774,7 @@ body.vdd-resizing-col-active * {
  * See docs/PARITY.md divergence D11.
  */
 .vdd-taskbar-item-preview-frame {
-  border-radius: 4px;
+  border-radius: calc(4px * var(--vdd-radius-scale, 1));
   overflow: hidden;
   background: #000000;
   border: 1px solid var(--vdd-taskbar-item-border, rgba(255, 255, 255, 0.15));
@@ -744,7 +804,7 @@ body.vdd-resizing-col-active * {
 .vdd-tooltip-close-x {
   width: 18px;
   height: 18px;
-  border-radius: 3px;
+  border-radius: calc(3px * var(--vdd-radius-scale, 1));
   background: transparent !important;
   border: none !important;
   color: var(--vdd-close-btn-color, var(--vdd-text-secondary, #888888)) !important;
@@ -791,7 +851,7 @@ body.vdd-resizing-col-active * {
 .vdd-workspace ::-webkit-scrollbar-thumb,
 .vdd-sidebar-drawer-body::-webkit-scrollbar-thumb {
   background: var(--vdd-scrollbar-thumb);
-  border-radius: 4px;
+  border-radius: calc(4px * var(--vdd-radius-scale, 1));
 }
 .vdd-workspace ::-webkit-scrollbar-thumb:hover,
 .vdd-sidebar-drawer-body::-webkit-scrollbar-thumb:hover {
@@ -801,7 +861,7 @@ body.vdd-resizing-col-active * {
 .vdd-floating-window {
   display: flex;
   flex-direction: column;
-  border-radius: 8px;
+  border-radius: calc(8px * var(--vdd-radius-scale, 1));
   border: 1px solid var(--vdd-window-border);
   box-shadow: var(--vdd-window-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(16px) saturate(180%);
@@ -877,7 +937,7 @@ body.vdd-resizing-col-active * {
   z-index: calc(var(--vdd-z-base, 1000) + 8500);
   background: var(--vdd-sidebar-bg, #1e2024);
   border: 1px solid var(--vdd-sidebar-border, rgba(255, 255, 255, 0.08));
-  border-radius: 6px;
+  border-radius: calc(6px * var(--vdd-radius-scale, 1));
   padding: 4px 0;
   min-width: 220px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2);
@@ -912,7 +972,7 @@ body.vdd-resizing-col-active * {
   gap: 8px;
   background: none;
   border: none;
-  border-radius: 4px;
+  border-radius: calc(4px * var(--vdd-radius-scale, 1));
   color: var(--vdd-sidebar-text-title, #cccccc);
   cursor: pointer;
   text-align: start;
@@ -1012,7 +1072,7 @@ body.vdd-resizing-col-active * {
   justify-content: center;
   background-color: rgba(0, 0, 0, 0.15);
   pointer-events: none;
-  border-radius: 4px;
+  border-radius: calc(4px * var(--vdd-radius-scale, 1));
 }
 
 /* Translucent overlay preview highlighting the grid section about to split */
@@ -1036,9 +1096,9 @@ body.vdd-resizing-col-active * {
 /* Visual split target buttons (top, bottom, left, right, center) */
 .vdd-dock-target-box {
   position: absolute;
-  background-color: rgba(15, 23, 42, 0.92);
+  background-color: color-mix(in srgb, var(--vdd--b-dock-target-bg, rgb(15 23 42)) 92%, transparent);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 4px;
+  border-radius: calc(4px * var(--vdd-radius-scale, 1));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1089,7 +1149,7 @@ body.vdd-resizing-col-active * {
   top: 45px;
   width: 50px;
   height: 50px;
-  background-color: rgba(30, 41, 59, 0.95);
+  background-color: color-mix(in srgb, var(--vdd--b-dock-target-center-bg, rgb(30 41 59)) 95%, transparent);
   color: var(--vdd-accent-color);
 }
 
@@ -1137,32 +1197,32 @@ body.vdd-dragging-active {
 [data-color-scheme="light"] {
   /* The default skin's light-mode accent (the blue its light tokens were already drawn in). */
   --vdd-accent-color: var(--vdd-brand-accent, #0066cc);
-  --vdd-bg-primary: #f8f9fa;
-  --vdd-bg-workspace: #f1f5f9;
-  --vdd-bg-panel: #ffffff;
-  --vdd-bg-tab-bar: #e9ecef;
-  --vdd-text-primary: #212529;
-  --vdd-text-secondary: #6c757d;
+  --vdd-bg-primary: var(--vdd--b-bg-primary, #f8f9fa);
+  --vdd-bg-workspace: var(--vdd--b-bg-workspace, #f1f5f9);
+  --vdd-bg-panel: var(--vdd--b-bg-panel, #ffffff);
+  --vdd-bg-tab-bar: var(--vdd--b-bg-tab-bar, #e9ecef);
+  --vdd-text-primary: var(--vdd--b-text-primary, #212529);
+  --vdd-text-secondary: var(--vdd--b-text-secondary, #6c757d);
   --vdd-border-color: rgba(0, 0, 0, 0.08);
 
-  --vdd-sidebar-bg: #f8f9fa;
-  --vdd-sidebar-tabs-bg: #e9ecef;
+  --vdd-sidebar-bg: var(--vdd--b-sidebar-bg, #f8f9fa);
+  --vdd-sidebar-tabs-bg: var(--vdd--b-sidebar-tabs-bg, #e9ecef);
   --vdd-sidebar-border: rgba(0, 0, 0, 0.08);
-  --vdd-sidebar-card-bg: #ffffff;
+  --vdd-sidebar-card-bg: var(--vdd--b-sidebar-card-bg, #ffffff);
   --vdd-sidebar-card-border: rgba(0, 0, 0, 0.08);
   --vdd-sidebar-card-active-bg: color-mix(in srgb, var(--vdd-accent-color) 5%, transparent);
   --vdd-sidebar-card-active-border: color-mix(in srgb, var(--vdd-accent-color) 30%, transparent);
-  --vdd-sidebar-text-title: #212529;
-  --vdd-sidebar-text-muted: #6c757d;
-  --vdd-sidebar-badge-bg: #e9ecef;
-  --vdd-sidebar-badge-text: #495057;
+  --vdd-sidebar-text-title: var(--vdd--b-sidebar-text-title, #212529);
+  --vdd-sidebar-text-muted: var(--vdd--b-sidebar-text-muted, #6c757d);
+  --vdd-sidebar-badge-bg: var(--vdd--b-sidebar-badge-bg, #e9ecef);
+  --vdd-sidebar-badge-text: var(--vdd--b-sidebar-badge-text, #495057);
   --vdd-sidebar-btn-front-border: var(--vdd-accent-color);
   --vdd-sidebar-btn-front-text: var(--vdd-accent-color);
   --vdd-sidebar-btn-front-bg: transparent;
   --vdd-sidebar-btn-front-hover-bg: color-mix(in srgb, var(--vdd-accent-color) 8%, transparent);
   --vdd-tab-icon-active: var(--vdd-accent-color);
-  --vdd-tab-icon-inactive: #555c66;
-  --vdd-tab-btn-active-bg: #f8f9fa; /* Seamless merge look */
+  --vdd-tab-icon-inactive: var(--vdd--b-tab-icon-inactive, #555c66);
+  --vdd-tab-btn-active-bg: var(--vdd--b-tab-btn-active-bg, #f8f9fa); /* Seamless merge look */
   --vdd-sidebar-btn-hover-bg: rgba(0, 0, 0, 0.05);
   --vdd-sidebar-card-hover-border: color-mix(in srgb, var(--vdd-accent-color) 30%, transparent);
   --vdd-sidebar-card-hover-bg: rgba(0, 0, 0, 0.03);
@@ -1173,11 +1233,11 @@ body.vdd-dragging-active {
   --vdd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--vdd-accent-color) 6%, transparent);
   --vdd-toolbar-separator-color: rgba(0, 0, 0, 0.1);
   /* Light skin window overrides */
-  --vdd-window-bg: rgba(243, 244, 246, var(--vdd-window-opacity, 0.9));
+  --vdd-window-bg: color-mix(in srgb, var(--vdd--b-window-bg, rgb(243 244 246)) calc(var(--vdd-window-opacity, 0.9) * 100%), transparent);
   --vdd-window-border: rgba(0, 0, 0, 0.08);
   --vdd-window-border-focused: rgba(0, 0, 0, 0.28);
   --vdd-window-header-bg: rgba(0, 0, 0, 0.04);
-  --vdd-window-text: #212529;
+  --vdd-window-text: var(--vdd--b-window-text, #212529);
   --vdd-window-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
   --vdd-window-shadow-focused: 0 16px 36px rgba(0, 0, 0, 0.12);
   /* Light skin modal overrides */
@@ -1186,38 +1246,38 @@ body.vdd-dragging-active {
   --vdd-modal-border: rgba(0, 0, 0, 0.1);
   --vdd-modal-header-bg: rgba(0, 0, 0, 0.04);
   --vdd-modal-header-border: rgba(0, 0, 0, 0.08);
-  --vdd-modal-close-hover-color: #212529;
+  --vdd-modal-close-hover-color: var(--vdd--b-modal-close-hover-color, #212529);
   /* Light skin side panel overrides */
   --vdd-side-panel-bg: rgba(255, 255, 255, 0.97);
   --vdd-side-panel-border: rgba(0, 0, 0, 0.1);
   --vdd-side-panel-header-bg: rgba(0, 0, 0, 0.04);
   --vdd-side-panel-header-border: rgba(0, 0, 0, 0.08);
-  --vdd-side-panel-close-hover-color: #212529;
+  --vdd-side-panel-close-hover-color: var(--vdd--b-side-panel-close-hover-color, #212529);
   /* Light skin grid/docked panel overrides */
   --vdd-border-panel: rgba(0, 0, 0, 0.08);
-  --vdd-bg-tab-inactive: #e9ecef;
-  --vdd-text-tab-inactive: #495057;
-  --vdd-text-tab-active: #212529;
+  --vdd-bg-tab-inactive: var(--vdd--b-bg-tab-inactive, #e9ecef);
+  --vdd-text-tab-inactive: var(--vdd--b-text-tab-inactive, #495057);
+  --vdd-text-tab-active: var(--vdd--b-text-tab-active, #212529);
   /* Light skin tab and control button hover colors */
-  --vdd-bg-tab-hover: #dee2e6;
-  --vdd-text-tab-hover: #212529;
+  --vdd-bg-tab-hover: var(--vdd--b-bg-tab-hover, #dee2e6);
+  --vdd-text-tab-hover: var(--vdd--b-text-tab-hover, #212529);
   --vdd-close-btn-hover-bg: rgba(0, 0, 0, 0.08);
-  --vdd-close-btn-hover-color: #212529;
-  --vdd-close-btn-color: #6c757d;
-  --vdd-close-btn-active-color: #212529;
+  --vdd-close-btn-hover-color: var(--vdd--b-close-btn-hover-color, #212529);
+  --vdd-close-btn-color: var(--vdd--b-close-btn-color, #6c757d);
+  --vdd-close-btn-active-color: var(--vdd--b-close-btn-active-color, #212529);
   --vdd-tab-indicator-focused: var(--vdd-accent-color);
   --vdd-tab-indicator-unfocused: rgba(0, 0, 0, 0.25);
   --vdd-tab-bg-active-focused: var(--vdd-bg-panel);
-  --vdd-tab-bg-active-unfocused: rgba(220, 224, 230, 0.65);
-  --vdd-tab-text-active-focused: #212529;
-  --vdd-tab-text-active-unfocused: #6c757d;
+  --vdd-tab-bg-active-unfocused: color-mix(in srgb, var(--vdd--b-tab-bg-active-unfocused, rgb(220 224 230)) 65%, transparent);
+  --vdd-tab-text-active-focused: var(--vdd--b-tab-text-active-focused, #212529);
+  --vdd-tab-text-active-unfocused: var(--vdd--b-tab-text-active-unfocused, #6c757d);
   --vdd-resizer-bg: rgba(0, 0, 0, 0.08);
   --vdd-custom-btn-bg: rgba(0, 0, 0, 0.03);
   --vdd-custom-btn-border: rgba(0, 0, 0, 0.08);
   --vdd-custom-btn-hover-bg: rgba(0, 0, 0, 0.08);
-  --vdd-custom-btn-hover-color: #212529;
+  --vdd-custom-btn-hover-color: var(--vdd--b-custom-btn-hover-color, #212529);
   /* Light skin taskbar theme variables */
-  --vdd-taskbar-bg: rgba(248, 249, 250, 0.85);
+  --vdd-taskbar-bg: color-mix(in srgb, var(--vdd--b-taskbar-bg, rgb(248 249 250)) 85%, transparent);
   --vdd-taskbar-border: rgba(0, 0, 0, 0.08);
   --vdd-taskbar-nav-color: rgba(0, 0, 0, 0.5);
   --vdd-taskbar-item-bg: rgba(255, 255, 255, 0.65);
@@ -1231,7 +1291,7 @@ body.vdd-dragging-active {
   /* Light skin mockup panel inner theme variables */
   --vdd-panel-card-bg: rgba(0, 0, 0, 0.03);
   --vdd-panel-card-border: rgba(0, 0, 0, 0.08);
-  --vdd-panel-text: #212529;
+  --vdd-panel-text: var(--vdd--b-panel-text, #212529);
   --vdd-panel-title-color: var(--vdd-accent-color);
   /* ── Panel Overlay — Toolbar (light) ── */
   --vdd-panel-toolbar-fg: rgba(0, 0, 0, 0.55);
@@ -1262,18 +1322,18 @@ body.vdd-dragging-active {
    -------------------------------------------------------------------------- */
 [data-vdd-skin="macos"] {
   --vdd-skin-font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif; /* San Francisco */
-  --vdd-bg-workspace: #1a1a24;
-  --vdd-bg-panel: rgba(30, 30, 40, 0.45);
-  --vdd-bg-tab-bar: rgba(18, 18, 24, 0.3);
-  --vdd-window-bg: rgba(25, 25, 35, var(--vdd-window-opacity, 0.7));
+  --vdd-bg-workspace: var(--vdd--b-bg-workspace, #1a1a24);
+  --vdd-bg-panel: color-mix(in srgb, var(--vdd--b-bg-panel, rgb(30 30 40)) 45%, transparent);
+  --vdd-bg-tab-bar: color-mix(in srgb, var(--vdd--b-bg-tab-bar, rgb(18 18 24)) 30%, transparent);
+  --vdd-window-bg: color-mix(in srgb, var(--vdd--b-window-bg, rgb(25 25 35)) calc(var(--vdd-window-opacity, 0.7) * 100%), transparent);
   --vdd-window-border: rgba(255, 255, 255, 0.1);
   --vdd-window-header-bg: rgba(0, 0, 0, 0.15);
   --vdd-accent-color: var(--vdd-brand-accent, #38bdf8);
   --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 25%, transparent);
   --vdd-border-panel: rgba(255, 255, 255, 0.08);
   --vdd-bg-tab-inactive: transparent;
-  --vdd-text-tab-inactive: #94a3b8;
-  --vdd-text-tab-active: #ffffff;
+  --vdd-text-tab-inactive: var(--vdd--b-text-tab-inactive, #94a3b8);
+  --vdd-text-tab-active: var(--vdd--b-text-tab-active, #ffffff);
   --vdd-window-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
   --vdd-window-shadow-focused: 0 24px 50px color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
   --vdd-panel-card-bg: rgba(255, 255, 255, 0.03);
@@ -1281,48 +1341,48 @@ body.vdd-dragging-active {
 }
 
 [data-vdd-skin="macos"][data-color-scheme="light"] {
-  --vdd-bg-primary: #f3f4f6;
-  --vdd-bg-workspace: #e5e7eb;
+  --vdd-bg-primary: var(--vdd--b-bg-primary, #f3f4f6);
+  --vdd-bg-workspace: var(--vdd--b-bg-workspace, #e5e7eb);
   --vdd-bg-panel: rgba(255, 255, 255, 0.7);
-  --vdd-bg-tab-bar: rgba(229, 231, 235, 0.5);
-  --vdd-window-bg: rgba(255, 255, 255, var(--vdd-window-opacity, 0.85));
+  --vdd-bg-tab-bar: color-mix(in srgb, var(--vdd--b-bg-tab-bar, rgb(229 231 235)) 50%, transparent);
+  --vdd-window-bg: color-mix(in srgb, var(--vdd--b-window-bg, rgb(255 255 255)) calc(var(--vdd-window-opacity, 0.85) * 100%), transparent);
   --vdd-window-border: rgba(0, 0, 0, 0.12);
-  --vdd-window-header-bg: rgba(243, 244, 246, 0.5);
+  --vdd-window-header-bg: color-mix(in srgb, var(--vdd--b-window-header-bg, rgb(243 244 246)) 50%, transparent);
   --vdd-accent-color: var(--vdd-brand-accent, #0066cc);
   --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
   --vdd-border-panel: rgba(0, 0, 0, 0.1);
   --vdd-bg-tab-inactive: transparent;
-  --vdd-text-tab-inactive: #4b5563;
-  --vdd-text-tab-active: #111827;
-  --vdd-window-text: #111827;
+  --vdd-text-tab-inactive: var(--vdd--b-text-tab-inactive, #4b5563);
+  --vdd-text-tab-active: var(--vdd--b-text-tab-active, #111827);
+  --vdd-window-text: var(--vdd--b-window-text, #111827);
   --vdd-window-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
   --vdd-window-shadow-focused: 0 16px 36px color-mix(in srgb, var(--vdd-accent-color) 18%, transparent);
   --vdd-panel-card-bg: rgba(0, 0, 0, 0.04);
   --vdd-panel-card-border: rgba(0, 0, 0, 0.08);
-  --vdd-panel-text: #111827;
+  --vdd-panel-text: var(--vdd--b-panel-text, #111827);
   --vdd-panel-title-color: var(--vdd-accent-color);
-  --vdd-close-btn-color: #4b5563;
-  --vdd-close-btn-active-color: #111827;
+  --vdd-close-btn-color: var(--vdd--b-close-btn-color, #4b5563);
+  --vdd-close-btn-active-color: var(--vdd--b-close-btn-active-color, #111827);
 }
 
 /* macOS structural adjustments */
 [data-vdd-skin="macos"] .vdd-floating-window {
-  border-radius: 12px;
+  border-radius: calc(12px * var(--vdd-radius-scale, 1));
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-color: var(--vdd-window-border);
 }
 [data-vdd-skin="macos"] .vdd-floating-window-titlebar {
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
+  border-top-left-radius: calc(12px * var(--vdd-radius-scale, 1));
+  border-top-right-radius: calc(12px * var(--vdd-radius-scale, 1));
 }
 [data-vdd-skin="macos"] .vdd-workspace-panel {
-  border-radius: 8px;
+  border-radius: calc(8px * var(--vdd-radius-scale, 1));
   backdrop-filter: blur(12px) saturate(180%);
   -webkit-backdrop-filter: blur(12px) saturate(180%);
 }
 [data-vdd-skin="macos"] .vdd-workspace-tab {
-  border-radius: 6px !important;
+  border-radius: calc(6px * var(--vdd-radius-scale, 1)) !important;
   margin: 4px 4px 4px 4px !important;
   height: 28px !important;
   border: 1px solid var(--vdd-border-panel) !important;
@@ -1411,47 +1471,47 @@ body.vdd-dragging-active {
    -------------------------------------------------------------------------- */
 [data-vdd-skin="chrome"] {
   --vdd-skin-font-family: 'Google Sans Text', 'Google Sans', Roboto, system-ui, -apple-system, 'Segoe UI', sans-serif; /* Google's UI fonts */
-  --vdd-bg-workspace: #202124;
-  --vdd-bg-panel: #292a2d;
-  --vdd-bg-tab-bar: #202124;
-  --vdd-window-bg: rgba(41, 42, 45, var(--vdd-window-opacity, 1.0));
-  --vdd-window-border: #3c4043;
-  --vdd-window-header-bg: #202124;
+  --vdd-bg-workspace: var(--vdd--b-bg-workspace, #202124);
+  --vdd-bg-panel: var(--vdd--b-bg-panel, #292a2d);
+  --vdd-bg-tab-bar: var(--vdd--b-bg-tab-bar, #202124);
+  --vdd-window-bg: color-mix(in srgb, var(--vdd--b-window-bg, rgb(41 42 45)) calc(var(--vdd-window-opacity, 1.0) * 100%), transparent);
+  --vdd-window-border: var(--vdd--b-window-border, #3c4043);
+  --vdd-window-header-bg: var(--vdd--b-window-header-bg, #202124);
   --vdd-accent-color: var(--vdd-brand-accent, #8ab4f8);
   --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
-  --vdd-border-panel: #3c4043;
-  --vdd-bg-tab-inactive: #202124;
-  --vdd-text-tab-inactive: #9aa0a6;
-  --vdd-text-tab-active: #ffffff;
-  --vdd-panel-card-bg: #202124;
-  --vdd-panel-card-border: #3c4043;
-  --vdd-window-text: #ffffff;
-  --vdd-panel-text: #e8eaed;
+  --vdd-border-panel: var(--vdd--b-border-panel, #3c4043);
+  --vdd-bg-tab-inactive: var(--vdd--b-bg-tab-inactive, #202124);
+  --vdd-text-tab-inactive: var(--vdd--b-text-tab-inactive, #9aa0a6);
+  --vdd-text-tab-active: var(--vdd--b-text-tab-active, #ffffff);
+  --vdd-panel-card-bg: var(--vdd--b-panel-card-bg, #202124);
+  --vdd-panel-card-border: var(--vdd--b-panel-card-border, #3c4043);
+  --vdd-window-text: var(--vdd--b-window-text, #ffffff);
+  --vdd-panel-text: var(--vdd--b-panel-text, #e8eaed);
   --vdd-tab-icon-active: var(--vdd-accent-color);
   --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 14%, transparent);
   --vdd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--vdd-accent-color) 8%, transparent);
 }
 
 [data-vdd-skin="chrome"][data-color-scheme="light"] {
-  --vdd-bg-workspace: #dee1e6;
-  --vdd-bg-panel: #ffffff;
-  --vdd-bg-tab-bar: #dee1e6;
-  --vdd-window-bg: rgba(255, 255, 255, var(--vdd-window-opacity, 1.0));
-  --vdd-window-border: #cbd5e1;
-  --vdd-window-header-bg: #dee1e6;
+  --vdd-bg-workspace: var(--vdd--b-bg-workspace, #dee1e6);
+  --vdd-bg-panel: var(--vdd--b-bg-panel, #ffffff);
+  --vdd-bg-tab-bar: var(--vdd--b-bg-tab-bar, #dee1e6);
+  --vdd-window-bg: color-mix(in srgb, var(--vdd--b-window-bg, rgb(255 255 255)) calc(var(--vdd-window-opacity, 1.0) * 100%), transparent);
+  --vdd-window-border: var(--vdd--b-window-border, #cbd5e1);
+  --vdd-window-header-bg: var(--vdd--b-window-header-bg, #dee1e6);
   --vdd-accent-color: var(--vdd-brand-accent, #1a73e8);
   --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
-  --vdd-border-panel: #dadce0;
-  --vdd-bg-tab-inactive: #dee1e6;
-  --vdd-text-tab-inactive: #474747;
-  --vdd-text-tab-active: #1f1f1f;
-  --vdd-panel-card-bg: #f1f3f4;
-  --vdd-panel-card-border: #dadce0;
-  --vdd-window-text: #1f1f1f;
-  --vdd-panel-text: #1f1f1f;
+  --vdd-border-panel: var(--vdd--b-border-panel, #dadce0);
+  --vdd-bg-tab-inactive: var(--vdd--b-bg-tab-inactive, #dee1e6);
+  --vdd-text-tab-inactive: var(--vdd--b-text-tab-inactive, #474747);
+  --vdd-text-tab-active: var(--vdd--b-text-tab-active, #1f1f1f);
+  --vdd-panel-card-bg: var(--vdd--b-panel-card-bg, #f1f3f4);
+  --vdd-panel-card-border: var(--vdd--b-panel-card-border, #dadce0);
+  --vdd-window-text: var(--vdd--b-window-text, #1f1f1f);
+  --vdd-panel-text: var(--vdd--b-panel-text, #1f1f1f);
   --vdd-panel-title-color: var(--vdd-accent-color);
-  --vdd-close-btn-color: #474747;
-  --vdd-close-btn-active-color: #1f1f1f;
+  --vdd-close-btn-color: var(--vdd--b-close-btn-color, #474747);
+  --vdd-close-btn-active-color: var(--vdd--b-close-btn-active-color, #1f1f1f);
   --vdd-tab-icon-active: var(--vdd-accent-color);
   --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 12%, transparent);
   --vdd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--vdd-accent-color) 7%, transparent);
@@ -1476,44 +1536,44 @@ body.vdd-dragging-active {
    -------------------------------------------------------------------------- */
 [data-vdd-skin="slate"] {
   --vdd-skin-font-family: 'Segoe UI Variable Text', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', sans-serif; /* Fluent's stack */
-  --vdd-bg-workspace: #0f172a;
-  --vdd-bg-panel: #1e293b;
-  --vdd-bg-tab-bar: #0f172a;
-  --vdd-window-bg: rgba(30, 41, 59, var(--vdd-window-opacity, 1.0));
-  --vdd-window-border: #334155;
-  --vdd-window-header-bg: #1e293b;
+  --vdd-bg-workspace: var(--vdd--b-bg-workspace, #0f172a);
+  --vdd-bg-panel: var(--vdd--b-bg-panel, #1e293b);
+  --vdd-bg-tab-bar: var(--vdd--b-bg-tab-bar, #0f172a);
+  --vdd-window-bg: color-mix(in srgb, var(--vdd--b-window-bg, rgb(30 41 59)) calc(var(--vdd-window-opacity, 1.0) * 100%), transparent);
+  --vdd-window-border: var(--vdd--b-window-border, #334155);
+  --vdd-window-header-bg: var(--vdd--b-window-header-bg, #1e293b);
   --vdd-accent-color: var(--vdd-brand-accent, #38bdf8);
   --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
-  --vdd-border-panel: #334155;
-  --vdd-bg-tab-inactive: #1e293b;
-  --vdd-text-tab-inactive: #64748b;
-  --vdd-text-tab-active: #f8fafc;
-  --vdd-panel-card-bg: #0f172a;
-  --vdd-panel-card-border: #334155;
-  --vdd-window-text: #f8fafc;
-  --vdd-panel-text: #f8fafc;
+  --vdd-border-panel: var(--vdd--b-border-panel, #334155);
+  --vdd-bg-tab-inactive: var(--vdd--b-bg-tab-inactive, #1e293b);
+  --vdd-text-tab-inactive: var(--vdd--b-text-tab-inactive, #64748b);
+  --vdd-text-tab-active: var(--vdd--b-text-tab-active, #f8fafc);
+  --vdd-panel-card-bg: var(--vdd--b-panel-card-bg, #0f172a);
+  --vdd-panel-card-border: var(--vdd--b-panel-card-border, #334155);
+  --vdd-window-text: var(--vdd--b-window-text, #f8fafc);
+  --vdd-panel-text: var(--vdd--b-panel-text, #f8fafc);
 }
 
 [data-vdd-skin="slate"][data-color-scheme="light"] {
-  --vdd-bg-workspace: #f1f5f9;
-  --vdd-bg-panel: #ffffff;
-  --vdd-bg-tab-bar: #f1f5f9;
-  --vdd-window-bg: rgba(255, 255, 255, var(--vdd-window-opacity, 1.0));
-  --vdd-window-border: #cbd5e1;
-  --vdd-window-header-bg: #f8fafc;
+  --vdd-bg-workspace: var(--vdd--b-bg-workspace, #f1f5f9);
+  --vdd-bg-panel: var(--vdd--b-bg-panel, #ffffff);
+  --vdd-bg-tab-bar: var(--vdd--b-bg-tab-bar, #f1f5f9);
+  --vdd-window-bg: color-mix(in srgb, var(--vdd--b-window-bg, rgb(255 255 255)) calc(var(--vdd-window-opacity, 1.0) * 100%), transparent);
+  --vdd-window-border: var(--vdd--b-window-border, #cbd5e1);
+  --vdd-window-header-bg: var(--vdd--b-window-header-bg, #f8fafc);
   --vdd-accent-color: var(--vdd-brand-accent, #0078d4);
   --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
-  --vdd-border-panel: #e2e8f0;
-  --vdd-bg-tab-inactive: #f8fafc;
-  --vdd-text-tab-inactive: #475569;
-  --vdd-text-tab-active: #0f172a;
-  --vdd-panel-card-bg: #f8fafc;
-  --vdd-panel-card-border: #cbd5e1;
-  --vdd-window-text: #0f172a;
-  --vdd-panel-text: #0f172a;
+  --vdd-border-panel: var(--vdd--b-border-panel, #e2e8f0);
+  --vdd-bg-tab-inactive: var(--vdd--b-bg-tab-inactive, #f8fafc);
+  --vdd-text-tab-inactive: var(--vdd--b-text-tab-inactive, #475569);
+  --vdd-text-tab-active: var(--vdd--b-text-tab-active, #0f172a);
+  --vdd-panel-card-bg: var(--vdd--b-panel-card-bg, #f8fafc);
+  --vdd-panel-card-border: var(--vdd--b-panel-card-border, #cbd5e1);
+  --vdd-window-text: var(--vdd--b-window-text, #0f172a);
+  --vdd-panel-text: var(--vdd--b-panel-text, #0f172a);
   --vdd-panel-title-color: var(--vdd-accent-color);
-  --vdd-close-btn-color: #475569;
-  --vdd-close-btn-active-color: #0f172a;
+  --vdd-close-btn-color: var(--vdd--b-close-btn-color, #475569);
+  --vdd-close-btn-active-color: var(--vdd--b-close-btn-active-color, #0f172a);
   --vdd-tab-icon-active: var(--vdd-accent-color);
   --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 10%, transparent);
   --vdd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--vdd-accent-color) 6%, transparent);
@@ -1530,52 +1590,52 @@ body.vdd-dragging-active {
    -------------------------------------------------------------------------- */
 [data-vdd-skin="nord"] {
   --vdd-skin-font-family: 'Avenir Next', 'Nunito', 'Segoe UI', system-ui, sans-serif; /* no official font: a softer humanist sans */
-  --vdd-bg-workspace: #2e3440;
-  --vdd-bg-panel: #3b4252;
-  --vdd-bg-tab-bar: #2e3440;
-  --vdd-window-bg: rgba(59, 66, 82, var(--vdd-window-opacity, 1.0));
-  --vdd-window-border: #434c5e;
-  --vdd-window-header-bg: #2e3440;
+  --vdd-bg-workspace: var(--vdd--b-bg-workspace, #2e3440);
+  --vdd-bg-panel: var(--vdd--b-bg-panel, #3b4252);
+  --vdd-bg-tab-bar: var(--vdd--b-bg-tab-bar, #2e3440);
+  --vdd-window-bg: color-mix(in srgb, var(--vdd--b-window-bg, rgb(59 66 82)) calc(var(--vdd-window-opacity, 1.0) * 100%), transparent);
+  --vdd-window-border: var(--vdd--b-window-border, #434c5e);
+  --vdd-window-header-bg: var(--vdd--b-window-header-bg, #2e3440);
   --vdd-accent-color: var(--vdd-brand-accent, #88c0d0);
   --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 20%, transparent);
-  --vdd-border-panel: #434c5e;
-  --vdd-bg-tab-inactive: #2e3440;
-  --vdd-text-tab-inactive: #d8dee9;
-  --vdd-text-tab-active: #eceff4;
-  --vdd-panel-card-bg: #2e3440;
-  --vdd-panel-card-border: #4c566a;
-  --vdd-close-btn-color: #d8dee9;
+  --vdd-border-panel: var(--vdd--b-border-panel, #434c5e);
+  --vdd-bg-tab-inactive: var(--vdd--b-bg-tab-inactive, #2e3440);
+  --vdd-text-tab-inactive: var(--vdd--b-text-tab-inactive, #d8dee9);
+  --vdd-text-tab-active: var(--vdd--b-text-tab-active, #eceff4);
+  --vdd-panel-card-bg: var(--vdd--b-panel-card-bg, #2e3440);
+  --vdd-panel-card-border: var(--vdd--b-panel-card-border, #4c566a);
+  --vdd-close-btn-color: var(--vdd--b-close-btn-color, #d8dee9);
   --vdd-close-btn-active-color: var(--vdd-accent-color);
   --vdd-scrollbar-thumb: color-mix(in srgb, var(--vdd-accent-color) 25%, transparent);
   --vdd-scrollbar-thumb-hover: color-mix(in srgb, var(--vdd-accent-color) 40%, transparent);
-  --vdd-window-text: #eceff4;
-  --vdd-panel-text: #eceff4;
+  --vdd-window-text: var(--vdd--b-window-text, #eceff4);
+  --vdd-panel-text: var(--vdd--b-panel-text, #eceff4);
   --vdd-tab-icon-active: var(--vdd-accent-color);
   --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 14%, transparent);
   --vdd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--vdd-accent-color) 8%, transparent);
 }
 
 [data-vdd-skin="nord"][data-color-scheme="light"] {
-  --vdd-bg-workspace: #e5e9f0;
-  --vdd-bg-panel: #eceff4;
-  --vdd-bg-tab-bar: #e5e9f0;
-  --vdd-window-bg: rgba(236, 239, 244, var(--vdd-window-opacity, 1.0));
-  --vdd-window-border: #d8dee9;
-  --vdd-window-header-bg: #e5e9f0;
+  --vdd-bg-workspace: var(--vdd--b-bg-workspace, #e5e9f0);
+  --vdd-bg-panel: var(--vdd--b-bg-panel, #eceff4);
+  --vdd-bg-tab-bar: var(--vdd--b-bg-tab-bar, #e5e9f0);
+  --vdd-window-bg: color-mix(in srgb, var(--vdd--b-window-bg, rgb(236 239 244)) calc(var(--vdd-window-opacity, 1.0) * 100%), transparent);
+  --vdd-window-border: var(--vdd--b-window-border, #d8dee9);
+  --vdd-window-header-bg: var(--vdd--b-window-header-bg, #e5e9f0);
   --vdd-accent-color: var(--vdd-brand-accent, #5e81ac);
   --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
-  --vdd-border-panel: #d8dee9;
-  --vdd-bg-tab-inactive: #e5e9f0;
-  --vdd-text-tab-inactive: #4c566a;
-  --vdd-text-tab-active: #2e3440;
-  --vdd-panel-card-bg: #e5e9f0;
-  --vdd-panel-card-border: #d8dee9;
-  --vdd-close-btn-color: #4c566a;
+  --vdd-border-panel: var(--vdd--b-border-panel, #d8dee9);
+  --vdd-bg-tab-inactive: var(--vdd--b-bg-tab-inactive, #e5e9f0);
+  --vdd-text-tab-inactive: var(--vdd--b-text-tab-inactive, #4c566a);
+  --vdd-text-tab-active: var(--vdd--b-text-tab-active, #2e3440);
+  --vdd-panel-card-bg: var(--vdd--b-panel-card-bg, #e5e9f0);
+  --vdd-panel-card-border: var(--vdd--b-panel-card-border, #d8dee9);
+  --vdd-close-btn-color: var(--vdd--b-close-btn-color, #4c566a);
   --vdd-close-btn-active-color: var(--vdd-accent-color);
   --vdd-scrollbar-thumb: color-mix(in srgb, var(--vdd-accent-color) 20%, transparent);
   --vdd-scrollbar-thumb-hover: color-mix(in srgb, var(--vdd-accent-color) 35%, transparent);
-  --vdd-window-text: #2e3440;
-  --vdd-panel-text: #2e3440;
+  --vdd-window-text: var(--vdd--b-window-text, #2e3440);
+  --vdd-panel-text: var(--vdd--b-panel-text, #2e3440);
   --vdd-panel-title-color: var(--vdd-accent-color);
   --vdd-tab-icon-active: var(--vdd-accent-color);
   --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 12%, transparent);
@@ -1586,54 +1646,54 @@ body.vdd-dragging-active {
    SKIN 6: Midnight Obsidian Preset (Vercel Style)
    -------------------------------------------------------------------------- */
 [data-vdd-skin="obsidian"] {
-  --vdd-bg-workspace: #000000;
-  --vdd-bg-panel: #0a0a0a;
-  --vdd-bg-tab-bar: #000000;
-  --vdd-window-bg: rgba(10, 10, 10, var(--vdd-window-opacity, 1.0));
-  --vdd-window-border: #1a1a1a;
-  --vdd-window-border-focused: #333333;
-  --vdd-window-header-bg: #000000;
+  --vdd-bg-workspace: var(--vdd--b-bg-workspace, #000000);
+  --vdd-bg-panel: var(--vdd--b-bg-panel, #0a0a0a);
+  --vdd-bg-tab-bar: var(--vdd--b-bg-tab-bar, #000000);
+  --vdd-window-bg: color-mix(in srgb, var(--vdd--b-window-bg, rgb(10 10 10)) calc(var(--vdd-window-opacity, 1.0) * 100%), transparent);
+  --vdd-window-border: var(--vdd--b-window-border, #1a1a1a);
+  --vdd-window-border-focused: var(--vdd--b-window-border-focused, #333333);
+  --vdd-window-header-bg: var(--vdd--b-window-header-bg, #000000);
   --vdd-accent-color: var(--vdd-brand-accent, #ffffff);
   --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 8%, transparent);
-  --vdd-border-panel: #1a1a1a;
-  --vdd-bg-tab-inactive: #000000;
-  --vdd-text-tab-inactive: #737373;
-  --vdd-text-tab-active: #ffffff;
-  --vdd-panel-card-bg: #030303;
-  --vdd-panel-card-border: #1a1a1a;
-  --vdd-close-btn-color: #737373;
-  --vdd-close-btn-active-color: #ffffff;
+  --vdd-border-panel: var(--vdd--b-border-panel, #1a1a1a);
+  --vdd-bg-tab-inactive: var(--vdd--b-bg-tab-inactive, #000000);
+  --vdd-text-tab-inactive: var(--vdd--b-text-tab-inactive, #737373);
+  --vdd-text-tab-active: var(--vdd--b-text-tab-active, #ffffff);
+  --vdd-panel-card-bg: var(--vdd--b-panel-card-bg, #030303);
+  --vdd-panel-card-border: var(--vdd--b-panel-card-border, #1a1a1a);
+  --vdd-close-btn-color: var(--vdd--b-close-btn-color, #737373);
+  --vdd-close-btn-active-color: var(--vdd--b-close-btn-active-color, #ffffff);
   --vdd-scrollbar-thumb: rgba(255, 255, 255, 0.15);
   --vdd-scrollbar-thumb-hover: rgba(255, 255, 255, 0.35);
-  --vdd-window-text: #ffffff;
-  --vdd-panel-text: #ffffff;
+  --vdd-window-text: var(--vdd--b-window-text, #ffffff);
+  --vdd-panel-text: var(--vdd--b-panel-text, #ffffff);
   --vdd-tab-icon-active: var(--vdd-accent-color);
   --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 10%, transparent);
   --vdd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--vdd-accent-color) 6%, transparent);
 }
 
 [data-vdd-skin="obsidian"][data-color-scheme="light"] {
-  --vdd-bg-workspace: #ffffff;
-  --vdd-bg-panel: #fafafa;
-  --vdd-bg-tab-bar: #ffffff;
-  --vdd-window-bg: rgba(250, 250, 250, var(--vdd-window-opacity, 1.0));
-  --vdd-window-border: #e5e5e5;
-  --vdd-window-border-focused: #a3a3a3;
-  --vdd-window-header-bg: #ffffff;
+  --vdd-bg-workspace: var(--vdd--b-bg-workspace, #ffffff);
+  --vdd-bg-panel: var(--vdd--b-bg-panel, #fafafa);
+  --vdd-bg-tab-bar: var(--vdd--b-bg-tab-bar, #ffffff);
+  --vdd-window-bg: color-mix(in srgb, var(--vdd--b-window-bg, rgb(250 250 250)) calc(var(--vdd-window-opacity, 1.0) * 100%), transparent);
+  --vdd-window-border: var(--vdd--b-window-border, #e5e5e5);
+  --vdd-window-border-focused: var(--vdd--b-window-border-focused, #a3a3a3);
+  --vdd-window-header-bg: var(--vdd--b-window-header-bg, #ffffff);
   --vdd-accent-color: var(--vdd-brand-accent, #000000);
   --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 5%, transparent);
-  --vdd-border-panel: #eaeaea;
-  --vdd-bg-tab-inactive: #ffffff;
-  --vdd-text-tab-inactive: #737373;
-  --vdd-text-tab-active: #000000;
-  --vdd-panel-card-bg: #ffffff;
-  --vdd-panel-card-border: #e5e5e5;
-  --vdd-close-btn-color: #737373;
-  --vdd-close-btn-active-color: #000000;
+  --vdd-border-panel: var(--vdd--b-border-panel, #eaeaea);
+  --vdd-bg-tab-inactive: var(--vdd--b-bg-tab-inactive, #ffffff);
+  --vdd-text-tab-inactive: var(--vdd--b-text-tab-inactive, #737373);
+  --vdd-text-tab-active: var(--vdd--b-text-tab-active, #000000);
+  --vdd-panel-card-bg: var(--vdd--b-panel-card-bg, #ffffff);
+  --vdd-panel-card-border: var(--vdd--b-panel-card-border, #e5e5e5);
+  --vdd-close-btn-color: var(--vdd--b-close-btn-color, #737373);
+  --vdd-close-btn-active-color: var(--vdd--b-close-btn-active-color, #000000);
   --vdd-scrollbar-thumb: rgba(0, 0, 0, 0.1);
   --vdd-scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
-  --vdd-window-text: #000000;
-  --vdd-panel-text: #000000;
+  --vdd-window-text: var(--vdd--b-window-text, #000000);
+  --vdd-panel-text: var(--vdd--b-panel-text, #000000);
   --vdd-panel-title-color: var(--vdd-accent-color);
   --vdd-tab-icon-active: var(--vdd-accent-color);
   --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 10%, transparent);
@@ -1643,7 +1703,7 @@ body.vdd-dragging-active {
 /* Obsidian custom borderless panel elevations */
 [data-vdd-skin="obsidian"] .vdd-floating-window {
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 1px rgba(255, 255, 255, 0.2) !important;
-  border-radius: 6px;
+  border-radius: calc(6px * var(--vdd-radius-scale, 1));
 }
 [data-vdd-skin="obsidian"] .vdd-floating-window.vdd-window-focused {
   box-shadow: 0 24px 50px color-mix(in srgb, var(--vdd-accent-color) 6%, transparent), 0 0 1px color-mix(in srgb, var(--vdd-accent-color) 40%, transparent) !important;
@@ -1660,54 +1720,54 @@ body.vdd-dragging-active {
    -------------------------------------------------------------------------- */
 [data-vdd-skin="tokyo"] {
   --vdd-skin-font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; /* no official font: a terminal/editor feel */
-  --vdd-bg-workspace: #1a1b26;
-  --vdd-bg-panel: #24283c;
-  --vdd-bg-tab-bar: #1f2335;
-  --vdd-window-bg: rgba(36, 40, 60, var(--vdd-window-opacity, 1.0));
-  --vdd-window-border: #383e5a;
+  --vdd-bg-workspace: var(--vdd--b-bg-workspace, #1a1b26);
+  --vdd-bg-panel: var(--vdd--b-bg-panel, #24283c);
+  --vdd-bg-tab-bar: var(--vdd--b-bg-tab-bar, #1f2335);
+  --vdd-window-bg: color-mix(in srgb, var(--vdd--b-window-bg, rgb(36 40 60)) calc(var(--vdd-window-opacity, 1.0) * 100%), transparent);
+  --vdd-window-border: var(--vdd--b-window-border, #383e5a);
   --vdd-window-border-focused: var(--vdd-accent-color);
-  --vdd-window-header-bg: #1f2335;
+  --vdd-window-header-bg: var(--vdd--b-window-header-bg, #1f2335);
   --vdd-accent-color: var(--vdd-brand-accent, #bb9af7);
   --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 25%, transparent);
-  --vdd-border-panel: #383e5a;
-  --vdd-bg-tab-inactive: #1f2335;
-  --vdd-text-tab-inactive: #787c99;
-  --vdd-text-tab-active: #c0caf5;
-  --vdd-panel-card-bg: #1a1b26;
-  --vdd-panel-card-border: #383e5a;
-  --vdd-close-btn-color: #787c99;
+  --vdd-border-panel: var(--vdd--b-border-panel, #383e5a);
+  --vdd-bg-tab-inactive: var(--vdd--b-bg-tab-inactive, #1f2335);
+  --vdd-text-tab-inactive: var(--vdd--b-text-tab-inactive, #787c99);
+  --vdd-text-tab-active: var(--vdd--b-text-tab-active, #c0caf5);
+  --vdd-panel-card-bg: var(--vdd--b-panel-card-bg, #1a1b26);
+  --vdd-panel-card-border: var(--vdd--b-panel-card-border, #383e5a);
+  --vdd-close-btn-color: var(--vdd--b-close-btn-color, #787c99);
   --vdd-close-btn-active-color: var(--vdd-accent-color);
   --vdd-scrollbar-thumb: color-mix(in srgb, var(--vdd-accent-color) 25%, transparent);
   --vdd-scrollbar-thumb-hover: color-mix(in srgb, var(--vdd-accent-color) 40%, transparent);
-  --vdd-window-text: #c0caf5;
-  --vdd-panel-text: #c0caf5;
+  --vdd-window-text: var(--vdd--b-window-text, #c0caf5);
+  --vdd-panel-text: var(--vdd--b-panel-text, #c0caf5);
   --vdd-tab-icon-active: var(--vdd-accent-color);
   --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 14%, transparent);
   --vdd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--vdd-accent-color) 8%, transparent);
 }
 
 [data-vdd-skin="tokyo"][data-color-scheme="light"] {
-  --vdd-bg-workspace: #e1e2e7;
-  --vdd-bg-panel: #f2f4f8;
-  --vdd-bg-tab-bar: #d5d6db;
-  --vdd-window-bg: rgba(242, 244, 248, var(--vdd-window-opacity, 1.0));
-  --vdd-window-border: #b4b5b9;
+  --vdd-bg-workspace: var(--vdd--b-bg-workspace, #e1e2e7);
+  --vdd-bg-panel: var(--vdd--b-bg-panel, #f2f4f8);
+  --vdd-bg-tab-bar: var(--vdd--b-bg-tab-bar, #d5d6db);
+  --vdd-window-bg: color-mix(in srgb, var(--vdd--b-window-bg, rgb(242 244 248)) calc(var(--vdd-window-opacity, 1.0) * 100%), transparent);
+  --vdd-window-border: var(--vdd--b-window-border, #b4b5b9);
   --vdd-window-border-focused: var(--vdd-accent-color);
-  --vdd-window-header-bg: #d5d6db;
+  --vdd-window-header-bg: var(--vdd--b-window-header-bg, #d5d6db);
   --vdd-accent-color: var(--vdd-brand-accent, #9854f1);
   --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
-  --vdd-border-panel: #b4b5b9;
-  --vdd-bg-tab-inactive: #d5d6db;
-  --vdd-text-tab-inactive: #565a6e;
-  --vdd-text-tab-active: #383e56;
-  --vdd-panel-card-bg: #e1e2e7;
-  --vdd-panel-card-border: #b4b5b9;
-  --vdd-close-btn-color: #565a6e;
+  --vdd-border-panel: var(--vdd--b-border-panel, #b4b5b9);
+  --vdd-bg-tab-inactive: var(--vdd--b-bg-tab-inactive, #d5d6db);
+  --vdd-text-tab-inactive: var(--vdd--b-text-tab-inactive, #565a6e);
+  --vdd-text-tab-active: var(--vdd--b-text-tab-active, #383e56);
+  --vdd-panel-card-bg: var(--vdd--b-panel-card-bg, #e1e2e7);
+  --vdd-panel-card-border: var(--vdd--b-panel-card-border, #b4b5b9);
+  --vdd-close-btn-color: var(--vdd--b-close-btn-color, #565a6e);
   --vdd-close-btn-active-color: var(--vdd-accent-color);
   --vdd-scrollbar-thumb: color-mix(in srgb, var(--vdd-accent-color) 20%, transparent);
   --vdd-scrollbar-thumb-hover: color-mix(in srgb, var(--vdd-accent-color) 35%, transparent);
-  --vdd-window-text: #383e56;
-  --vdd-panel-text: #383e56;
+  --vdd-window-text: var(--vdd--b-window-text, #383e56);
+  --vdd-panel-text: var(--vdd--b-panel-text, #383e56);
   --vdd-panel-title-color: var(--vdd-accent-color);
   --vdd-tab-icon-active: var(--vdd-accent-color);
   --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 12%, transparent);
@@ -1741,11 +1801,11 @@ body.vdd-dragging-active {
   --vdd-toolbar-accent-bar-width: 2px;
 }
 [data-vdd-skin="chrome"] .vdd-sidebar-tabs-strip.vdd-left .vdd-sidebar-tab-btn.vdd-active {
-  border-radius: 0 10px 10px 0 !important;
+  border-radius: 0 calc(10px * var(--vdd-radius-scale, 1)) calc(10px * var(--vdd-radius-scale, 1)) 0 !important;
   border-left: none !important;
 }
 [data-vdd-skin="chrome"] .vdd-sidebar-tabs-strip.vdd-right .vdd-sidebar-tab-btn.vdd-active {
-  border-radius: 10px 0 0 10px !important;
+  border-radius: calc(10px * var(--vdd-radius-scale, 1)) 0 0 calc(10px * var(--vdd-radius-scale, 1)) !important;
   border-right: none !important;
   border-top: 1px solid var(--vdd-sidebar-border) !important;
   border-bottom: 1px solid var(--vdd-sidebar-border) !important;
@@ -1769,7 +1829,7 @@ body.vdd-dragging-active {
 }
 [data-vdd-skin="slate"] .vdd-toolbar-strip .vdd-toolbar-btn-radio.vdd-active,
 [data-vdd-skin="slate"] .vdd-toolbar-strip .vdd-toolbar-btn-group.vdd-active {
-  border-radius: 8px !important;
+  border-radius: calc(8px * var(--vdd-radius-scale, 1)) !important;
 }
 [data-vdd-skin="slate"][data-color-scheme="light"] {
   --vdd-tab-btn-active-bg: color-mix(in srgb, var(--vdd-accent-color) 12%, transparent);
@@ -1801,7 +1861,7 @@ body.vdd-dragging-active {
   transform: translateX(-50%);
   width: 16px;
   height: 2px;
-  border-radius: 1px;
+  border-radius: calc(1px * var(--vdd-radius-scale, 1));
   background-color: var(--vdd-tab-icon-active);
 }
 [data-vdd-skin="nord"] .vdd-toolbar-strip .vdd-toolbar-btn-radio.vdd-active,
@@ -1824,7 +1884,7 @@ body.vdd-dragging-active {
   transform: translateX(-50%);
   width: 14px;
   height: 2px;
-  border-radius: 1px;
+  border-radius: calc(1px * var(--vdd-radius-scale, 1));
   background-color: var(--vdd-tab-icon-active);
 }
 [data-vdd-skin="nord"] .vdd-toolbar-strip.vdd-bottom .vdd-toolbar-btn-radio.vdd-active::after,
@@ -1836,7 +1896,7 @@ body.vdd-dragging-active {
   transform: translateX(-50%);
   width: 14px;
   height: 2px;
-  border-radius: 1px;
+  border-radius: calc(1px * var(--vdd-radius-scale, 1));
   background-color: var(--vdd-tab-icon-active);
 }
 
@@ -1940,7 +2000,7 @@ body.vdd-dragging-active {
 }
 [data-vdd-skin="macos"] .vdd-toolbar-strip .vdd-toolbar-btn-radio.vdd-active,
 [data-vdd-skin="macos"] .vdd-toolbar-strip .vdd-toolbar-btn-group.vdd-active {
-  border-radius: 10px !important;
+  border-radius: calc(10px * var(--vdd-radius-scale, 1)) !important;
 }
 [data-vdd-skin="macos"][data-color-scheme="light"] {
   --vdd-tab-btn-active-bg: color-mix(in srgb, var(--vdd-accent-color) 16%, transparent);
@@ -2141,7 +2201,7 @@ body.vdd-dragging-active {
   align-items: center;
   justify-content: center;
   border: 1px solid transparent !important;
-  border-radius: 6px;
+  border-radius: calc(6px * var(--vdd-radius-scale, 1));
   background: transparent;
   color: var(--vdd-tab-icon-inactive);
   position: relative;
@@ -2163,7 +2223,7 @@ body.vdd-dragging-active {
   background-color: var(--vdd-tab-btn-active-bg) !important;
   border-top: 1px solid var(--vdd-sidebar-border) !important;
   border-bottom: 1px solid var(--vdd-sidebar-border) !important;
-  border-radius: var(--vdd-tab-btn-active-radius, 0px) !important;
+  border-radius: calc(var(--vdd-tab-btn-active-radius, 0px) * var(--vdd-radius-scale, 1)) !important;
   box-shadow: var(--vdd-tab-btn-active-shadow, none);
   filter: var(--vdd-tab-btn-active-glow, none);
   z-index: 6;
@@ -2236,7 +2296,7 @@ html.vdd-no-animations [class*="vdd-"]::after {
   background: var(--vdd-modal-bg);
   border: 1px solid var(--vdd-modal-border);
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
+  border-radius: calc(12px * var(--vdd-radius-scale, 1));
   display: flex;
   flex-direction: column;
   color: var(--vdd-text-primary);
@@ -2277,7 +2337,7 @@ html.vdd-no-animations [class*="vdd-"]::after {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  border-radius: calc(4px * var(--vdd-radius-scale, 1));
   transition: all 0.15s ease;
 }
 
@@ -2402,7 +2462,7 @@ html.vdd-no-animations [class*="vdd-"]::after {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  border-radius: calc(4px * var(--vdd-radius-scale, 1));
   transition: all 0.15s ease;
 }
 
@@ -2439,12 +2499,12 @@ html.vdd-no-animations [class*="vdd-"]::after {
 .vdd-workspace-edge-trigger {
   position: absolute;
   z-index: calc(var(--vdd-z-base, 1000) + 8999);
-  background-color: rgba(0, 123, 255, 0.01);
+  background-color: color-mix(in srgb, var(--vdd-accent-color) 1%, transparent);
   transition: background-color 0.2s;
 }
 
 .vdd-workspace-edge-trigger:hover {
-  background-color: rgba(0, 123, 255, 0.12);
+  background-color: color-mix(in srgb, var(--vdd-accent-color) 12%, transparent);
 }
 
 .vdd-edge-trigger-left {
@@ -2478,8 +2538,8 @@ html.vdd-no-animations [class*="vdd-"]::after {
 .vdd-workspace-edge-preview {
   position: absolute;
   z-index: calc(var(--vdd-z-base, 1000) + 8998);
-  background-color: rgba(0, 123, 255, 0.2);
-  border: 2px dashed #007bff;
+  background-color: color-mix(in srgb, var(--vdd-accent-color) 20%, transparent);
+  border: 2px dashed var(--vdd-accent-color);
   pointer-events: none;
   animation: vdd-fade-in 0.15s ease-out;
 }
@@ -2490,7 +2550,7 @@ html.vdd-no-animations [class*="vdd-"]::after {
   width: 80px;
   height: 80px;
   border: 2px dashed var(--vdd-accent-color, #38bdf8);
-  border-radius: 8px;
+  border-radius: calc(8px * var(--vdd-radius-scale, 1));
   background: color-mix(in srgb, var(--vdd-accent-color) 6%, transparent);
   pointer-events: auto;
   z-index: calc(var(--vdd-z-base, 1000) + 9000);
@@ -2667,12 +2727,12 @@ html.vdd-no-animations [class*="vdd-"]::after {
 
 /* chrome — swap the capsule border-radius when strips change sides */
 [dir="rtl"] [data-vdd-skin="chrome"] .vdd-sidebar-tabs-strip.vdd-left .vdd-sidebar-tab-btn.vdd-active {
-  border-radius: 10px 0 0 10px !important;
+  border-radius: calc(10px * var(--vdd-radius-scale, 1)) 0 0 calc(10px * var(--vdd-radius-scale, 1)) !important;
   margin-left: 0 !important;
   margin-right: 0 !important;
 }
 [dir="rtl"] [data-vdd-skin="chrome"] .vdd-sidebar-tabs-strip.vdd-right .vdd-sidebar-tab-btn.vdd-active {
-  border-radius: 0 10px 10px 0 !important;
+  border-radius: 0 calc(10px * var(--vdd-radius-scale, 1)) calc(10px * var(--vdd-radius-scale, 1)) 0 !important;
   margin-right: 0 !important;
   margin-left: 0 !important;
 }
@@ -2776,7 +2836,7 @@ html.vdd-no-animations [class*="vdd-"]::after {
   background: rgba(0, 0, 0, 0.8);
   border: 1px solid var(--vdd-accent-color, #38bdf8);
   border-left: 3px solid var(--vdd-accent-color, #38bdf8);
-  border-radius: 4px;
+  border-radius: calc(4px * var(--vdd-radius-scale, 1));
   color: var(--vdd-accent-color, #38bdf8);
   font-family: monospace;
   padding: 0.375rem 1rem;
@@ -2804,7 +2864,7 @@ html.vdd-no-animations [class*="vdd-"]::after {
   margin: 0;
   padding: 0.625rem;
   font-size: 0.875rem;
-  border-radius: 0.375rem;
+  border-radius: calc(0.375rem * var(--vdd-radius-scale, 1));
 }
 
 .vdd-confirmation-alert-danger {
@@ -2872,7 +2932,7 @@ html.vdd-no-animations [class*="vdd-"]::after {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  border-radius: calc(4px * var(--vdd-radius-scale, 1));
   transition: all 0.15s ease;
   flex-shrink: 0;
 }
@@ -2943,7 +3003,7 @@ html.vdd-no-animations [class*="vdd-"]::after {
   justify-content: center;
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: calc(6px * var(--vdd-radius-scale, 1));
   color: var(--vdd-tab-icon-inactive);
   cursor: pointer;
   flex-shrink: 0;
@@ -2971,10 +3031,10 @@ html.vdd-no-animations [class*="vdd-"]::after {
   transition: color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.vdd-toolbar-strip.vdd-left   .vdd-toolbar-btn-radio.vdd-active { border-left:   var(--vdd-toolbar-accent-bar-width, 3px) solid var(--vdd-tab-icon-active); border-radius: 0 6px 6px 0; }
-.vdd-toolbar-strip.vdd-right  .vdd-toolbar-btn-radio.vdd-active { border-right:  var(--vdd-toolbar-accent-bar-width, 3px) solid var(--vdd-tab-icon-active); border-radius: 6px 0 0 6px; }
-.vdd-toolbar-strip.vdd-top    .vdd-toolbar-btn-radio.vdd-active { border-bottom: var(--vdd-toolbar-accent-bar-width, 3px) solid var(--vdd-tab-icon-active); border-radius: 6px 6px 0 0; }
-.vdd-toolbar-strip.vdd-bottom .vdd-toolbar-btn-radio.vdd-active { border-top:    var(--vdd-toolbar-accent-bar-width, 3px) solid var(--vdd-tab-icon-active); border-radius: 0 0 6px 6px; }
+.vdd-toolbar-strip.vdd-left   .vdd-toolbar-btn-radio.vdd-active { border-left:   var(--vdd-toolbar-accent-bar-width, 3px) solid var(--vdd-tab-icon-active); border-radius: 0 calc(6px * var(--vdd-radius-scale, 1)) calc(6px * var(--vdd-radius-scale, 1)) 0; }
+.vdd-toolbar-strip.vdd-right  .vdd-toolbar-btn-radio.vdd-active { border-right:  var(--vdd-toolbar-accent-bar-width, 3px) solid var(--vdd-tab-icon-active); border-radius: calc(6px * var(--vdd-radius-scale, 1)) 0 0 calc(6px * var(--vdd-radius-scale, 1)); }
+.vdd-toolbar-strip.vdd-top    .vdd-toolbar-btn-radio.vdd-active { border-bottom: var(--vdd-toolbar-accent-bar-width, 3px) solid var(--vdd-tab-icon-active); border-radius: calc(6px * var(--vdd-radius-scale, 1)) calc(6px * var(--vdd-radius-scale, 1)) 0 0; }
+.vdd-toolbar-strip.vdd-bottom .vdd-toolbar-btn-radio.vdd-active { border-top:    var(--vdd-toolbar-accent-bar-width, 3px) solid var(--vdd-tab-icon-active); border-radius: 0 0 calc(6px * var(--vdd-radius-scale, 1)) calc(6px * var(--vdd-radius-scale, 1)); }
 
 /* Toggle active — lighter tint, no directional border */
 .vdd-toolbar-btn-toggle.vdd-active {
@@ -3009,10 +3069,10 @@ html.vdd-no-animations [class*="vdd-"]::after {
   transition: color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.vdd-toolbar-strip.vdd-left   .vdd-toolbar-btn-group.vdd-active { border-left:   var(--vdd-toolbar-accent-bar-width, 3px) solid var(--vdd-tab-icon-active); border-radius: 0 6px 6px 0; }
-.vdd-toolbar-strip.vdd-right  .vdd-toolbar-btn-group.vdd-active { border-right:  var(--vdd-toolbar-accent-bar-width, 3px) solid var(--vdd-tab-icon-active); border-radius: 6px 0 0 6px; }
-.vdd-toolbar-strip.vdd-top    .vdd-toolbar-btn-group.vdd-active { border-bottom: var(--vdd-toolbar-accent-bar-width, 3px) solid var(--vdd-tab-icon-active); border-radius: 6px 6px 0 0; }
-.vdd-toolbar-strip.vdd-bottom .vdd-toolbar-btn-group.vdd-active { border-top:    var(--vdd-toolbar-accent-bar-width, 3px) solid var(--vdd-tab-icon-active); border-radius: 0 0 6px 6px; }
+.vdd-toolbar-strip.vdd-left   .vdd-toolbar-btn-group.vdd-active { border-left:   var(--vdd-toolbar-accent-bar-width, 3px) solid var(--vdd-tab-icon-active); border-radius: 0 calc(6px * var(--vdd-radius-scale, 1)) calc(6px * var(--vdd-radius-scale, 1)) 0; }
+.vdd-toolbar-strip.vdd-right  .vdd-toolbar-btn-group.vdd-active { border-right:  var(--vdd-toolbar-accent-bar-width, 3px) solid var(--vdd-tab-icon-active); border-radius: calc(6px * var(--vdd-radius-scale, 1)) 0 0 calc(6px * var(--vdd-radius-scale, 1)); }
+.vdd-toolbar-strip.vdd-top    .vdd-toolbar-btn-group.vdd-active { border-bottom: var(--vdd-toolbar-accent-bar-width, 3px) solid var(--vdd-tab-icon-active); border-radius: calc(6px * var(--vdd-radius-scale, 1)) calc(6px * var(--vdd-radius-scale, 1)) 0 0; }
+.vdd-toolbar-strip.vdd-bottom .vdd-toolbar-btn-group.vdd-active { border-top:    var(--vdd-toolbar-accent-bar-width, 3px) solid var(--vdd-tab-icon-active); border-radius: 0 0 calc(6px * var(--vdd-radius-scale, 1)) calc(6px * var(--vdd-radius-scale, 1)); }
 
 /* Separators */
 .vdd-toolbar-strip.vdd-left .vdd-toolbar-separator,
@@ -3049,7 +3109,7 @@ html.vdd-no-animations [class*="vdd-"]::after {
   z-index: calc(var(--vdd-z-base, 1000) + 7000);
   background: var(--vdd-sidebar-bg, var(--vdd-bg-panel));
   border: 1px solid var(--vdd-sidebar-border);
-  border-radius: 8px;
+  border-radius: calc(8px * var(--vdd-radius-scale, 1));
   padding: 4px;
   min-width: 168px;
   display: flex;
@@ -3085,7 +3145,7 @@ html.vdd-no-animations [class*="vdd-"]::after {
   gap: 8px;
   padding: 5px 8px;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: calc(6px * var(--vdd-radius-scale, 1));
   background: transparent;
   color: var(--vdd-sidebar-text-title, var(--vdd-text-primary));
   cursor: pointer;
@@ -3152,7 +3212,7 @@ html.vdd-no-animations [class*="vdd-"]::after {
   font-family: monospace;
   font-weight: 500;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: calc(4px * var(--vdd-radius-scale, 1));
   transition: all 0.15s ease;
   white-space: nowrap;
   user-select: none;
@@ -3177,14 +3237,14 @@ html.vdd-no-animations [class*="vdd-"]::after {
 }
 
 [data-color-scheme="light"] .vdd-btn-outline {
-  border-color: #6c757d;
-  color: #6c757d;
+  border-color: var(--vdd--b-text-secondary, #6c757d);
+  color: var(--vdd--b-text-secondary, #6c757d);
 }
 
 [data-color-scheme="light"] .vdd-btn-outline:hover {
   background: rgba(0, 0, 0, 0.05);
-  border-color: #495057;
-  color: #495057;
+  border-color: var(--vdd--b-text-tab-inactive, #495057);
+  color: var(--vdd--b-text-tab-inactive, #495057);
 }
 
 .vdd-btn-primary {
@@ -3427,7 +3487,7 @@ html.vdd-no-animations [class*="vdd-"]::after {
   width: var(--vdd-panel-toolbar-btn-size, 32px);
   height: var(--vdd-panel-toolbar-btn-size, 32px);
   flex-shrink: 0;
-  border-radius: var(--vdd-panel-toolbar-btn-radius, 6px);
+  border-radius: calc(var(--vdd-panel-toolbar-btn-radius, 6px) * var(--vdd-radius-scale, 1));
   border: none;
   background: transparent;
   color: var(--vdd-panel-toolbar-fg, rgba(255, 255, 255, 0.65));
@@ -3462,7 +3522,7 @@ html.vdd-no-animations [class*="vdd-"]::after {
 
 /* ── Toolbar strip variants ── */
 .vdd-panel-toolbar[data-variant="frosted"] {
-  background: rgba(15, 20, 30, 0.55);
+  background: color-mix(in srgb, var(--vdd--b-panel-toolbar-frosted-bg, rgb(15 20 30)) 55%, transparent);
   backdrop-filter: blur(10px) saturate(150%);
   -webkit-backdrop-filter: blur(10px) saturate(150%);
 }
@@ -3470,7 +3530,7 @@ html.vdd-no-animations [class*="vdd-"]::after {
   background: var(--vdd-bg-tab-bar, #0d0f16);
 }
 [data-color-scheme="light"] .vdd-panel-toolbar[data-variant="frosted"] {
-  background: rgba(233, 236, 239, 0.72);
+  background: color-mix(in srgb, var(--vdd--b-panel-toolbar-frosted-bg, rgb(233 236 239)) 72%, transparent);
 }
 .vdd-panel-toolbar--top[data-variant="frosted"],
 .vdd-panel-toolbar--top[data-variant="solid"] {
@@ -3612,7 +3672,7 @@ html.vdd-no-animations [class*="vdd-"]::after {
   height: var(--vdd-panel-toolbar-btn-size, 28px);
   width: 200px;
   border: 1px solid var(--vdd-panel-toolbar-separator-color, rgba(255, 255, 255, 0.15));
-  border-radius: var(--vdd-panel-toolbar-btn-radius, 6px);
+  border-radius: calc(var(--vdd-panel-toolbar-btn-radius, 6px) * var(--vdd-radius-scale, 1));
   background: rgba(0, 0, 0, 0.18);
   color: inherit;
   padding: 0 8px;
@@ -3635,7 +3695,7 @@ html.vdd-no-animations [class*="vdd-"]::after {
   z-index: calc(var(--vdd-z-base, 1000) + 8502);
   background: var(--vdd-panel-float-bg, rgba(22, 24, 34, 0.95));
   border: 1px solid var(--vdd-panel-float-border, rgba(255, 255, 255, 0.1));
-  border-radius: var(--vdd-panel-float-radius, 8px);
+  border-radius: calc(var(--vdd-panel-float-radius, 8px) * var(--vdd-radius-scale, 1));
   box-shadow: var(--vdd-panel-float-shadow-active, 0 8px 28px rgba(0, 0, 0, 0.55));
   overflow: hidden;
   max-height: 300px;
@@ -3680,7 +3740,7 @@ html.vdd-no-animations [class*="vdd-"]::after {
   min-height: 60px;
   display: flex;
   flex-direction: column;
-  border-radius: var(--vdd-panel-float-radius, 8px);
+  border-radius: calc(var(--vdd-panel-float-radius, 8px) * var(--vdd-radius-scale, 1));
   background: var(--vdd-panel-float-bg, rgba(22, 24, 34, 0.92));
   border: 1px solid var(--vdd-panel-float-border, rgba(255, 255, 255, 0.1));
   box-shadow: var(--vdd-panel-float-shadow, 0 4px 16px rgba(0, 0, 0, 0.35));
@@ -3752,7 +3812,7 @@ html.vdd-no-animations [class*="vdd-"]::after {
   border: 1px solid var(--vdd-custom-btn-border, rgba(255, 255, 255, 0.05));
   color: var(--vdd-text-secondary, #94a3b8);
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: calc(4px * var(--vdd-radius-scale, 1));
   padding: 0;
   line-height: 1;
   transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
@@ -3791,7 +3851,7 @@ html.vdd-no-animations [class*="vdd-"]::after {
   width: 80px;
   height: 80px;
   border: 2px dashed var(--vdd-accent-color, #38bdf8);
-  border-radius: 8px;
+  border-radius: calc(8px * var(--vdd-radius-scale, 1));
   background: color-mix(in srgb, var(--vdd-accent-color) 6%, transparent);
   pointer-events: none;
   z-index: 200;
@@ -3825,7 +3885,7 @@ html.vdd-no-animations [class*="vdd-"]::after {
   --vdd-toast-success-color: #4ade80;
   --vdd-toast-warning-color: #fbbf24;
   --vdd-toast-error-color:   #f87171;
-  --vdd-toast-bg:            #2a2d32;
+  --vdd-toast-bg: var(--vdd--b-toast-bg, #2a2d32);
   --vdd-toast-border:        rgba(255, 255, 255, 0.14);
 }
 [data-color-scheme="light"] {
@@ -3833,7 +3893,7 @@ html.vdd-no-animations [class*="vdd-"]::after {
   --vdd-toast-success-color: #15803d;
   --vdd-toast-warning-color: #b45309;
   --vdd-toast-error-color:   #b91c1c;
-  --vdd-toast-bg:            #ffffff;
+  --vdd-toast-bg: var(--vdd--b-toast-bg, #ffffff);
   --vdd-toast-border:        rgba(0, 0, 0, 0.14);
 }
 
@@ -3858,7 +3918,7 @@ html.vdd-no-animations [class*="vdd-"]::after {
 .vdd-toast {
   pointer-events: all; position: relative; overflow: hidden;
   display: flex; align-items: flex-start; gap: 10px;
-  padding: 20px 14px; border-radius: 6px;
+  padding: 20px 14px; border-radius: calc(6px * var(--vdd-radius-scale, 1));
   background: var(--vdd-toast-bg, #2a2d32);
   border: 1px solid var(--vdd-toast-border, rgba(255,255,255,0.14)); border-inline-start-width: 3px;
   box-shadow: 0 8px 24px rgba(0,0,0,.4), 0 2px 8px rgba(0,0,0,.2);
@@ -4023,7 +4083,7 @@ html.vdd-no-animations [class*="vdd-"]::after {
   font-size: 2rem;
   font-weight: 600;
   color: var(--vdd-panel-title-color, var(--vdd-panel-text));
-  background: rgba(108, 117, 125, 0.15);
+  background: color-mix(in srgb, var(--vdd--b-placeholder-bg, rgb(108 117 125)) 15%, transparent);
   border: 1px dashed var(--vdd-taskbar-item-border);
   user-select: none;
 }

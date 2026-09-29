@@ -26,3 +26,4 @@ importance.
 | [0015](0015-toolchain-pins.md) | Toolchain pins (TypeScript 5.x, Vue peer ^3.4) | Accepted |
 | [0016](0016-escape-claiming.md) | One Escape, one answer: whoever acts claims the event | Accepted |
 | [0017](0017-brand-variables.md) | Brand variables: read by the library, never declared by it; one accent source; skin fonts | Accepted |
+| [0018](0018-brand-surfaces-and-corners.md) | Brand surfaces and corner scale: derived, guarded, never declared by the library | Accepted |

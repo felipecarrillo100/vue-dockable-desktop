@@ -12,6 +12,10 @@ const params = new URLSearchParams(location.search)
 if (params.get('cs') === 'light') document.documentElement.setAttribute('data-color-scheme', 'light')
 if (params.get('ba')) document.documentElement.style.setProperty('--vdd-brand-accent', `#${params.get('ba')}`)
 if (params.get('bon')) document.documentElement.style.setProperty('--vdd-brand-on-accent', `#${params.get('bon')}`)
+// The M16 gate: `?bs=HEX` / `?bt=HEX` set --vdd-brand-surface / --vdd-brand-text, `?rs=N` --vdd-radius-scale.
+if (params.get('bs')) document.documentElement.style.setProperty('--vdd-brand-surface', `#${params.get('bs')}`)
+if (params.get('bt')) document.documentElement.style.setProperty('--vdd-brand-text', `#${params.get('bt')}`)
+if (params.get('rs')) document.documentElement.style.setProperty('--vdd-radius-scale', params.get('rs')!)
 
 const workspace = createWorkspace({
   panels: {

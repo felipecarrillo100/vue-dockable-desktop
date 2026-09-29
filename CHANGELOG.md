@@ -11,6 +11,59 @@ correspondence lives, alongside the feature-by-feature map in [docs/PARITY.md](d
 
 ## [Unreleased]
 
+## [1.4.0] — 2026-09-30
+
+**Parity: react-dockable-desktop 6.3.1, plus react-dockable-desktop 7.2.0 and 7.3.0's skin
+branding.** Branding, part two: your own surfaces and corner shape on any built-in skin. See
+[Your surfaces](docs/manual/10-theming.md#your-surfaces) and [Corners](docs/manual/10-theming.md#corners).
+
+### Added
+
+- **`--vdd-brand-surface`** and **`--vdd-brand-text`**: set per scheme on `:root`, they replace
+  every built-in skin's backgrounds and text — the workspace, panels, tab bar, sidebar, floating
+  windows, modals, drawers, the taskbar, toasts, borders and muted text are all derived from the
+  two. Set both or neither: with only one set, every skin keeps its own surfaces. A skin keeps
+  its shape and effects (macOS's glass, Chrome's tabs, the VS Code accent bar) and each
+  translucent surface keeps the skin's own transparency; the accent, status colours and shadows
+  are not affected.
+- **`--vdd-radius-scale`**: multiplies every corner the library draws — `0` square, `1` each
+  skin's own (the default), `1.5` rounder. Circles and pills stay round. It also scales the
+  radius tokens you set yourself (`--vdd-panel-float-radius`, `--vdd-panel-toolbar-btn-radius`,
+  `--vdd-tab-btn-active-radius`).
+- Manual: **Your surfaces** and **Corners** under Brand your app, the corner habit for custom
+  skins, and the three variables in the token reference.
+
+### Fixed
+
+- **The workspace-edge drop preview was Bootstrap blue** (`#007bff`) in every skin, instead of
+  the skin's accent. It follows `--vdd-accent-color` and `--vdd-brand-accent` now. It shows only
+  while you drag a panel to a workspace edge.
+- **Colours no token reached**: the dock-target chips, the light-mode outline button (the
+  confirm dialog's Cancel) and the frosted panel toolbar painted literal colours in their own
+  rules. They read the surface tokens now, and follow a brand surface; unbranded they are
+  unchanged.
+
+### Tests
+
+- **M16 browser gate** (`scripts/gates/browser/m16.mjs`, real Chrome): the corner radii of every
+  library element and pseudo-element, in all 7 skins × dark/light, match a 1.3.0 baseline with
+  the scale unset, are `0px` at scale `0` and 1.5× at `1.5`, with circles and pills unchanged;
+  with a brand surface set, no colour of any skin's own palette remains — rendered, hovered or as
+  a token — the workspace, panel and tab bar stay distinct, and text on panels meets 4.5:1
+  (muted 3:1); with only one of the two set, a scene matches M15's baseline. M15's gate still
+  holds with no brand set.
+- `test/core/stylesheet.test.ts`, ported from rdd 7.3.0: every corner length is scaled and the
+  library never declares the scale; every coloured surface reads a derived value first, declared
+  only on `:root` and built on the guarded base; no element rule paints a colour of its own.
+- M16 rules (`scripts/gates/m16.mjs`) and two selftest cases. The M15 browser gate's scene
+  helpers moved to `scripts/gates/lib/branding-scenes.mjs`, shared with M16. The playground
+  takes `?bs=`, `?bt=` and `?rs=`.
+
+### Documentation
+
+- Theming chapter: Your surfaces, Corners, the fourth brandable-skin habit, token rows; README
+  snippet; ADR 0018; PARITY.md; the plan's M16.
+
 ## [1.3.0] — 2026-09-29
 
 **Parity: react-dockable-desktop 6.3.1, plus react-dockable-desktop 7.2.0's skin branding**

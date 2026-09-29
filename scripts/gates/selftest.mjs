@@ -438,7 +438,7 @@ check('M14 catches a documented token that does not exist', 'docs/manual/10-them
 
 // The shape 1.0.x actually shipped: base values hidden inside a scheme block that never matches.
 check('M14 catches a token whose only home is a colour-scheme block', 'src/index.css',
-  s => s.replace('  --vdd-sidebar-tabs-bg: #141619;\n', '')
+  s => s.replace('  --vdd-sidebar-tabs-bg: var(--vdd--b-sidebar-tabs-bg, #141619);\n', '')
         .replace('[data-color-scheme="light"] {', '[data-color-scheme="light"] {\n  --vdd-sidebar-tabs-bg: #e9ecef;'),
   'node scripts/gates/m14.mjs')
 
@@ -451,6 +451,16 @@ check('M15 catches a skin font changed without the manual', 'src/index.css',
 check('M15 catches a wrong browser minimum in chapter 1', 'docs/manual/01-getting-started.md',
   s => s.replace('Safari 16.2', 'Safari 15'),
   'node scripts/gates/m15.mjs')
+
+// The 1.4.0 rules: the surface sections stay in the manual, and the dark selector it shows is
+// the one a missing data-color-scheme matches.
+check('M16 catches the Corners section removed', 'docs/manual/10-theming.md',
+  s => s.replace('### Corners\n', '### Corner shape\n'),
+  'node scripts/gates/m16.mjs')
+
+check('M16 catches the dark brand surface under [data-color-scheme="dark"]', 'docs/manual/10-theming.md',
+  s => s.replace(':root:not([data-color-scheme="light"]) {\n  --vdd-brand-surface', '[data-color-scheme="dark"] {\n  --vdd-brand-surface'),
+  'node scripts/gates/m16.mjs')
 
 // M1: hide a build artefact the exports map promises
 const hidden = 'dist/styles.css'
