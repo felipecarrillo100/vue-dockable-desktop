@@ -18,7 +18,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { classNames } from '../lib/css.mjs'
 import { CONSUMER_HOOKS, OPEN_ENDED_PREFIXES } from '../lib/emitted.mjs'
 
-const APP = 'http://localhost:5188/'
+const APP = process.env.VDD_APP_URL ?? 'http://localhost:5188/'
 const OUT = 'artifacts/M13'
 mkdirSync(OUT, { recursive: true })
 

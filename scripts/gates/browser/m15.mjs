@@ -44,7 +44,7 @@ import { chromium } from 'playwright-core'
 
 const ROOT = process.cwd()
 const STYLES = join(ROOT, 'src/index.css')
-const APP = 'http://localhost:5188/'
+const APP = process.env.VDD_APP_URL ?? 'http://localhost:5188/'
 const OUT = 'artifacts/M15'
 mkdirSync(OUT, { recursive: true })
 

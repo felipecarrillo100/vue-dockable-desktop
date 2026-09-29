@@ -67,6 +67,43 @@ const APPS = {
   demo: { root: 'demo', port: 5190 },
 }
 
+/**
+ * Starts the app on its usual port, or the next free one, and resolves once *this* server says
+ * it is ready.
+ *
+ * It used to poll the port with `fetch` and take any answer as ready. With another project's
+ * dev server already on 5190, `--strictPort` made vdd's own demo exit at once, the poll got the
+ * other app's page, and M14 then waited 60s for a `window.__demo` that was never coming — a
+ * timeout that pointed at the demo, not at the port. Readiness now comes from the spawned Vite's
+ * own "ready" line, and a server that exits first means the port was taken.
+ */
+async function startApp(app) {
+  for (let port = app.port; port < app.port + 10; port++) {
+    const server = spawn('npx', ['vite', app.root, '--port', String(port), '--strictPort'], {
+      stdio: ['ignore', 'pipe', 'pipe'], detached: true,
+    })
+    // Monaco makes the demo's first cold start slow, so the wait is generous.
+    const outcome = await new Promise((resolve) => {
+      const timer = setTimeout(() => resolve('timeout'), 90000)
+      let seen = ''
+      server.stdout.on('data', (chunk) => {
+        if (seen === null) return // ready already: keep draining, stop collecting
+        seen += chunk
+        if (/ready in/.test(seen)) { seen = null; clearTimeout(timer); resolve('ready') }
+      })
+      server.stderr.resume()
+      server.on('exit', () => { clearTimeout(timer); resolve('exited') })
+    })
+    if (outcome === 'ready') {
+      if (port !== app.port) console.log(`\n  :${app.port} is in use by another process; ${app.root} is served on :${port}`)
+      return { server, port }
+    }
+    try { process.kill(-server.pid) } catch { /* already gone */ }
+    if (outcome === 'timeout') return { reason: `${app.root} did not report ready on :${port} within 90s` }
+  }
+  return { reason: `${app.root} could not start: ports ${app.port}–${app.port + 9} are all in use` }
+}
+
 const browserGate = `scripts/gates/browser/${milestone.toLowerCase()}.mjs`
 if (existsSync(browserGate)) {
   const declared = readFileSync(browserGate, 'utf8').match(/^\s*\/\/\s*gate:app\s+(\w+)/m)?.[1]
@@ -75,28 +112,18 @@ if (existsSync(browserGate)) {
     steps.push({ name: `${milestone} browser`, cmd: `unknown app "${declared}"`, ok: false, status: 1 })
     console.error(`\n── ${milestone} browser\n  gate:app "${declared}" is not one of ${Object.keys(APPS).join(', ')}`)
   } else {
-    // Monaco makes the demo's first cold start slow, so the wait is generous and the gate
-    // reports a timeout rather than failing on an empty page.
-    const server = spawn('npx', ['vite', app.root, '--port', String(app.port), '--strictPort'], {
-      stdio: 'ignore', detached: true,
-    })
+    const { server, port, reason } = await startApp(app)
     try {
-      const deadline = Date.now() + 90000
-      let up = false
-      while (Date.now() < deadline && !up) {
-        try {
-          const r = await fetch(`http://localhost:${app.port}/`)
-          up = r.ok
-        } catch { await new Promise(r => setTimeout(r, 400)) }
-      }
-      if (!up) {
+      if (!server) {
         steps.push({ name: `${milestone} browser`, cmd: app.root, ok: false, status: 1 })
-        console.error(`\n── ${milestone} browser\n  ${app.root} did not answer on :${app.port} within 90s`)
+        console.error(`\n── ${milestone} browser\n  ${reason}`)
       } else {
+        // The browser gates default to the app's usual port; this tells them where it really is.
+        process.env.VDD_APP_URL = `http://localhost:${port}/`
         steps.push(run(`${milestone} browser`, `node ${browserGate}`))
       }
     } finally {
-      try { process.kill(-server.pid) } catch { /* already gone */ }
+      if (server) try { process.kill(-server.pid) } catch { /* already gone */ }
     }
   }
 }

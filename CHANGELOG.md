@@ -100,6 +100,11 @@ built-in skin with a few CSS variables — no skin of your own needed. See
   against the stylesheet, the browser minimum in the README and chapter 1, and PARITY.md.
 - The playground takes `?skin=`, `?cs=light`, `?ba=` / `?bon=` (brand variables before mount)
   and `?anim=0`.
+- **The gate runner no longer mistakes another app for its own**: with another dev server on
+  the demo's port, `--strictPort` stopped vdd's demo from starting, the runner took the other
+  app's answer as ready, and M14 timed out waiting for the demo. It now waits for its own Vite's
+  ready line, moves to the next free port when the usual one is taken, and passes the URL to the
+  browser gates (`VDD_APP_URL`; the usual ports stay the default when a gate is run by hand).
 
 ### Documentation
 
