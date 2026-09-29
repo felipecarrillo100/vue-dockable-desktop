@@ -24,7 +24,7 @@ so a layout saved by either library loads in the other.
 > matching the two numbers would be a promise that breaks the first time either library needs
 > a breaking change the other does not. Which rdd release a given version corresponds to is
 > stated per release in [CHANGELOG.md](CHANGELOG.md) — this one tracks **rdd 6.3.1**, plus
-> rdd 7.2.0's skin branding — and feature by feature in [docs/PARITY.md](docs/PARITY.md).
+> rdd 7.2.0 and 7.3.0's skin branding — and feature by feature in [docs/PARITY.md](docs/PARITY.md).
 
 ## Install
 
@@ -35,7 +35,7 @@ npm install vue-dockable-desktop
 Requires Vue 3.4+, and a browser with CSS `color-mix()` (Chrome / Edge 111, Safari 16.2,
 Firefox 113 or later). No other runtime dependencies. The published package is
 [`vue-dockable-desktop`](https://www.npmjs.com/package/vue-dockable-desktop); the public API
-is pinned by `api-surface.json` and covered by 846 tests.
+is pinned by `api-surface.json` and covered by 851 tests.
 
 ## Quick start
 
@@ -117,8 +117,17 @@ localStorage.setItem('layout', ws.saveLayout())
   ```
 
   Point them at your UI framework's theme to follow it — `var(--p-primary-color)` (PrimeVue),
-  `var(--bs-primary)` (Bootstrap). See
-  [Brand your app](docs/manual/10-theming.md#brand-your-app)
+  `var(--bs-primary)` (Bootstrap). Your own surfaces and corner shape, too:
+
+  ```css
+  :root:not([data-color-scheme="light"]) {  /* dark: the attribute's absence */
+    --vdd-brand-surface: #0b1f3a;   /* app background — panels, bars and borders derive from it */
+    --vdd-brand-text: #e8eef7;      /* main text — set both, or neither */
+  }
+  :root { --vdd-radius-scale: 0; }  /* 0 square · 1 each skin's own · 1.5 rounder */
+  ```
+
+  See [Brand your app](docs/manual/10-theming.md#brand-your-app)
 - **i18n and RTL** — every string is a message key; `dir="rtl"` flips the whole workspace
 - **TypeScript-first** — complete types, no separate `@types` package
 

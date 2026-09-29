@@ -120,6 +120,16 @@ mental models transfer, and it is what makes section 3 possible.
 | `:where(button, input, select, textarea)[class*="rdd-"] { font-family: inherit }` (rdd 6.4.0) | the same, `vdd-` — without it the rail and toolbar buttons kept the browser's font |
 | `WindowManager` sets `data-rdd-skin` on `<html>` | `<VddDesktop>` sets `data-vdd-skin` on `<html>` (1.0.0 already did), so the skin font resolves there |
 
+**1.4.0, from rdd 7.3.0:**
+
+| rdd 7.3.0 | vdd 1.4.0 |
+|---|---|
+| `--rdd-brand-surface`, `--rdd-brand-text` | `--vdd-brand-surface`, `--vdd-brand-text` |
+| `--rdd-radius-scale` | `--vdd-radius-scale` |
+| `--rdd--b-*` derived values on `:root`, built on `--rdd--b-base` | `--vdd--b-*`, built on `--vdd--b-base` — the same transform, prefix aside; placed after the main `:root` block, which the M14 token check reads |
+| `--rdd-placeholder-bg` (a token since rdd 7.1.2) | none: the taskbar preview letter's background reads `--vdd--b-placeholder-bg` in its own rule |
+| `--rdd-danger-color` on the unregistered-panel message | the literal danger red, left as it is |
+
 One difference, older than 1.3.0: vdd's default stack has no `'Segoe UI'` (`'Outfit', 'Inter',
 system-ui, -apple-system, sans-serif`, kept as it was), and vdd has no `--vdd-font-family-mono`
 token; its monospaced labels keep `monospace`.
@@ -198,6 +208,9 @@ comment, so a reviewer can see the trade rather than discover a silent gap.
 | `tests/browser/branding.browser.ts` — 14-scene baseline, red brand, on-accent | `scripts/gates/browser/m15.mjs` (baseline in `scripts/gates/browser/fixtures/m15-branding-baseline.json`, captured from 1.2.0), plus a `--control` run that must fail |
 | `tests/browser/fonts.browser.ts` — skin fonts, brand font in every skin | `scripts/gates/browser/m15.mjs` (fonts) |
 | `StylesheetContract.test.ts` — "branding contract" (5) | `test/core/stylesheet.test.ts` — "branding contract (index.css)" (5, names kept) |
+| `tests/browser/radius.browser.ts` (7.3.0) — corner baseline, scale 0 and 1.5 | `scripts/gates/browser/m16.mjs` (corners; baseline `fixtures/m16-radius-baseline.json`, captured from 1.3.0) |
+| `branding.browser.ts` brand-surface cases (7.3.0) — leftovers, layers, contrast, one input | `scripts/gates/browser/m16.mjs` (surfaces) |
+| `StylesheetContract.test.ts` — "corner contract" (2), "surface contract" (3) | `test/core/stylesheet.test.ts` — the same, names kept |
 
 ---
 

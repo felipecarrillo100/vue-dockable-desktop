@@ -57,7 +57,8 @@ declares; a skin that should look different is the [skin of your own](#defining-
 ## Brand your app
 
 Every built-in skin, in dark and light, takes your company's colour and font from three
-variables set on `:root`:
+variables set on `:root` — and, if you want them, [your surfaces](#your-surfaces) and
+[corner shape](#corners) from three more:
 
 ```css
 /* your stylesheet, imported after vue-dockable-desktop/styles.css */
@@ -166,6 +167,39 @@ The variable you point at must be defined on `:root` (or `<html>`), where the br
 are read. A framework that declares its theme variables on an element of its own instead —
 Vuetify's `.v-theme--light` / `.v-theme--dark` on `<v-app>` — cannot be followed this way from
 `:root`; set the brand colour to the same value your theme uses.
+
+### Your surfaces
+
+Two more variables replace a skin's backgrounds and text with your own, per scheme: `--vdd-brand-surface` (the app background) and `--vdd-brand-text` (the main text colour). The library derives every other surface from those two — panels and the workspace a few percent towards the text, the tab bar and rail a little darker, borders and muted text as mixes of the two — so layers stay distinct and text stays readable:
+
+```css
+/* dark is the default: a missing data-color-scheme reads as dark */
+:root:not([data-color-scheme="light"]) {
+  --vdd-brand-surface: #0b1f3a;
+  --vdd-brand-text: #e8eef7;
+}
+:root[data-color-scheme="light"] {
+  --vdd-brand-surface: #f4f1ec;
+  --vdd-brand-text: #2b2620;
+}
+```
+
+- **Set both, or neither.** With only one of them set, every skin keeps its own surfaces — half a palette is the case most likely to be unreadable.
+- **A scheme you leave out keeps the skin's surfaces.** Brand dark only, and light mode looks as it always did.
+- **A skin keeps its shape and effects** — macOS's glass and window buttons, Chrome's tabs, the VS Code accent bar. Only the colours come from you, so with a brand surface set the skins differ by shape, not by colour. Each translucent surface (macOS panels, floating windows, modals) keeps the skin's own transparency.
+- **Not affected:** the accent (that's `--vdd-brand-accent`), status colours (errors, warnings, the toast types), and shadows.
+
+Pick a surface and a text colour with enough contrast between them — the text is used as-is on the panels. The M16 gate requires 4.5:1 for the main text on panels with the two colours above.
+
+### Corners
+
+`--vdd-radius-scale` multiplies every corner the library draws:
+
+```css
+:root { --vdd-radius-scale: 0; }    /* square corners, everywhere */
+```
+
+`1` (the default) is each skin's own shape, `0` is square, `1.5` is rounder; a skin keeps its own proportions at every scale, so macOS stays rounder than VS Code. Circles and pills stay round: macOS's window buttons and the taskbar's peek handle. It also scales the radius tokens you can set yourself (`--vdd-panel-float-radius`, `--vdd-panel-toolbar-btn-radius`, `--vdd-tab-btn-active-radius`).
 
 ### Your logo
 
@@ -292,16 +326,19 @@ and your skin can add rules of that kind against `vdd-` classes if it wants them
 The demo ships `mono` as a worked example: see the bottom of `demo/src/demo.css`, and pick it from
 the skin dropdown to see it in both schemes.
 
-> **Let your skin take a brand, as the built-in ones do.** Three habits keep a skin brandable
-> with [`--vdd-brand-accent`](#brand-your-app):
+> **Let your skin take a brand, as the built-in ones do.** Four habits keep a skin brandable:
 >
 > - Declare the accent as `var(--vdd-brand-accent, <your colour>)`, never as a bare colour.
 > - Write every tint of it as `color-mix(in srgb, var(--vdd-accent-color) N%, transparent)`
 >   instead of an `rgba()` of the same colour — then one accent drives them all.
 > - Give your skin a font with `--vdd-skin-font-family`, never `--vdd-font-family`: declared in a
 >   skin, `--vdd-font-family` would override the one an application sets on `:root`. Likewise,
->   never declare `--vdd-brand-accent` or `--vdd-brand-on-accent` in a skin — those belong to the
->   application.
+>   never declare a `--vdd-brand-*` variable in a skin — those belong to the application.
+> - Write a corner radius your own rules add as `calc(6px * var(--vdd-radius-scale, 1))`, so
+>   [`--vdd-radius-scale`](#corners) reaches it too.
+>
+> A skin of your own keeps its own surfaces: [brand surfaces](#your-surfaces) recolour the
+> built-in skins, and a custom skin is where you choose every colour yourself.
 >
 > A skin that sets no accent of its own gets the default skin's (`#38bdf8` dark, `#0066cc` light),
 > and one that sets no font gets the library's fallback stack. The library's own tints, the
@@ -396,6 +433,9 @@ Never declared by the library, only read. See [Brand your app](#brand-your-app).
 |---|---|---|
 | `--vdd-brand-accent` | *(unset)* | Replaces every skin's accent, in dark and light. |
 | `--vdd-brand-on-accent` | *(unset — `#090b11`; `#ffffff` on the primary button in light mode)* | Text on a solid accent fill, in both schemes: the primary button, the active dock target. |
+| `--vdd-brand-surface` | *(unset)* | With `--vdd-brand-text`, replaces every skin's backgrounds; see [Your surfaces](#your-surfaces). |
+| `--vdd-brand-text` | *(unset)* | With `--vdd-brand-surface`, replaces every skin's text; borders and muted text are mixes of the two. |
+| `--vdd-radius-scale` | *(unset — `1`)* | Multiplies every corner; see [Corners](#corners). |
 
 A skin sets its own font as `--vdd-skin-font-family` — declared by each built-in skin (see
 [Skin fonts](#skin-fonts)), never on `:root` — which `--vdd-font-family` falls back to.
