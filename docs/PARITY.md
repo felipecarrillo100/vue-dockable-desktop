@@ -201,6 +201,19 @@ quietly dropped from it.
 Every "substitute", "rewrite" and "moot" above must be justified in its test file's header
 comment, so a reviewer can see the trade rather than discover a silent gap.
 
+### rdd 7.4.0 field-report fixes, traced
+
+| rdd 7.4.0 | vdd 1.5.0 |
+|---|---|
+| frost (and its background) on a `::before` of the 5 content containers | the same — one transform, byte-identical to rdd's after the prefix; vdd's drawer is frosted too |
+| `prefers-reduced-motion` stops the library's motion | the same |
+| `setDirection('rtl')` reaches `RddSidebar` and toasts | `<VddSidebar>` (and so `<VddSecondarySidebar>`) and `<VddToasts>` |
+| title `() => string` (`PanelTitle`) | `Label` gains `() => string` |
+| non-finite saved geometry repaired on load | `core/serialize.ts` |
+| `data-rdd-*` identity attributes | already had `data-vdd-*` |
+| CHANGELOG in the package | already shipped |
+| `frost.browser.ts`, `motion.browser.ts`, `direction.browser.ts`, `TitleThunk.test.tsx`, `FiniteGeometry.test.tsx` | `scripts/gates/browser/m17.mjs`, `test/components/fieldReport.test.ts` |
+
 ### rdd 7.2.0 branding, traced
 
 | rdd 7.2.0 test | vdd |

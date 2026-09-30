@@ -27,3 +27,4 @@ importance.
 | [0016](0016-escape-claiming.md) | One Escape, one answer: whoever acts claims the event | Accepted |
 | [0017](0017-brand-variables.md) | Brand variables: read by the library, never declared by it; one accent source; skin fonts | Accepted |
 | [0018](0018-brand-surfaces-and-corners.md) | Brand surfaces and corner scale: derived, guarded, never declared by the library | Accepted |
+| [0019](0019-frost-on-a-pseudo-element.md) | Frost on a pseudo-element; the sidebar and toasts follow the workspace into RTL | Accepted |

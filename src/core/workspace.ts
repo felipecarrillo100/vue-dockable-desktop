@@ -17,7 +17,8 @@ import {
   removePanelFromTree, selectPanelInTree, splitLeafInTree, updateSizesAtPath,
 } from './layoutTree'
 import type { ActiveTargetScope } from './layoutTree'
-import { LAYOUT_VERSION, parseInitialState, parseLayoutPayload } from './serialize'
+import { DEFAULT_FLOAT_RECT, LAYOUT_VERSION, parseInitialState, parseLayoutPayload } from './serialize'
+import type { ParsedLayout } from './serialize'
 import { isSerializable } from './serializable'
 import { PanelRegistry } from './registry'
 import type { PanelDefaultOptions } from './registry'
@@ -123,7 +124,7 @@ export interface WorkspaceState {
 const clampRatio = (n: number | undefined, fallback: number): number =>
   Math.min(0.9, Math.max(0.1, n ?? fallback))
 
-const DEFAULT_RECT = { x: 300, y: 150, width: 450, height: 350 }
+const DEFAULT_RECT = DEFAULT_FLOAT_RECT
 
 /** A workspace instance: reactive state, actions, registry, and a Vue plugin. */
 export interface Workspace<TEvents extends object = Record<string, unknown>> {
@@ -278,7 +279,20 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
   const zIndexBase = config.zIndexBase ?? 1000
   let maxZ = zIndexBase
 
-  const initial = parseInitialState(config.initialState, warn)
+  /**
+   * A panel saved without a title — it had a function title, which a layout can't hold — takes
+   * its registered default title, as a newly opened one would, or its id.
+   */
+  function withTitles(parsed: ParsedLayout): ParsedLayout {
+    const panels: Record<string, PanelInfo> = {}
+    for (const [id, info] of Object.entries(parsed.panels)) {
+      panels[id] = info.title ? info : { ...info, title: registry.get(info.component)?.defaultOptions?.title || id }
+    }
+    const minimized = parsed.minimized.map(m => (m.title ? m : { ...m, title: panels[m.id]?.title || m.id }))
+    return { ...parsed, panels, minimized }
+  }
+
+  const initial = withTitles(parseInitialState(config.initialState, warn))
 
   const state = reactive<WorkspaceState>({
     gridRoot: initial.gridRoot,
@@ -785,7 +799,9 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
       const hasDynamic = provider !== undefined && dynamic !== undefined
       const props = hasDynamic ? (dynamic as Record<string, unknown>) : info.props
       const ok = hasDynamic ? isSerializable(toRaw(dynamic)) : info.serializable
-      if (ok) included[id] = hasDynamic ? { ...info, props, serializable: true } : info
+      // A function title (1.5.0) can't be saved; the restored panel takes its registered default.
+      const saved = typeof info.title === 'function' ? (({ title: _t, ...rest }) => rest)(info) as PanelInfo : info
+      if (ok) included[id] = hasDynamic ? { ...saved, props, serializable: true } : saved
       else excluded.push(id)
     }
 
@@ -819,7 +835,7 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
       ...(activePanelId !== null ? { activePanelId } : {}),
       gridRoot,
       floating,
-      minimized,
+      minimized: minimized.map(m => (typeof m.title === 'function' ? { id: m.id, component: m.component } : m)) as SerializedLayout['minimized'],
       panels: included,
     }
     return JSON.stringify(payload)
@@ -835,7 +851,8 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
     }
     // Straight to the validator: `parseInitialState` falls back to an *empty* workspace, which
     // is right for a first start and wrong here — applying it would close every panel.
-    const parsed = parseLayoutPayload(payload, warn)
+    const valid = parseLayoutPayload(payload, warn)
+    const parsed = valid && withTitles(valid)
     if (!parsed) {
       warn('loadLayout received something that is not a layout (it needs gridRoot, floating, ' +
         'minimized and panels); the current layout is unchanged.')
@@ -883,6 +900,7 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
   const format = (label: Label | undefined): string => {
     if (label === undefined || label === null) return ''
     if (typeof label === 'string') return label
+    if (typeof label === 'function') return label()
     if (config.formatMessage) return config.formatMessage(label)
     let text = label.defaultMessage ?? label.id
     for (const [k, v] of Object.entries(label.values ?? {})) text = text.replace(`{${k}}`, String(v))

@@ -53,6 +53,7 @@ export function formatLabel(
 ): string {
   if (label === undefined || label === null) return ''
   if (typeof label === 'string') return label
+  if (typeof label === 'function') return label()
   if (format) return format(label)
   let text = label.defaultMessage ?? label.id
   if (label.values) {

@@ -462,6 +462,15 @@ check('M16 catches the dark brand surface under [data-color-scheme="dark"]', 'do
   s => s.replace(':root:not([data-color-scheme="light"]) {\n  --vdd-brand-surface', '[data-color-scheme="dark"] {\n  --vdd-brand-surface'),
   'node scripts/gates/m16.mjs')
 
+// The 1.5.0 rules: the fixes stay documented, and the manual stops claiming the old limits.
+check('M17 catches the frost section removed', 'docs/manual/10-theming.md',
+  s => s.replace('## Frosted glass and your own overlays\n', '## Frosted glass\n'),
+  'node scripts/gates/m17.mjs')
+
+check('M17 catches the old Label type in the i18n chapter', 'docs/manual/11-i18n.md',
+  s => s.replace('string | MessageDescriptor | (() => string)', 'string | MessageDescriptor'),
+  'node scripts/gates/m17.mjs')
+
 // M1: hide a build artefact the exports map promises
 const hidden = 'dist/styles.css'
 if (existsSync(hidden)) {

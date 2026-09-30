@@ -335,9 +335,11 @@ await walk('open a drawer, a toast and a modal', async () => {
     const ratio = (a, b) => { const [x, y] = [L(a), L(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05) }
     const bgOf = (el) => {
       for (let e = el; e; e = e.parentElement) {
-        const bg = getComputedStyle(e).backgroundColor
-        const m = bg.match(/[\d.]+/g)
-        if (m && (m[3] === undefined || Number(m[3]) > 0.5)) return bg
+        // A frosted container paints its background on its ::before (1.5.0, ADR 0019).
+        for (const bg of [getComputedStyle(e).backgroundColor, getComputedStyle(e, '::before').backgroundColor]) {
+          const m = bg.match(/[\d.]+/g)
+          if (m && (m[3] === undefined || Number(m[3]) > 0.5)) return bg
+        }
       }
       return 'rgb(255, 255, 255)'
     }
@@ -467,7 +469,9 @@ const surfaces = () => drive((spec) => {
   const out = {}
   for (const [name, [sel, prop]] of Object.entries(spec)) {
     const el = document.querySelector(sel)
-    out[name] = el ? getComputedStyle(el)[prop] : null
+    const own = el ? getComputedStyle(el)[prop] : null
+    // A frosted container paints its background on its ::before (1.5.0, ADR 0019).
+    out[name] = el && prop === 'backgroundColor' && own === 'rgba(0, 0, 0, 0)' ? getComputedStyle(el, '::before')[prop] : own
   }
   return out
 }, SURFACES)
