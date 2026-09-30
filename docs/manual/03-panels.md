@@ -60,6 +60,21 @@ useful when several call sites cannot agree on the same literal id.
 > Whether `props` survive `saveLayout()` depends on whether they are JSON-serialisable. See
 > [chapter 5](05-persistence.md); it is a runtime fact, not a type-level guarantee.
 
+### Objects that cross into Vue's reactivity
+
+The workspace's state is `reactive`, and so is anything you store in a `ref()` of your own. An
+object that goes in — a panel prop, a widget's data, an `onSaveState` payload, or something the
+library hands back to you — comes out as a **proxy**, not the object you put in. That matters
+for objects that are compared by identity, or owned by another library: a map, a WebGL
+context, an editor instance. A third-party library holding the original no longer recognises the
+proxy (`proxy !== original`), and deep reactivity on a large graphics object is also slow.
+
+- Mark such objects `markRaw(obj)` before handing them over, so Vue never wraps them.
+- Keep your own reference in `shallowRef()`, not `ref()`, so only the reference is reactive.
+- Or pass a getter (`() => editor`) instead of the object, and call it where you need it.
+
+`toRaw(proxy)` gets the original back when you already have a proxy.
+
 ## Talking to the container: `usePanel()`
 
 ```vue

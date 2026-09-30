@@ -7,11 +7,12 @@
  * imperatively when a toast finished exiting; here a toast leaving the list means the next
  * one is simply inside the slice, so promotion is not code.
  */
-import { computed, onBeforeUnmount, toRaw, watch } from 'vue'
+import { computed, inject, onBeforeUnmount, toRaw, watch } from 'vue'
 import { removeToast, setToastAdapter, toastQueue } from '../core/toast'
 import { useLibraryMessage } from '../composables/useLibraryMessage'
 import type { ToastAdapter, ToastPosition } from '../core/toast'
 import VddToastItem from './VddToastItem.vue'
+import { WORKSPACE_KEY } from '../core/workspace'
 
 /** The library's own strings, translated when a workspace is present. */
 const message = useLibraryMessage()
@@ -91,6 +92,11 @@ watch(() => toastQueue.items.map(t => `${t.id}:${t.exiting}`).join(','), () => {
 }, { immediate: true })
 
 const isLeft = computed(() => props.position.endsWith('left'))
+
+// Toasts are teleported to <body>: they follow the workspace into RTL (1.5.0), and otherwise
+// inherit the page's direction, as before.
+const workspace = inject(WORKSPACE_KEY, null)
+const workspaceDir = computed(() => (workspace?.state.dir === 'rtl' ? 'rtl' : undefined))
 </script>
 
 <template>
@@ -106,6 +112,7 @@ const isLeft = computed(() => props.position.endsWith('left'))
         newestOnTop ? 'vdd-toast-container--newest-top' : 'vdd-toast-container--newest-bottom',
       ]"
       :style="{ width: `${width}px` }"
+      :dir="workspaceDir"
       role="region"
       :aria-label="message('notifications')"
       aria-live="polite"

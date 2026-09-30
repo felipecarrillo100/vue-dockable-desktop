@@ -23,7 +23,7 @@ import { chromium } from 'playwright-core'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import {
-  SKINS, SCENE_PARTS, colours, diff, hoverSnapshots, intended, isRgb, lines, openBase, openOverlays,
+  SKINS, SCENE_PARTS, FROSTED, colours, diff, hoverSnapshots, intended, isRgb, lines, openBase, openOverlays,
   rgbOf, snapshot, tokens,
 } from '../lib/branding-scenes.mjs'
 
@@ -55,7 +55,8 @@ const PALETTE = [...css.matchAll(/var\(--vdd--b-[\w-]+, (#[0-9a-fA-F]{6}|rgb\((\
 // ── corners ─────────────────────────────────────────────────────────────────
 
 /** Every vdd- element's four corners, keyed by a DOM path; elements with no rounded corner are left out. */
-const radii = page => page.evaluate((corners) => {
+const radii = page => page.evaluate(([corners, frostedSrc]) => {
+  const frosted = new RegExp(frostedSrc)
   const out = {}
   const seg = (el) => {
     const parent = el.parentElement
@@ -70,11 +71,13 @@ const radii = page => page.evaluate((corners) => {
       if (pseudo && (cs.content === 'none' || cs.content === 'normal')) continue
       const r = corners.map(c => cs.getPropertyValue(c))
       if (r.every(v => v === '0px')) continue
+      // A frosted container's ::before (1.5.0) takes border-radius: inherit — its corners are its element's.
+      if (pseudo === '::before' && frosted.test(path(el).split('>').pop() ?? '')) continue
       out[path(el) + pseudo] = r
     }
   }
   return out
-}, CORNERS)
+}, [CORNERS, FROSTED.source])
 
 const round = v => v === '50%' || v === '999px'
 const px = v => /^-?[\d.]+px$/.test(v) ? parseFloat(v) : NaN

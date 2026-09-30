@@ -11,6 +11,58 @@ correspondence lives, alongside the feature-by-feature map in [docs/PARITY.md](d
 
 ## [Unreleased]
 
+## [1.5.0] — 2026-09-30
+
+**Parity: react-dockable-desktop 6.3.1, plus react-dockable-desktop 7.2.0–7.4.0's skin branding
+and field-report fixes.** From a consumer's field report: fixed dropdowns inside frosted windows,
+direction for the sidebar and toasts, translated titles, and a quieter restore.
+
+### Added
+
+- **Title functions**: a title (a panel's, a window's, a drawer's, a modal's, a widget's) can be
+  `() => string`. The library calls it each time it renders the title, so a function that reads
+  your locale ref follows a language change on its own — a translated *string* is fixed in the
+  language active when the panel opened. A function isn't saved in a layout: the restored panel
+  takes the title its type is registered with. `Label` is now
+  `string | MessageDescriptor | (() => string)`.
+- **Reduced motion**: the library's own transitions and animations stop when the user has asked
+  the system for reduced motion (`prefers-reduced-motion: reduce`), as with
+  `:animations="false"`. Your own are untouched.
+
+### Fixed
+
+- **A `position: fixed` element inside a frosted container was positioned against the
+  container, not the viewport** — so a dropdown, popover or date picker of yours inside a
+  floating window, a drawer, an overlay widget, a frosted panel toolbar or (in `macos`) a docked
+  panel opened in the wrong place, in some skins and not others. A `backdrop-filter` makes its
+  element the containing block for fixed content; the frost now sits on each container's
+  `::before` (with the background it tints, where the frost saturates). What is drawn is unchanged.
+- **`setDirection('rtl')` did not mirror the sidebar or the toasts**: they followed only the
+  page's `dir`. They follow the workspace into RTL now, and so does everything inside the sidebar
+  (a toolbar, your own chrome); while the workspace is left-to-right they still follow the page,
+  as before.
+- **A saved window with unusable geometry reached the window's style**: a `NaN` saved as `null`,
+  an `Infinity` or a missing size. Such values are replaced on load by the default a new floating
+  window gets, with a warning naming the window.
+
+### Tests
+
+- **M17 browser gate** (`scripts/gates/browser/m17.mjs`, real Chrome): a fixed child of each of
+  the 7 frosted cases lands on the viewport, and each renders as before within a small tolerance;
+  reduced motion stops every library transition and leaves the page's; the sidebar and toasts
+  follow `setDirection` and still follow the page while LTR.
+- `test/components/fieldReport.test.ts` (title functions, finite geometry) and
+  `test/core/stylesheet.test.ts` (the consumer content contract), ported from rdd 7.4.0.
+- The M15 colour and M16 corner baselines compare a frosted container's `::before` as its
+  element: where it is drawn changed, what is drawn did not.
+- M17 rules (`scripts/gates/m17.mjs`) and two selftest cases.
+
+### Documentation
+
+- Theming: Frosted glass and your own overlays; reduced motion under Animations. i18n: title
+  functions; the sidebar and toasts follow `setDirection`. Panels: objects that cross into Vue's
+  reactivity (`markRaw`, `shallowRef`, getters). ADR 0019; PARITY.md; the plan's M17.
+
 ## [1.4.0] — 2026-09-30
 
 **Parity: react-dockable-desktop 6.3.1, plus react-dockable-desktop 7.2.0 and 7.3.0's skin

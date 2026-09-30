@@ -369,11 +369,23 @@ react-dockable-desktop 7.3.0's Phase 2 branding, ported ([0018](decisions/0018-b
 skin colour left, distinct layers and readable text in all 14 scenes; one input alone changes
 nothing. M15's browser gate must still pass unchanged.
 
+### M17 — Field-report fixes (1.5.0) · S
+
+react-dockable-desktop 7.4.0's fixes from a consumer's field report, ported
+([0019](decisions/0019-frost-on-a-pseudo-element.md)): frost on a `::before`, reduced motion,
+the sidebar and toasts following `setDirection`, title functions, finite saved geometry, and the
+reactivity notes.
+
+**Gate** — standing gate; M17 rules (the 1.5.0 entry, ADR, manual, PARITY); **browser:** a fixed
+child of every frosted container lands on the viewport and nothing visible changes; reduced motion
+stops the library's motion only; the sidebar and toasts follow `setDirection`. M15 and M16 still
+pass.
+
 ---
 
 ## 4. Totals
 
-15 milestones for 1.0.0 (M15 added for 1.3.0, M16 for 1.4.0). **468 assertions** to reach, of which ~31 are pure-logic (M2) and 133 land in
+15 milestones for 1.0.0 (M15 added for 1.3.0, M16 for 1.4.0, M17 for 1.5.0). **468 assertions** to reach, of which ~31 are pure-logic (M2) and 133 land in
 a single milestone (M9). Two milestones are stop-or-go on architecture (M0) or format
 compatibility (M13).
 

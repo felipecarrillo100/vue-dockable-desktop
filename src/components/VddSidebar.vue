@@ -9,10 +9,11 @@
  * (docs/decisions/0005-vmodel.md). Binding a model makes the caller the source of truth;
  * omitting it lets the component keep its own.
  */
-import { computed, provide, ref, watch } from 'vue'
+import { computed, inject, provide, ref, watch } from 'vue'
 import type { SidebarProps, SidebarTab } from '../core/sidebarTypes'
 import { SIDEBAR_KEY, isTabEntry, toRailArray } from '../core/sidebarTypes'
 import { isRtlElement, startPointerDrag } from '../core/dragResize'
+import { WORKSPACE_KEY } from '../core/workspace'
 import VddSidebarRail from './VddSidebarRail.vue'
 import VddSidebarDrawer from './VddSidebarDrawer.vue'
 
@@ -171,10 +172,20 @@ watch(openTab, (tab) => {
     `slot or a \`component\`. The drawer will open empty.`,
   )
 })
+
+// A sidebar is usually an ancestor of the desktop, so the workspace's own dir never reached it:
+// setDirection('rtl') mirrored the desktop beside an unmirrored rail (1.5.0). It follows the
+// workspace into RTL; otherwise it inherits the page's direction, as before. No workspace: the page.
+const workspace = inject(WORKSPACE_KEY, null)
+const workspaceDir = computed(() => (workspace?.state.dir === 'rtl' ? 'rtl' : undefined))
 </script>
 
 <template>
-  <div class="vdd-sidebar-layout" :data-vdd-sidebar="position">
+  <div
+    class="vdd-sidebar-layout"
+    :data-vdd-sidebar="position"
+    :dir="workspaceDir"
+  >
     <!--
       Left and right are the same three pieces in opposite order. Rendered from one list so
       neither arrangement can drift from the other.
