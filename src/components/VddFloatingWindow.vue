@@ -133,6 +133,9 @@ function onTitlePointerDown(event: PointerEvent): void {
       if (armed) drag.finishDrag(props.window.id, new PointerEvent('pointerup'))
       else drag.cancel()
     },
+    // A cancel — a pointercancel, the window losing focus (1.5.1) — leaves the window where it
+    // is: docking it into the target it was over is what a release does, not a cancel.
+    onCancel: () => { if (moved) drag?.cancel() },
   })
 }
 

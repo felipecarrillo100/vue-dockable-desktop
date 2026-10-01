@@ -254,6 +254,7 @@ export function provideDragDock(ws: Workspace<never>): DragDock {
           el.removeEventListener('pointermove', onMove)
           el.removeEventListener('pointerup', onEnd)
           el.removeEventListener('pointercancel', onCancel)
+          window.removeEventListener('blur', onCancel)
           if (dragStarted) finishDrag(panelId, e)
           else { document.body.classList.remove('vdd-dragging-active'); onLongPressWithoutDrag?.(e) }
         }
@@ -262,11 +263,14 @@ export function provideDragDock(ws: Workspace<never>): DragDock {
           el.removeEventListener('pointermove', onMove)
           el.removeEventListener('pointerup', onEnd)
           el.removeEventListener('pointercancel', onCancel)
+          window.removeEventListener('blur', onCancel)
           reset()
         }
         el.addEventListener('pointermove', onMove)
         el.addEventListener('pointerup', onEnd)
         el.addEventListener('pointercancel', onCancel)
+        // The window losing focus ends the drag, as a pointercancel would (1.5.1).
+        window.addEventListener('blur', onCancel)
       }, LONG_PRESS_MS)
 
       el.addEventListener('pointermove', onPreMove)
@@ -289,6 +293,7 @@ export function provideDragDock(ws: Workspace<never>): DragDock {
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
       window.removeEventListener('pointercancel', onCancel)
+      window.removeEventListener('blur', onCancel)
     }
     const onUp = (e: PointerEvent) => {
       teardown()
@@ -300,6 +305,10 @@ export function provideDragDock(ws: Workspace<never>): DragDock {
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp)
     window.addEventListener('pointercancel', onCancel)
+    // The window losing focus (an alt-tab, an iframe taking it) ends the drag, as a
+    // pointercancel would (1.5.1): the listeners, the armed target and the body class all go,
+    // so the next click can't drop the panel into the target it was over.
+    window.addEventListener('blur', onCancel)
   }
 
   const trackPointer = (x: number, y: number): void => {

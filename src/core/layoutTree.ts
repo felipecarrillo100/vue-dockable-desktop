@@ -206,10 +206,15 @@ export function isLoneOccupant(node: LayoutNode, leafId: string, panelId: string
   return leaf !== null && leaf.panels.length === 1 && leaf.panels[0] === panelId
 }
 
+/** One finite, positive size per child. */
+const sizesFit = (sizes: unknown, n: number): sizes is number[] =>
+  Array.isArray(sizes) && sizes.length === n && sizes.every(v => typeof v === 'number' && Number.isFinite(v) && v > 0)
+
 /**
- * Heal a tree that lists a panel twice, or lists none of a docked panel.
+ * Heal a tree that lists a panel twice, or lists none of a docked panel — or, since 1.5.1, lists
+ * a panel the layout doesn't have, or gives a split sizes that don't fit its children.
  *
- * Both are states this library once produced and then *saved*: a lone docked panel dropped
+ * The first two are states this library once produced and then *saved*: a lone docked panel dropped
  * on its own group left rdd with the panel in two leaves and vdd with it in none, and
  * `saveLayout()` wrote the result out, so the fault returned on every reload. Repairing on
  * read means a layout stored by an affected version loads clean with nothing asked of the
@@ -229,6 +234,10 @@ export function repairLayoutTree(
   const walk = (node: LayoutNode): LayoutNode | null => {
     if (node.type === 'leaf') {
       const kept = node.panels.filter((id) => {
+        if (!panels[id]) {
+          repairs.push(`group "${node.id}" listed panel "${id}", which the layout doesn't have`)
+          return false
+        }
         if (seen.has(id)) {
           repairs.push(`panel "${id}" was listed in more than one group`)
           return false
@@ -247,13 +256,20 @@ export function repairLayoutTree(
     const children = node.children.map(walk).filter((c): c is LayoutNode => c !== null)
     // Identity, not count: a child can survive the walk and still have been repaired inside.
     // Comparing lengths alone returned the original branch and threw those repairs away.
-    if (children.length === node.children.length && children.every((c, i) => c === node.children[i])) {
-      return node
-    }
+    const unchanged = children.length === node.children.length && children.every((c, i) => c === node.children[i])
+    if (unchanged && sizesFit(node.sizes, children.length)) return node
     if (children.length === 0) return null
     if (children.length === 1) return children[0]!
-    const sizes = node.sizes.slice(0, children.length)
-    const sum = sizes.reduce((a, b) => a + b, 0) || 1
+    // Sizes that don't match the children, or aren't finite positive numbers, would give a child
+    // `flex-basis: NaN%` (1.5.1): such a branch gets even sizes.
+    const even = () => children.map(() => 1 / children.length)
+    if (unchanged) {
+      repairs.push(`a split had sizes ${JSON.stringify(node.sizes)} for ${children.length} children`)
+      return { ...node, sizes: even() }
+    }
+    const sizes = Array.isArray(node.sizes) ? node.sizes.slice(0, children.length) : []
+    if (!sizesFit(sizes, children.length)) return { ...node, children, sizes: even() }
+    const sum = sizes.reduce((a, b) => a + b, 0)
     return { ...node, children, sizes: sizes.map(s => s / sum) }
   }
 

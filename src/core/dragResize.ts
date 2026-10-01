@@ -24,8 +24,13 @@ export interface PointerDragConfig<TStart> {
   captureStart: () => TStart;
   /** Called on every pointermove with the delta from the drag's start position. */
   onMove: (dx: number, dy: number, start: TStart) => void;
-  /** Called once when the drag ends (pointerup or pointercancel). */
+  /** Called once when the drag ends (pointerup, or pointercancel and window blur when `onCancel` is absent). */
   onEnd?: (start: TStart) => void;
+  /**
+   * Called instead of `onEnd` when the drag is cancelled — a pointercancel, or the window losing
+   * focus (1.5.1) — for a drag whose release does something a cancel must not.
+   */
+  onCancel?: (start: TStart) => void;
   /** Classes toggled on the given elements for the duration of the drag. */
   activeClasses?: Array<{ el: HTMLElement; classes: string[] }>;
 }
@@ -36,7 +41,7 @@ export interface PointerDragConfig<TStart> {
  * cleans up automatically on release or cancel.
  */
 export function startPointerDrag<TStart>(config: PointerDragConfig<TStart>): void {
-  const { element, pointerId, startClientX, startClientY, captureStart, onMove, onEnd, activeClasses } = config;
+  const { element, pointerId, startClientX, startClientY, captureStart, onMove, onEnd, onCancel, activeClasses } = config;
 
   element.setPointerCapture(pointerId);
   activeClasses?.forEach(({ el, classes }) => el.classList.add(...classes));
@@ -46,17 +51,28 @@ export function startPointerDrag<TStart>(config: PointerDragConfig<TStart>): voi
     onMove(e.clientX - startClientX, e.clientY - startClientY, start);
   };
 
-  const handleEnd = () => {
+  const teardown = () => {
     activeClasses?.forEach(({ el, classes }) => el.classList.remove(...classes));
     element.removeEventListener('pointermove', handleMove);
     element.removeEventListener('pointerup', handleEnd);
-    element.removeEventListener('pointercancel', handleEnd);
+    element.removeEventListener('pointercancel', handleCancel);
+    window.removeEventListener('blur', handleCancel);
+  };
+  const handleEnd = () => {
+    teardown();
     onEnd?.(start);
+  };
+  const handleCancel = () => {
+    teardown();
+    (onCancel ?? onEnd)?.(start);
   };
 
   element.addEventListener('pointermove', handleMove);
   element.addEventListener('pointerup', handleEnd);
-  element.addEventListener('pointercancel', handleEnd);
+  element.addEventListener('pointercancel', handleCancel);
+  // The window losing focus ends the drag, as a pointercancel does (1.5.1): after an alt-tab the
+  // listeners and the active classes would otherwise outlive the gesture.
+  window.addEventListener('blur', handleCancel);
 }
 
 // ── Reading direction ────────────────────────────────────────────────────────

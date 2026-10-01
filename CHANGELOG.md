@@ -11,6 +11,35 @@ correspondence lives, alongside the feature-by-feature map in [docs/PARITY.md](d
 
 ## [Unreleased]
 
+## [1.5.1] — 2026-10-01
+
+**Parity: react-dockable-desktop 7.4.1 fixes.** From a review of 1.5.0. No API changes.
+
+### Fixed
+
+- **A message's placeholder was replaced only once**: `'{n} of {n}'` read `'2 of {n}'`. The
+  default formatter replaces every `{key}` now, and the workspace's `format` uses the same
+  function instead of a copy of it.
+- **The window losing focus mid-drag left the drag armed.** After an alt-tab, the pointer
+  listeners, the drop target and `vdd-dragging-active` stayed, and the next release docked the
+  panel into the target it had been over. A `blur` now ends a tab drag (mouse or touch) and a
+  floating window's title-bar drag as a `pointercancel` does. `startPointerDrag` ends on `blur`
+  too, and takes an optional `onCancel`; the floating window's title bar uses it, so a cancel
+  no longer docks the window into the target it was over.
+- **Layout repair** drops a group's panel id that the layout's `panels` doesn't have, and gives
+  a split whose sizes don't match its children, or aren't finite positive numbers, even sizes
+  (they reached the style as `flex-basis: NaN%`). Each is named in the development warning.
+- **A throwing event subscriber stopped delivery to the others**, and threw into the action
+  that published — `loadLayout`, `openPanel`, a close. Each subscriber's error is logged with
+  `console.error`, naming the event, and delivery goes on.
+
+### Tests
+
+- `test/store/reviewFixes.test.ts` (placeholders, layout repair, the event bus) and
+  `test/components/dragBlur.test.ts` (mouse, touch and title-bar drags, with uninterrupted
+  drags as controls), ported from rdd 7.4.1's `Patch741.test.ts` and `DragBlur.test.tsx`. Each
+  seen failing before its fix and with it removed.
+
 ## [1.5.0] — 2026-09-30
 
 **Parity: react-dockable-desktop 6.3.1, plus react-dockable-desktop 7.2.0–7.4.0's skin branding

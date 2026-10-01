@@ -201,6 +201,18 @@ quietly dropped from it.
 Every "substitute", "rewrite" and "moot" above must be justified in its test file's header
 comment, so a reviewer can see the trade rather than discover a silent gap.
 
+### rdd 7.4.1 review fixes, traced
+
+| rdd 7.4.1 | vdd 1.5.1 |
+|---|---|
+| default formatter replaces every `{key}`; one shared copy | `formatLabel`; `workspace.format` calls it |
+| blur ends a tab drag and a floating-window drag | `useDragDock` (mouse and touch), `startPointerDrag` (+ `onCancel`) |
+| repair drops unknown leaf ids, evens bad split sizes | `repairLayoutTree` |
+| a throwing subscriber is logged, delivery goes on | `EventBus` |
+| restored windows keep their stacking order | already: the z counter is seeded from the restored windows |
+| `RddToolbarSearch` aborts on unmount | already: `<VddToolbarSearch>` resets on unmount |
+| `Patch741.test.ts`, `DragBlur.test.tsx` | `test/store/reviewFixes.test.ts`, `test/components/dragBlur.test.ts` |
+
 ### rdd 7.4.0 field-report fixes, traced
 
 | rdd 7.4.0 | vdd 1.5.0 |
