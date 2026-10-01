@@ -46,7 +46,10 @@ export const defaultMessages = {
  */
 export type MessageKey = keyof typeof defaultMessages
 
-/** Resolve a label with a formatter, falling back to its `defaultMessage` then its `id`. */
+/**
+ * Resolve a label with a formatter, falling back to its `defaultMessage` then its `id`, with each
+ * `{key}` replaced by its value — every occurrence (1.5.1; it replaced only the first).
+ */
 export function formatLabel(
   label: Label | undefined,
   format?: MessageFormatter,
@@ -58,7 +61,7 @@ export function formatLabel(
   let text = label.defaultMessage ?? label.id
   if (label.values) {
     for (const [key, value] of Object.entries(label.values)) {
-      text = text.replace(`{${key}}`, String(value))
+      text = text.split(`{${key}}`).join(String(value))
     }
   }
   return text

@@ -77,7 +77,15 @@ export class EventBus<TEvents extends object = Record<string, unknown>> {
     if (!set) return
     // Iterate a copy: a listener that unsubscribes itself (or another) during dispatch must
     // not change the set being walked.
-    for (const listener of Array.from(set)) listener(data)
+    // One listener that throws must not stop delivery to the rest (1.5.1), nor the action that
+    // published — a loadLayout, a close — halfway through.
+    for (const listener of Array.from(set)) {
+      try {
+        listener(data)
+      } catch (e) {
+        console.error(`[vue-dockable-desktop] A subscriber to "${event}" threw:`, e)
+      }
+    }
   }
 
   /** Listener count for an event — for tests and diagnostics. */

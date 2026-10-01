@@ -26,7 +26,7 @@ import { EventBus } from './eventBus'
 import { menuPosition } from './contextMenu'
 import type { ContextMenuItem, ShowContextMenuOptions } from './contextMenu'
 import type { BuiltInEvents } from './eventBus'
-import { defaultMessages } from './messages'
+import { defaultMessages, formatLabel } from './messages'
 import { createToolbarState } from './toolbarState'
 import type { ToolbarState } from './toolbarState'
 import { createOverlays } from './overlays'
@@ -897,15 +897,8 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
     }
   }
 
-  const format = (label: Label | undefined): string => {
-    if (label === undefined || label === null) return ''
-    if (typeof label === 'string') return label
-    if (typeof label === 'function') return label()
-    if (config.formatMessage) return config.formatMessage(label)
-    let text = label.defaultMessage ?? label.id
-    for (const [k, v] of Object.entries(label.values ?? {})) text = text.replace(`{${k}}`, String(v))
-    return text
-  }
+  // The shared resolver (1.5.1): this had its own copy, which replaced only the first `{key}`.
+  const format = (label: Label | undefined): string => formatLabel(label, config.formatMessage)
 
   const overlays = createOverlays()
   const contributions = createContributions()
