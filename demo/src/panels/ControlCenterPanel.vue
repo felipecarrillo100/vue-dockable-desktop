@@ -52,7 +52,7 @@ const STEPS: [string, string][] = [
 const progress = computed(() => STEPS.filter(([id]) => done.value[id]).length)
 
 // ── actions ────────────────────────────────────────────────────────────────
-const KINDS = ['editor', 'markdownEditor', 'mainMap', 'leafletMap', 'layers', 'tools', 'table', 'terminal', 'preview', 'help', 'timeControl', 'overview', 'dirtyForm', 'dirtyEditor', 'rtl']
+const KINDS = ['editor', 'markdownEditor', 'mainMap', 'leafletMap', 'layers', 'tools', 'table', 'terminal', 'preview', 'help', 'timeControl', 'overview', 'dirtyForm', 'dirtyEditor', 'rtl', 'toolbarButtons']
 
 function openKind(kind: string): void {
   const existing = Object.values(ws.state.panels).filter(p => p.component === kind).length

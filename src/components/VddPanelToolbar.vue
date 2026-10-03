@@ -16,7 +16,7 @@ const props = withDefaults(defineProps<{
   variant?: ToolbarVariant
   /** Inherited by this toolbar's buttons unless they override it. @default 'ghost' */
   buttonVariant?: ButtonVariant
-  /** Icon button size in pixels. Left to the stylesheet when unset. */
+  /** Button size in pixels (sets `--vdd-panel-toolbar-btn-size`). The icon inside follows `--vdd-panel-toolbar-icon-size`. Left to the stylesheet when unset. */
   buttonSize?: number
 }>(), { variant: 'transparent', buttonVariant: 'ghost' })
 
