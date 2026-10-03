@@ -24,6 +24,7 @@ import ControlCenterPanel from './panels/ControlCenterPanel.vue'
 import DirtyFormPanel from './panels/DirtyFormPanel.vue'
 import DirtyEditorPanel from './panels/DirtyEditorPanel.vue'
 import RtlShowcasePanel from './panels/RtlShowcasePanel.vue'
+import ToolbarButtonsPanel from './panels/ToolbarButtonsPanel.vue'
 
 /**
  * The locale lives outside the workspace, because the workspace only needs a *formatter* —
@@ -58,6 +59,7 @@ const workspace = createWorkspace({
     preview: { component: PreviewPanel, defaultOptions: { title: 'Preview', icon: ICONS.eye } },
     help: { component: HelpPanel, defaultOptions: { title: 'Help', icon: ICONS.help } },
     timeControl: { component: TimeControlPanel, defaultOptions: { title: 'Timeline', icon: ICONS.clock } },
+    toolbarButtons: { component: ToolbarButtonsPanel, defaultOptions: { title: 'Toolbar Buttons', icon: ICONS.tools } },
     overview: { component: OverviewMapPanel, defaultOptions: { title: 'Locator', icon: ICONS.locator } },
 
     dirtyForm: {

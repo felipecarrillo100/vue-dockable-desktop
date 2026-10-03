@@ -52,7 +52,7 @@ are never contested.
 | `position` | `top` · `bottom` · `left` · `right` |
 | `variant` | `transparent` (default) · `frosted` · `solid` |
 | `buttonVariant` | `ghost` (default) · `soft` · `outlined` · `filled` — inherited by its buttons |
-| `buttonSize` | icon size in px; left to the stylesheet when unset |
+| `buttonSize` | button size in px (`--vdd-panel-toolbar-btn-size`); the icon follows `--vdd-panel-toolbar-icon-size`. Left to the stylesheet when unset |
 
 The contents are yours. The library provides the pieces it styles consistently:
 
@@ -62,6 +62,64 @@ The contents are yours. The library provides the pieces it styles consistently:
 - `<VddToolbarSpacer>` — pushes everything after it to the far end.
 - `<VddToolbarCenter>` — centres its content regardless of what flanks it.
 - `<VddToolbarItem>` — wraps a control that is not one of the above: a select, a badge.
+
+### Styling toolbar buttons
+
+The library owns the whole button: its size, the size and colour of the icon inside it, its
+hover, disabled and "on" states, the keyboard focus ring and `aria-pressed`. Your app supplies
+only the icon, from any icon library, and passes **no size**.
+
+**Icon size.** `--vdd-panel-toolbar-icon-size` (`20px`) sizes icons in panel toolbar buttons;
+`--vdd-chrome-icon-size` (`22px`) sizes them in the workspace toolbar and the sidebar rail. Icon
+fonts (Bootstrap Icons, Font Awesome's webfont, Material Symbols) follow the button's
+`font-size`. SVG icons follow the token's width and height, even when the SVG carries its own
+`width`/`height` attributes. An inline `style` width or height still wins, so don't set one. An
+icon drawn as a CSS mask or background on a `<span>` needs `width: 1em; height: 1em` in your own
+CSS to follow the size. Keep the icon at least about 5px smaller than the button on each side.
+
+**Variants.** `buttonVariant` sets the look of a button that is **off**; "on" looks the same in
+every variant.
+
+| `buttonVariant` | Off | Use it for |
+|---|---|---|
+| `ghost` (default) | icon only | toolbars on a plain, known background, or with a `frosted`/`solid` strip |
+| `soft` | its own near-opaque chip with a hairline edge | toolbars over panel content you don't control: canvases, video, images, charts, maps |
+| `outlined` | a thin outline | dense toolbars that need visible button bounds |
+| `filled` | an accent-tinted chip with an accent edge | toolbars that carry the brand colour at rest |
+
+When a toolbar floats over content you don't control, use `soft` or a `frosted`/`solid` strip.
+Don't add shadows to the icons: the chip or the strip keeps them readable.
+
+**The "on" look** is `--vdd-panel-toolbar-btn-active-bg` (the accent, deepened 35% toward black
+in dark) and `--vdd-panel-toolbar-btn-active-color` (`--vdd-brand-on-accent`, else white). It
+clears WCAG's 3:1 non-text contrast with bright and dark accents alike. Set the two tokens on
+`:root` for every toolbar, on a skin selector for one skin, or on a toolbar's `class` for one
+toolbar; load your stylesheet after the library's. Some starting points:
+
+```css
+/* A calmer tint: softer, but weaker over busy content */
+[data-color-scheme="dark"] {
+  --vdd-panel-toolbar-btn-active-bg: color-mix(in srgb, var(--vdd-accent-color) 34%, transparent);
+  --vdd-panel-toolbar-btn-active-color: #ffffff;
+}
+[data-color-scheme="light"] {
+  --vdd-panel-toolbar-btn-active-bg: color-mix(in srgb, var(--vdd-accent-color) 16%, transparent);
+  --vdd-panel-toolbar-btn-active-color: var(--vdd-accent-color);
+}
+
+/* A neutral "pressed key", no accent */
+[data-color-scheme="dark"]  { --vdd-panel-toolbar-btn-active-bg: #e8eaef; --vdd-panel-toolbar-btn-active-color: #0d0f16; }
+[data-color-scheme="light"] { --vdd-panel-toolbar-btn-active-bg: #1f2430; --vdd-panel-toolbar-btn-active-color: #ffffff; }
+
+/* One toolbar in its own colour: <VddPanelToolbar class="inspector-toolbar" …> */
+.inspector-toolbar {
+  --vdd-panel-toolbar-btn-active-bg: #7c3aed;
+  --vdd-panel-toolbar-btn-active-color: #ffffff;
+}
+```
+
+To recolour every "on" state in every skin at once, set your brand instead:
+`--vdd-brand-accent` and `--vdd-brand-on-accent` on `:root` (see the theming chapter).
 
 ### Search
 

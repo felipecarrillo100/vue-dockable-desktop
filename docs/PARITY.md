@@ -201,6 +201,18 @@ quietly dropped from it.
 Every "substitute", "rewrite" and "moot" above must be justified in its test file's header
 comment, so a reviewer can see the trade rather than discover a silent gap.
 
+### rdd 7.5.0 toolbar buttons, traced
+
+| rdd 7.5.0 | vdd 1.6.0 |
+|---|---|
+| `--rdd-panel-toolbar-icon-size`, `--rdd-chrome-icon-size` | `--vdd-panel-toolbar-icon-size`, `--vdd-chrome-icon-size`, same defaults and selectors |
+| panel "on": accent 65% + black (dark) / accent (light), on-accent icon | same tokens, same values |
+| `soft` chip tokens; `filled` on ≠ off | same |
+| workspace toggle: 22% / 16% tint, accent edge and icon | same |
+| global `:focus-visible` ring | vdd had none on toolbar/rail buttons: added on the three button classes |
+| "Styling toolbar buttons" (panel overlay guide) | same section in `docs/manual/07-panel-overlay.md` |
+| demo Toolbar Buttons panel | `demo/src/panels/ToolbarButtonsPanel.vue` |
+
 ### rdd 7.4.1 review fixes, traced
 
 | rdd 7.4.1 | vdd 1.5.1 |

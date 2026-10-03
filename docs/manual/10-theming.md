@@ -576,14 +576,27 @@ A skin sets its own font as `--vdd-skin-font-family` — declared by each built-
 |---|---|---|
 | `--vdd-panel-toolbar-padding` | `8px` | Padding inside a panel toolbar strip. |
 | `--vdd-panel-toolbar-gap` | `4px` | Gap between its buttons. |
-| `--vdd-panel-toolbar-btn-size` | `32px` | Button hit size (a coarse-pointer media rule enlarges it). |
+| `--vdd-panel-toolbar-btn-size` | `32px` | Button hit size. |
 | `--vdd-panel-toolbar-btn-radius` | `6px` | Button corner radius. |
 | `--vdd-panel-toolbar-fg` | `rgba(255, 255, 255, 0.65)` | Button glyph at rest. |
 | `--vdd-panel-toolbar-fg-hover` | `rgba(255, 255, 255, 0.95)` | Button glyph on hover. |
 | `--vdd-panel-toolbar-btn-hover-bg` | `var(--vdd-toolbar-btn-hover-bg, rgba(255, 255, 255, 0.08))` | Button background on hover. |
-| `--vdd-panel-toolbar-btn-active-bg` | `var(--vdd-toolbar-btn-radio-active-bg, rgba(56, 189, 248, 0.14))` | Background of a toggled or selected button. |
-| `--vdd-panel-toolbar-btn-active-color` | `var(--vdd-tab-icon-active, #38bdf8)` | Glyph of a toggled or selected button. |
+| `--vdd-panel-toolbar-icon-size` | `20px` | Icon inside a panel toolbar button: icon fonts follow it as `font-size`, SVG icons as width and height. |
+| `--vdd-panel-toolbar-btn-active-bg` | `color-mix(in srgb, var(--vdd-accent-color) 65%, #000000)`; light: `var(--vdd-accent-color)` | Background of a toggled-on button, the same in every `buttonVariant`. |
+| `--vdd-panel-toolbar-btn-active-color` | `var(--vdd-brand-on-accent, #ffffff)` | Icon of a toggled-on button. |
+| `--vdd-panel-toolbar-btn-bg` | `var(--vdd-panel-float-bg)` | `soft` button chip. |
+| `--vdd-panel-toolbar-btn-bg-hover` | the chip, 14% toward the hover glyph colour | `soft` button chip on hover. |
+| `--vdd-panel-toolbar-btn-border` | `1px solid var(--vdd-panel-float-border)` | `soft` button chip edge. |
 | `--vdd-panel-toolbar-separator-color` | `var(--vdd-toolbar-separator-color, rgba(255, 255, 255, 0.09))` | Separator inside a panel toolbar. |
+
+### Toolbar and rail buttons
+
+| Token | Default | What it paints |
+|---|---|---|
+| `--vdd-chrome-icon-size` | `22px` | Icon inside workspace toolbar buttons and sidebar rail buttons. |
+| `--vdd-toolbar-btn-toggle-active-bg` | `color-mix(in srgb, var(--vdd-accent-color) 22%, transparent)`; light: `16%` | Background of a toggled-on workspace toolbar toggle. |
+| `--vdd-toolbar-btn-toggle-active-color` | `var(--vdd-tab-icon-active)` | Its icon. |
+| `--vdd-toolbar-btn-toggle-active-border` | `var(--vdd-tab-icon-active)` | Its 1px edge. |
 
 ### Panel overlay - floating widgets
 

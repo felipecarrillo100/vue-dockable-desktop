@@ -1,5 +1,5 @@
 <script setup lang="ts">
-/** An icon button for a `<VddPanelToolbar>`. The icon is a slot, so anything renders. */
+/** An icon button for a `<VddPanelToolbar>`. The icon is a slot, so anything renders; pass it no size, the library sizes it with `--vdd-panel-toolbar-icon-size`. */
 defineProps<{
   /** Tooltip and accessible name. */
   title?: string
