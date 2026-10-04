@@ -1,0 +1,64 @@
+/* --------------------------------------------------------------------------
+   nord — Nordic Line (zero fill, zero bar, 16×2 px accent line via ::after)
+   -------------------------------------------------------------------------- */
+[data-vdd-skin="nord"] {
+  --vdd-tab-btn-active-bg: transparent;
+  --vdd-tab-btn-active-width: 44px;
+  --vdd-tab-btn-active-radius: 6px;
+  --vdd-tab-accent-bar-width: 0px;
+  --vdd-toolbar-btn-radio-active-bg: transparent;
+  --vdd-toolbar-accent-bar-width: 0px;
+}
+[data-vdd-skin="nord"] .vdd-sidebar-tab-btn.vdd-active {
+  border-top: 1px solid transparent !important;
+  border-bottom: 1px solid transparent !important;
+  border-left: none !important;
+  border-right: none !important;
+}
+[data-vdd-skin="nord"] .vdd-sidebar-tab-btn.vdd-active::after {
+  content: '';
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16px;
+  height: 2px;
+  border-radius: calc(1px * var(--vdd-radius-scale, 1));
+  background-color: var(--vdd-tab-icon-active);
+}
+[data-vdd-skin="nord"] .vdd-toolbar-strip .vdd-toolbar-btn-radio.vdd-active,
+[data-vdd-skin="nord"] .vdd-toolbar-strip .vdd-toolbar-btn-group.vdd-active {
+  border-left: none !important;
+  border-right: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+}
+[data-vdd-skin="nord"] .vdd-toolbar-strip.vdd-left  .vdd-toolbar-btn-radio.vdd-active::after,
+[data-vdd-skin="nord"] .vdd-toolbar-strip.vdd-left  .vdd-toolbar-btn-group.vdd-active::after,
+[data-vdd-skin="nord"] .vdd-toolbar-strip.vdd-right .vdd-toolbar-btn-radio.vdd-active::after,
+[data-vdd-skin="nord"] .vdd-toolbar-strip.vdd-right .vdd-toolbar-btn-group.vdd-active::after,
+[data-vdd-skin="nord"] .vdd-toolbar-strip.vdd-top   .vdd-toolbar-btn-radio.vdd-active::after,
+[data-vdd-skin="nord"] .vdd-toolbar-strip.vdd-top   .vdd-toolbar-btn-group.vdd-active::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 2px;
+  border-radius: calc(1px * var(--vdd-radius-scale, 1));
+  background-color: var(--vdd-tab-icon-active);
+}
+[data-vdd-skin="nord"] .vdd-toolbar-strip.vdd-bottom .vdd-toolbar-btn-radio.vdd-active::after,
+[data-vdd-skin="nord"] .vdd-toolbar-strip.vdd-bottom .vdd-toolbar-btn-group.vdd-active::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 2px;
+  border-radius: calc(1px * var(--vdd-radius-scale, 1));
+  background-color: var(--vdd-tab-icon-active);
+}
+

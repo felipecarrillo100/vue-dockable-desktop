@@ -1,0 +1,25 @@
+/* --------------------------------------------------------------------------
+   slate — Fluent Pill (floating capsule, accent-tinted)
+   -------------------------------------------------------------------------- */
+[data-vdd-skin="slate"] {
+  --vdd-tab-btn-active-bg: color-mix(in srgb, var(--vdd-accent-color) 14%, transparent);
+  --vdd-tab-btn-active-width: 36px;
+  --vdd-tab-btn-active-radius: 8px;
+  --vdd-tab-accent-bar-width: 0px;
+  --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 14%, transparent);
+  --vdd-toolbar-accent-bar-width: 0px;
+}
+[data-vdd-skin="slate"] .vdd-sidebar-tab-btn.vdd-active {
+  border-top: 1px solid transparent !important;
+  border-bottom: 1px solid transparent !important;
+  margin: 0 !important;
+}
+[data-vdd-skin="slate"] .vdd-toolbar-strip .vdd-toolbar-btn-radio.vdd-active,
+[data-vdd-skin="slate"] .vdd-toolbar-strip .vdd-toolbar-btn-group.vdd-active {
+  border-radius: calc(8px * var(--vdd-radius-scale, 1)) !important;
+}
+[data-vdd-skin="slate"][data-color-scheme="light"] {
+  --vdd-tab-btn-active-bg: color-mix(in srgb, var(--vdd-accent-color) 12%, transparent);
+  --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 12%, transparent);
+}
+

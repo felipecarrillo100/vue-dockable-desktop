@@ -1,0 +1,160 @@
+/* ==========================================================================
+   TOOLBAR STRIP
+   ========================================================================== */
+
+.vdd-toolbar-strip {
+  background-color: var(--vdd-sidebar-tabs-bg);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  z-index: 5;
+}
+
+.vdd-toolbar-strip.vdd-left,
+.vdd-toolbar-strip.vdd-right {
+  flex-direction: column;
+  width: 48px;
+  height: 100%;
+  padding: 8px 0;
+  gap: 4px;
+  overflow: hidden;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.vdd-toolbar-strip.vdd-top,
+.vdd-toolbar-strip.vdd-bottom {
+  flex-direction: row;
+  width: 100%;
+  height: 48px;
+  padding: 0 8px;
+  gap: 4px;
+  overflow: hidden;
+  transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (pointer: coarse) {
+  .vdd-toolbar-strip.vdd-left, .vdd-toolbar-strip.vdd-right { width: 56px; }
+  .vdd-toolbar-strip.vdd-top, .vdd-toolbar-strip.vdd-bottom { height: 56px; }
+}
+
+.vdd-toolbar-strip.vdd-left  { border-right:  1px solid var(--vdd-sidebar-border); }
+.vdd-toolbar-strip.vdd-right { border-left:   1px solid var(--vdd-sidebar-border); }
+.vdd-toolbar-strip.vdd-top   { border-bottom: 1px solid var(--vdd-sidebar-border); }
+.vdd-toolbar-strip.vdd-bottom{ border-top:    1px solid var(--vdd-sidebar-border); }
+/* Collapsed to zero size: without this the edge border stays behind as a 1px line. */
+.vdd-toolbar-strip.vdd-toolbar-strip--collapsed { border-width: 0; }
+
+/* Base button */
+.vdd-toolbar-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: calc(6px * var(--vdd-radius-scale, 1));
+  color: var(--vdd-tab-icon-inactive);
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+  transition: color 0.15s ease, background-color 0.15s ease;
+  font-size: var(--vdd-chrome-icon-size, 22px);
+  line-height: 1;
+}
+
+.vdd-toolbar-btn svg {
+  width: var(--vdd-chrome-icon-size, 22px);
+  height: var(--vdd-chrome-icon-size, 22px);
+  flex-shrink: 0;
+}
+
+.vdd-toolbar-btn:hover:not(:disabled) {
+  background-color: var(--vdd-toolbar-btn-hover-bg);
+  color: var(--vdd-sidebar-text-title);
+}
+
+.vdd-toolbar-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Radio active — accent bar on the outer edge */
+.vdd-toolbar-btn-radio.vdd-active {
+  color: var(--vdd-tab-icon-active);
+  background-color: var(--vdd-toolbar-btn-radio-active-bg);
+  box-shadow: var(--vdd-toolbar-btn-active-shadow, none);
+  filter: var(--vdd-toolbar-btn-active-glow, none);
+  transition: color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.vdd-toolbar-strip.vdd-left   .vdd-toolbar-btn-radio.vdd-active { border-left:   var(--vdd-toolbar-accent-bar-width, 3px) solid var(--vdd-tab-icon-active); border-radius: 0 calc(6px * var(--vdd-radius-scale, 1)) calc(6px * var(--vdd-radius-scale, 1)) 0; }
+.vdd-toolbar-strip.vdd-right  .vdd-toolbar-btn-radio.vdd-active { border-right:  var(--vdd-toolbar-accent-bar-width, 3px) solid var(--vdd-tab-icon-active); border-radius: calc(6px * var(--vdd-radius-scale, 1)) 0 0 calc(6px * var(--vdd-radius-scale, 1)); }
+.vdd-toolbar-strip.vdd-top    .vdd-toolbar-btn-radio.vdd-active { border-bottom: var(--vdd-toolbar-accent-bar-width, 3px) solid var(--vdd-tab-icon-active); border-radius: calc(6px * var(--vdd-radius-scale, 1)) calc(6px * var(--vdd-radius-scale, 1)) 0 0; }
+.vdd-toolbar-strip.vdd-bottom .vdd-toolbar-btn-radio.vdd-active { border-top:    var(--vdd-toolbar-accent-bar-width, 3px) solid var(--vdd-tab-icon-active); border-radius: 0 0 calc(6px * var(--vdd-radius-scale, 1)) calc(6px * var(--vdd-radius-scale, 1)); }
+
+/* Toggle active — accent tint, accent edge and accent icon; no directional bar (that marks radios) */
+.vdd-toolbar-btn-toggle.vdd-active {
+  color: var(--vdd-toolbar-btn-toggle-active-color);
+  background-color: var(--vdd-toolbar-btn-toggle-active-bg);
+  border-color: var(--vdd-toolbar-btn-toggle-active-border);
+}
+
+/* Group button — corner triangle indicator shows a sub-tool family */
+.vdd-toolbar-btn-group {
+  position: relative;
+}
+
+.vdd-toolbar-btn-group::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 0;
+  height: 0;
+  border: 3.5px solid transparent;
+  border-top-color: currentColor;
+  border-right-color: currentColor;
+  opacity: 0.55;
+}
+
+/* Group active state — same directional accent as radio */
+.vdd-toolbar-btn-group.vdd-active {
+  color: var(--vdd-tab-icon-active);
+  background-color: var(--vdd-toolbar-btn-radio-active-bg);
+  box-shadow: var(--vdd-toolbar-btn-active-shadow, none);
+  filter: var(--vdd-toolbar-btn-active-glow, none);
+  transition: color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.vdd-toolbar-strip.vdd-left   .vdd-toolbar-btn-group.vdd-active { border-left:   var(--vdd-toolbar-accent-bar-width, 3px) solid var(--vdd-tab-icon-active); border-radius: 0 calc(6px * var(--vdd-radius-scale, 1)) calc(6px * var(--vdd-radius-scale, 1)) 0; }
+.vdd-toolbar-strip.vdd-right  .vdd-toolbar-btn-group.vdd-active { border-right:  var(--vdd-toolbar-accent-bar-width, 3px) solid var(--vdd-tab-icon-active); border-radius: calc(6px * var(--vdd-radius-scale, 1)) 0 0 calc(6px * var(--vdd-radius-scale, 1)); }
+.vdd-toolbar-strip.vdd-top    .vdd-toolbar-btn-group.vdd-active { border-bottom: var(--vdd-toolbar-accent-bar-width, 3px) solid var(--vdd-tab-icon-active); border-radius: calc(6px * var(--vdd-radius-scale, 1)) calc(6px * var(--vdd-radius-scale, 1)) 0 0; }
+.vdd-toolbar-strip.vdd-bottom .vdd-toolbar-btn-group.vdd-active { border-top:    var(--vdd-toolbar-accent-bar-width, 3px) solid var(--vdd-tab-icon-active); border-radius: 0 0 calc(6px * var(--vdd-radius-scale, 1)) calc(6px * var(--vdd-radius-scale, 1)); }
+
+/* Separators */
+.vdd-toolbar-strip.vdd-left .vdd-toolbar-separator,
+.vdd-toolbar-strip.vdd-right .vdd-toolbar-separator {
+  width: 24px;
+  height: 1px;
+  background-color: var(--vdd-toolbar-separator-color);
+  flex-shrink: 0;
+  margin: 4px 0;
+  align-self: center;
+}
+
+.vdd-toolbar-strip.vdd-top .vdd-toolbar-separator,
+.vdd-toolbar-strip.vdd-bottom .vdd-toolbar-separator {
+  height: 24px;
+  width: 1px;
+  background-color: var(--vdd-toolbar-separator-color);
+  flex-shrink: 0;
+  margin: 0 4px;
+  align-self: center;
+}
+
+/* Touch targets on coarse-pointer devices */
+@media (pointer: coarse) {
+  .vdd-toolbar-btn { width: 44px; height: 44px; }
+}
+

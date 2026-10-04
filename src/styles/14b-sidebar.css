@@ -1,0 +1,180 @@
+/* --- Modern Sidebar and Tabs UI Theme Customizations --- */
+.vdd-sidebar-content-drawer {
+  background-color: var(--vdd-sidebar-bg) !important;
+  color: var(--vdd-sidebar-text-title) !important;
+  height: 100%;
+}
+
+/* Position-specific drawer border and shadow alignment */
+.vdd-sidebar-content-drawer.vdd-left {
+  border-right: 1px solid var(--vdd-sidebar-border) !important;
+  border-left: none !important;
+  box-shadow: 4px 0 16px rgba(0, 0, 0, 0.12);
+}
+.vdd-sidebar-content-drawer.vdd-right {
+  border-left: 1px solid var(--vdd-sidebar-border) !important;
+  border-right: none !important;
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.12);
+}
+
+.vdd-sidebar-tabs-strip {
+  background-color: var(--vdd-sidebar-tabs-bg) !important;
+  /* Fills `.vdd-sidebar-strip-outer`, which is `height: 100%` but `display: block` — so it does
+     not stretch this child the way a flex row would. rdd has no such wrapper: its strip is a
+     direct flex child of the sidebar row and inherits the row's `align-items: stretch`. vdd added
+     the wrapper to own the width-collapse transition, and the strip quietly lost its height with
+     it, so the background covered only the buttons — 216px of a 915px column, the rest showing
+     the host page through. */
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 38px; /* Perfectly aligned to match the 38px height of the drawer header bar — only
+                         relevant when a tab is the first item; see the modifier rule below. */
+  padding-bottom: 12px;
+  flex-shrink: 0;
+  z-index: 5;
+}
+
+/* When a headerAction is present, it owns its own top/bottom spacing (see
+   .vdd-sidebar-header-area below) — the strip's own alignment padding no longer applies. */
+.vdd-sidebar-tabs-strip.vdd-sidebar-tabs-strip--has-header-action {
+  padding-top: 0;
+}
+
+/* When a footerAction is present, it owns its own bottom spacing (see .vdd-sidebar-footer-area
+   below) — the strip's own bottom padding no longer applies. */
+.vdd-sidebar-tabs-strip.vdd-sidebar-tabs-strip--has-footer-action {
+  padding-bottom: 0;
+}
+
+/* Wraps `headerAction` — independent of .vdd-sidebar-tabs-list's own gap, so a consumer can
+   tune spacing/effective height around their button(s) (default, custom-rendered, or a mix with
+   real tabs) without touching inter-tab spacing. Layout-only values, so no light/dark variant is
+   needed. Column + gap so multiple entries stack — visually identical to before for the single-
+   entry case. */
+.vdd-sidebar-header-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  /* Floor matching .vdd-sidebar-tab-btn's own intrinsic 44px — without it, a lone active tab
+     (width: var(--vdd-tab-btn-active-width, 100%)) has no stable sibling to size this shrink-to-fit
+     container against, so its 100% resolves against nothing and collapses to its icon's size. */
+  min-width: 44px;
+  padding-top: var(--vdd-sidebar-header-area-padding-top, 8px);
+  padding-bottom: var(--vdd-sidebar-header-area-padding-bottom, 8px);
+}
+
+/* Mirror of .vdd-sidebar-header-area for `footerAction` — pinned to the bottom of the strip via
+   .vdd-sidebar-tabs-list's flex: 1 below. */
+.vdd-sidebar-footer-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 44px;
+  padding-top: var(--vdd-sidebar-footer-area-padding-top, 8px);
+  padding-bottom: var(--vdd-sidebar-footer-area-padding-bottom, 8px);
+}
+
+/* Wraps the tabs only — owns the gap that used to live on .vdd-sidebar-tabs-strip itself.
+   flex: 1 absorbs remaining space so a following .vdd-sidebar-footer-area is pushed to the
+   bottom of the strip regardless of tab count. */
+.vdd-sidebar-tabs-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  /* The same floor `.vdd-sidebar-header-area` and `.vdd-sidebar-footer-area` carry, for the same
+     reason — and this is the container that actually needed it. An active tab takes
+     `width: var(--vdd-tab-btn-active-width, 100%)`, and that percentage resolves against this
+     shrink-to-fit box; a rail holding exactly one tab has no other child to hold the box open, so
+     the tab collapsed to its icon's width (26px against a normal 44px) and its accent border sat
+     15px inboard of the rail's edge. A rail with several tabs hid it, because the inactive
+     buttons' intrinsic 44px kept the box open. */
+  min-width: 44px;
+}
+
+/* Position-specific tab strip border alignment */
+.vdd-sidebar-tabs-strip.vdd-left {
+  border-right: 1px solid var(--vdd-sidebar-border) !important;
+  border-left: none !important;
+}
+.vdd-sidebar-tabs-strip.vdd-right {
+  border-left: 1px solid var(--vdd-sidebar-border) !important;
+  border-right: none !important;
+}
+
+/* Sidebar Header */
+.vdd-sidebar-header-title {
+  font-family: monospace;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--vdd-sidebar-text-title);
+  font-size: 0.85rem;
+}
+
+/* Tab Button with real tabbed integration */
+.vdd-sidebar-tab-btn {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent !important;
+  border-radius: calc(6px * var(--vdd-radius-scale, 1));
+  background: transparent;
+  color: var(--vdd-tab-icon-inactive);
+  position: relative;
+  transition: color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
+  cursor: pointer;
+  font-size: var(--vdd-chrome-icon-size, 22px);
+  line-height: 1;
+}
+
+/* Icons in rail buttons: SVG icons follow the chrome icon size whatever their own width/height
+   attributes say; icon fonts follow the font-size above. An inline style size still wins. */
+.vdd-sidebar-tab-btn svg {
+  width: var(--vdd-chrome-icon-size, 22px);
+  height: var(--vdd-chrome-icon-size, 22px);
+  flex-shrink: 0;
+}
+
+/* Micro-interactions & hover tactile feedback for inactive buttons */
+.vdd-sidebar-tab-btn:not(.vdd-active):hover {
+  color: var(--vdd-sidebar-text-title);
+  background-color: var(--vdd-sidebar-btn-hover-bg) !important;
+  transform: scale(1.05);
+}
+
+.vdd-sidebar-tab-btn.vdd-active {
+  width: var(--vdd-tab-btn-active-width, 100%) !important;
+  color: var(--vdd-tab-icon-active) !important;
+  background-color: var(--vdd-tab-btn-active-bg) !important;
+  border-top: 1px solid var(--vdd-sidebar-border) !important;
+  border-bottom: 1px solid var(--vdd-sidebar-border) !important;
+  border-radius: calc(var(--vdd-tab-btn-active-radius, 0px) * var(--vdd-radius-scale, 1)) !important;
+  box-shadow: var(--vdd-tab-btn-active-shadow, none);
+  filter: var(--vdd-tab-btn-active-glow, none);
+  z-index: 6;
+  transition: color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Position-specific active button border & margin alignments */
+.vdd-sidebar-tabs-strip.vdd-left .vdd-sidebar-tab-btn.vdd-active {
+  border-left: var(--vdd-tab-accent-bar-width, 3px) solid var(--vdd-tab-icon-active) !important;
+  border-right: none !important;
+  margin-right: -2px !important;
+  margin-left: 0 !important;
+}
+.vdd-sidebar-tabs-strip.vdd-right .vdd-sidebar-tab-btn.vdd-active {
+  border-left: none !important;
+  border-right: var(--vdd-tab-accent-bar-width, 3px) solid var(--vdd-tab-icon-active) !important;
+  margin-left: -2px !important;
+  margin-right: 0 !important;
+}
+
+

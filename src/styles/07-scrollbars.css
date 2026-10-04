@@ -1,0 +1,32 @@
+/* Cross-browser scrollbar styling (Firefox standard) — scoped to the library's
+   own workspace subtree, never the consumer's page. .vdd-sidebar-drawer-body is
+   included explicitly alongside it: <Sidebar> mounts as a sibling of
+   <WindowManager>, not a descendant of .vdd-workspace, so it needs its own
+   entry here to pick up the same treatment — keep both in sync if this block
+   ever changes. */
+.vdd-workspace *,
+.vdd-sidebar-drawer-body {
+  scrollbar-width: thin;
+  scrollbar-color: var(--vdd-scrollbar-thumb) var(--vdd-scrollbar-track);
+}
+
+/* WebKit (Chrome, Safari, Edge) scrollbar styling */
+.vdd-workspace ::-webkit-scrollbar,
+.vdd-sidebar-drawer-body::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.vdd-workspace ::-webkit-scrollbar-track,
+.vdd-sidebar-drawer-body::-webkit-scrollbar-track {
+  background: var(--vdd-scrollbar-track);
+}
+.vdd-workspace ::-webkit-scrollbar-thumb,
+.vdd-sidebar-drawer-body::-webkit-scrollbar-thumb {
+  background: var(--vdd-scrollbar-thumb);
+  border-radius: calc(4px * var(--vdd-radius-scale, 1));
+}
+.vdd-workspace ::-webkit-scrollbar-thumb:hover,
+.vdd-sidebar-drawer-body::-webkit-scrollbar-thumb:hover {
+  background: var(--vdd-scrollbar-thumb-hover);
+}
+

@@ -1,0 +1,54 @@
+/* --------------------------------------------------------------------------
+   SKIN 4: Fluent Slate Preset
+   -------------------------------------------------------------------------- */
+[data-vdd-skin="slate"] {
+  --vdd-skin-font-family: 'Segoe UI Variable Text', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', sans-serif; /* Fluent's stack */
+  --vdd-bg-workspace: var(--vdd--b-bg-workspace, #0f172a);
+  --vdd-bg-panel: var(--vdd--b-bg-panel, #1e293b);
+  --vdd-bg-tab-bar: var(--vdd--b-bg-tab-bar, #0f172a);
+  --vdd-window-bg: color-mix(in srgb, var(--vdd--b-window-bg, rgb(30 41 59)) calc(var(--vdd-window-opacity, 1.0) * 100%), transparent);
+  --vdd-window-border: var(--vdd--b-window-border, #334155);
+  --vdd-window-header-bg: var(--vdd--b-window-header-bg, #1e293b);
+  --vdd-accent-color: var(--vdd-brand-accent, #38bdf8);
+  --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
+  --vdd-border-panel: var(--vdd--b-border-panel, #334155);
+  --vdd-bg-tab-inactive: var(--vdd--b-bg-tab-inactive, #1e293b);
+  --vdd-text-tab-inactive: var(--vdd--b-text-tab-inactive, #64748b);
+  --vdd-text-tab-active: var(--vdd--b-text-tab-active, #f8fafc);
+  --vdd-panel-card-bg: var(--vdd--b-panel-card-bg, #0f172a);
+  --vdd-panel-card-border: var(--vdd--b-panel-card-border, #334155);
+  --vdd-window-text: var(--vdd--b-window-text, #f8fafc);
+  --vdd-panel-text: var(--vdd--b-panel-text, #f8fafc);
+}
+
+[data-vdd-skin="slate"][data-color-scheme="light"] {
+  --vdd-bg-workspace: var(--vdd--b-bg-workspace, #f1f5f9);
+  --vdd-bg-panel: var(--vdd--b-bg-panel, #ffffff);
+  --vdd-bg-tab-bar: var(--vdd--b-bg-tab-bar, #f1f5f9);
+  --vdd-window-bg: color-mix(in srgb, var(--vdd--b-window-bg, rgb(255 255 255)) calc(var(--vdd-window-opacity, 1.0) * 100%), transparent);
+  --vdd-window-border: var(--vdd--b-window-border, #cbd5e1);
+  --vdd-window-header-bg: var(--vdd--b-window-header-bg, #f8fafc);
+  --vdd-accent-color: var(--vdd-brand-accent, #0078d4);
+  --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
+  --vdd-border-panel: var(--vdd--b-border-panel, #e2e8f0);
+  --vdd-bg-tab-inactive: var(--vdd--b-bg-tab-inactive, #f8fafc);
+  --vdd-text-tab-inactive: var(--vdd--b-text-tab-inactive, #475569);
+  --vdd-text-tab-active: var(--vdd--b-text-tab-active, #0f172a);
+  --vdd-panel-card-bg: var(--vdd--b-panel-card-bg, #f8fafc);
+  --vdd-panel-card-border: var(--vdd--b-panel-card-border, #cbd5e1);
+  --vdd-window-text: var(--vdd--b-window-text, #0f172a);
+  --vdd-panel-text: var(--vdd--b-panel-text, #0f172a);
+  --vdd-panel-title-color: var(--vdd-accent-color);
+  --vdd-close-btn-color: var(--vdd--b-close-btn-color, #475569);
+  --vdd-close-btn-active-color: var(--vdd--b-close-btn-active-color, #0f172a);
+  --vdd-tab-icon-active: var(--vdd-accent-color);
+  --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 10%, transparent);
+  --vdd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--vdd-accent-color) 16%, transparent);
+}
+
+[data-vdd-skin="slate"] .vdd-workspace-tab.vdd-active::before {
+  top: auto !important;
+  bottom: 0 !important;
+  height: 3px !important;
+}
+

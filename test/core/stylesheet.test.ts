@@ -6,12 +6,24 @@
  * nothing. These read the CSS text directly.
  *
  * Includes rdd's `sidePanelPositioning.test.ts` (1 test, name preserved).
+ *
+ * Since 1.7.1 `src/index.css` is generated from the area files in `src/styles/` by
+ * `scripts/build-css.mjs`; the first test fails when it was not regenerated after an edit.
  */
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+import { spawnSync } from 'node:child_process'
 
 const css = readFileSync(resolve(import.meta.dirname, '../../src/index.css'), 'utf8')
+
+describe('generated stylesheet', () => {
+  it('src/index.css is exactly what src/styles/*.css give (run `npm run css` after an edit)', () => {
+    const run = spawnSync('node', [resolve(import.meta.dirname, '../../scripts/build-css.mjs'), '--check'], { encoding: 'utf8' })
+    expect(run.stderr.trim()).toBe('')
+    expect(run.status).toBe(0)
+  })
+})
 /** Rules only. Assertions must be about what the stylesheet *does*, never about its prose —
  *  a comment explaining why a selector was removed should not look like the selector. */
 const rules = css.replace(/\/\*[\s\S]*?\*\//g, '')

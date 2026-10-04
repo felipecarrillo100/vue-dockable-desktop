@@ -1,0 +1,153 @@
+/* --------------------------------------------------------------------------
+   SKIN 2: macOS / Glassmorphic Preset
+   -------------------------------------------------------------------------- */
+[data-vdd-skin="macos"] {
+  --vdd-skin-font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif; /* San Francisco */
+  --vdd-bg-workspace: var(--vdd--b-bg-workspace, #1a1a24);
+  --vdd-bg-panel: color-mix(in srgb, var(--vdd--b-bg-panel, rgb(30 30 40)) 45%, transparent);
+  --vdd-bg-tab-bar: color-mix(in srgb, var(--vdd--b-bg-tab-bar, rgb(18 18 24)) 30%, transparent);
+  --vdd-window-bg: color-mix(in srgb, var(--vdd--b-window-bg, rgb(25 25 35)) calc(var(--vdd-window-opacity, 0.7) * 100%), transparent);
+  --vdd-window-border: rgba(255, 255, 255, 0.1);
+  --vdd-window-header-bg: rgba(0, 0, 0, 0.15);
+  --vdd-accent-color: var(--vdd-brand-accent, #38bdf8);
+  --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 25%, transparent);
+  --vdd-border-panel: rgba(255, 255, 255, 0.08);
+  --vdd-bg-tab-inactive: transparent;
+  --vdd-text-tab-inactive: var(--vdd--b-text-tab-inactive, #94a3b8);
+  --vdd-text-tab-active: var(--vdd--b-text-tab-active, #ffffff);
+  --vdd-window-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  --vdd-window-shadow-focused: 0 24px 50px color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
+  --vdd-panel-card-bg: rgba(255, 255, 255, 0.03);
+  --vdd-panel-card-border: rgba(255, 255, 255, 0.08);
+}
+
+[data-vdd-skin="macos"][data-color-scheme="light"] {
+  --vdd-bg-primary: var(--vdd--b-bg-primary, #f3f4f6);
+  --vdd-bg-workspace: var(--vdd--b-bg-workspace, #e5e7eb);
+  --vdd-bg-panel: rgba(255, 255, 255, 0.7);
+  --vdd-bg-tab-bar: color-mix(in srgb, var(--vdd--b-bg-tab-bar, rgb(229 231 235)) 50%, transparent);
+  --vdd-window-bg: color-mix(in srgb, var(--vdd--b-window-bg, rgb(255 255 255)) calc(var(--vdd-window-opacity, 0.85) * 100%), transparent);
+  --vdd-window-border: rgba(0, 0, 0, 0.12);
+  --vdd-window-header-bg: color-mix(in srgb, var(--vdd--b-window-header-bg, rgb(243 244 246)) 50%, transparent);
+  --vdd-accent-color: var(--vdd-brand-accent, #0066cc);
+  --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
+  --vdd-border-panel: rgba(0, 0, 0, 0.1);
+  --vdd-bg-tab-inactive: transparent;
+  --vdd-text-tab-inactive: var(--vdd--b-text-tab-inactive, #4b5563);
+  --vdd-text-tab-active: var(--vdd--b-text-tab-active, #111827);
+  --vdd-window-text: var(--vdd--b-window-text, #111827);
+  --vdd-window-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  --vdd-window-shadow-focused: 0 16px 36px color-mix(in srgb, var(--vdd-accent-color) 18%, transparent);
+  --vdd-panel-card-bg: rgba(0, 0, 0, 0.04);
+  --vdd-panel-card-border: rgba(0, 0, 0, 0.08);
+  --vdd-panel-text: var(--vdd--b-panel-text, #111827);
+  --vdd-panel-title-color: var(--vdd-accent-color);
+  --vdd-close-btn-color: var(--vdd--b-close-btn-color, #4b5563);
+  --vdd-close-btn-active-color: var(--vdd--b-close-btn-active-color, #111827);
+}
+
+/* macOS structural adjustments */
+[data-vdd-skin="macos"] .vdd-floating-window {
+  border-radius: calc(12px * var(--vdd-radius-scale, 1));
+  border-color: var(--vdd-window-border);
+}
+[data-vdd-skin="macos"] .vdd-floating-window::before {
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+[data-vdd-skin="macos"] .vdd-floating-window-titlebar {
+  border-top-left-radius: calc(12px * var(--vdd-radius-scale, 1));
+  border-top-right-radius: calc(12px * var(--vdd-radius-scale, 1));
+}
+[data-vdd-skin="macos"] .vdd-workspace-panel {
+  border-radius: calc(8px * var(--vdd-radius-scale, 1));
+}
+[data-vdd-skin="macos"] .vdd-workspace-panel::before {
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+}
+[data-vdd-skin="macos"] .vdd-workspace-tab {
+  border-radius: calc(6px * var(--vdd-radius-scale, 1)) !important;
+  margin: 4px 4px 4px 4px !important;
+  height: 28px !important;
+  border: 1px solid var(--vdd-border-panel) !important;
+}
+[data-vdd-skin="macos"] .vdd-workspace-tab.vdd-active {
+  background-color: var(--vdd-bg-workspace) !important;
+}
+[data-vdd-skin="macos"] .vdd-workspace-tab.vdd-active::before {
+  display: none !important; /* Hide VS Code top line */
+}
+
+/* macOS Circle dots controls styling */
+[data-vdd-skin="macos"] .vdd-custom-tab-btn {
+  border-radius: 50% !important;
+  width: 12px !important;
+  height: 12px !important;
+  background: var(--vdd-custom-btn-bg) !important;
+  border: none !important;
+  color: transparent !important;
+  font-size: 0 !important;
+  overflow: hidden;
+  margin: 0 2px;
+}
+[data-vdd-skin="macos"] .vdd-floating-window-titlebar {
+  flex-direction: row-reverse !important;
+  position: relative !important;
+}
+[data-vdd-skin="macos"] .vdd-floating-window-titlebar .vdd-floating-window-title {
+  pointer-events: none !important;
+  margin: 0 !important;
+  margin-inline-start: 0.5rem !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+  justify-content: flex-end !important;
+}
+[data-vdd-skin="macos"] .vdd-floating-window-titlebar .vdd-floating-window-title > * {
+  pointer-events: auto;
+}
+[data-vdd-skin="macos"] .vdd-floating-window-titlebar .vdd-titlebar-actions {
+  flex-direction: row-reverse !important;
+}
+[data-vdd-skin="macos"] .vdd-custom-tab-btn svg {
+  display: none !important;
+}
+[data-vdd-skin="macos"] .vdd-btn-close-tab {
+  background-color: #ff5f56 !important; /* Red (Close) */
+}
+[data-vdd-skin="macos"] .vdd-btn-minimize-tab {
+  background-color: #ffbd2e !important; /* Yellow (Minimize) */
+}
+[data-vdd-skin="macos"] .vdd-btn-maximize-tab {
+  background-color: #27c93f !important; /* Green (Maximize) */
+}
+
+/* Panel Icon Styling and Alignment */
+.vdd-workspace-tab-icon,
+.vdd-window-title-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  vertical-align: middle;
+  line-height: 1;
+  margin-inline-end: 4px !important; /* Forces the gap between the icon and the text title */
+}
+
+.vdd-workspace-tab-icon svg,
+.vdd-workspace-tab-icon img,
+.vdd-window-title-icon svg,
+.vdd-window-title-icon img {
+  width: 14px !important;
+  height: 14px !important;
+  max-width: 14px !important;
+  max-height: 14px !important;
+  object-fit: contain;
+  display: block;
+}
+
+[data-vdd-skin="macos"] .vdd-custom-tab-btn:hover {
+  filter: brightness(0.85);
+  transform: none !important;
+}
+

@@ -136,6 +136,18 @@ token; its monospaced labels keep `monospace`.
 
 ---
 
+### rdd's source layout (since rdd 7.6.1)
+
+rdd's source now mirrors this port's: `src/types.ts` (vdd `src/types.ts`); `src/core/` with
+`workspaceCore.ts` (vdd `core/workspace.ts`), `layoutTree.ts`, `serialize.ts`, `eventBus.ts`,
+`messages.ts`, `stretch.ts`, `panelOverlayGeometry.ts` (vdd `core/panelOverlay.ts`); the workspace
+view in `components/workspace/` (`LeafGroup`, `WorkspaceGrid`, `FloatingWindows`, `Taskbar`,
+`WorkspaceZones`, `panelMount` ≈ vdd's `VddLeafGroup`, `VddWorkspaceGrid`, `VddFloatingWindow`,
+`VddTaskbar`, `VddEdgeZones`, `VddPanelMount`/`panelDom.ts`; the drag code ≈ `useDragDock.ts`);
+and the panel overlay in `components/panelOverlay/`. Function names were kept as they were in rdd,
+so they can differ from vdd's (`hasLeaf` here is vdd's `leafExists`). Both stylesheets are built
+from `src/styles/NN-area.css` with the same area names.
+
 ## 2. Layout compatibility *(hard requirement)*
 
 `SerializedLayout` is **byte-compatible** in both directions, `version: 2`. Verified by
