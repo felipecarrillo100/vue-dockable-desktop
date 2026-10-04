@@ -18,7 +18,7 @@
   "floatingWindows.test.ts": 25,
   "dragDock.test.ts": 27,
   "taskbar.test.ts": 20,
-  "contextMenu.test.ts": 42,
+  "contextMenu.test.ts": 46,
   "sidebar.test.ts": 91,
   "toolbar.test.ts": 44,
   "overlays.test.ts": 6,

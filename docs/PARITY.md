@@ -201,6 +201,18 @@ quietly dropped from it.
 Every "substitute", "rewrite" and "moot" above must be justified in its test file's header
 comment, so a reviewer can see the trade rather than discover a silent gap.
 
+### rdd 7.6.0 context-menu focus, traced
+
+| rdd 7.6.0 | vdd 1.7.0 |
+|---|---|
+| menu opens with the menu element focused (`tabIndex={-1}`), nothing highlighted | `VddContextMenu.vue` open watcher; `tabindex="-1"` on the menu and submenu |
+| `initialFocus?: 'menu' \| 'first-item'`; a keyboard `contextmenu` event (0,0) defaults to `'first-item'` | same option; `menuInitialFocus()` in `core/contextMenu.ts` |
+| ArrowUp from the menu goes to the last item | `onMenuKey`; Home/End added (vdd had none) |
+| the library's keyboard openers (Menu key, Shift+F10, ⋮ button) pass `'first-item'` | vdd has no keyboard openers of its own; a native keyboard `contextmenu` event is covered by the 0,0 rule |
+| hover-opened submenu never takes focus | already: vdd moves no focus into submenus |
+| `--rdd-context-menu-focus-ring` | `--vdd-context-menu-focus-ring` |
+| `KeyboardAccess.test.tsx` | `test/components/contextMenu.test.ts` |
+
 ### rdd 7.5.0 toolbar buttons, traced
 
 | rdd 7.5.0 | vdd 1.6.0 |

@@ -561,18 +561,56 @@ describe('keyboard', () => {
     { label: 'Two', action: () => {} },
   ]
 
-  it('focus moves to the first enabled item when the menu opens', async () => {
+  const menuEl = () => document.querySelector('[data-vdd-menu]') as HTMLElement
+
+  // 1.7.0 (rdd 7.6.0): a menu opens with nothing highlighted, the same however it was opened.
+  // Focusing the first item made the browser's focus ring come and go with the user's previous
+  // interaction.
+  it('focus moves onto the menu itself when it opens, with no item highlighted', async () => {
     const { ws } = setup()
     opener()
     ws.showContextMenu({ x: 10, y: 10, items })
     await nextTick(); await nextTick()
+    expect(document.activeElement).toBe(menuEl())
+    expect(menuEl().getAttribute('role')).toBe('menu')
+    expect(focusedLabel()).toBeNull()
+  })
+
+  it("initialFocus: 'first-item' opens on the first enabled item", async () => {
+    const { ws } = setup()
+    opener()
+    ws.showContextMenu({ x: 10, y: 10, items, initialFocus: 'first-item' })
+    await nextTick(); await nextTick()
     expect(focusedLabel()).toBe('One')
+  })
+
+  it('a keyboard contextmenu event (no pointer position) opens on the first item; a mouse one on the menu', async () => {
+    const { ws } = setup()
+    ws.showContextMenu({ event: new MouseEvent('contextmenu', { clientX: 0, clientY: 0 }), items })
+    await nextTick(); await nextTick()
+    expect(focusedLabel()).toBe('One')
+    ws.closeContextMenu(); await nextTick()
+    ws.showContextMenu({ event: new MouseEvent('contextmenu', { clientX: 40, clientY: 30 }), items })
+    await nextTick(); await nextTick()
+    expect(document.activeElement).toBe(menuEl())
+  })
+
+  it('from the menu itself, ArrowDown reaches the first item and ArrowUp the last', async () => {
+    const { ws } = setup()
+    opener()
+    ws.showContextMenu({ x: 10, y: 10, items: [...items, { label: 'Three', action: () => {} }] })
+    await nextTick(); await nextTick()
+    await press('ArrowDown')
+    expect(focusedLabel()).toBe('One')
+    menuEl().focus()
+    await press('ArrowUp')
+    expect(focusedLabel()).toBe('Three')
   })
 
   it('ArrowDown and ArrowUp move between enabled items, wrapping', async () => {
     const { ws } = setup()
     opener()
-    ws.showContextMenu({ x: 10, y: 10, items })
+    ws.showContextMenu({ x: 10, y: 10, items, initialFocus: 'first-item' })
     await nextTick(); await nextTick()
     await press('ArrowDown')
     expect(focusedLabel()).toBe('Two')      // skips the disabled item and the separator
@@ -580,6 +618,19 @@ describe('keyboard', () => {
     expect(focusedLabel()).toBe('One')      // wraps
     await press('ArrowUp')
     expect(focusedLabel()).toBe('Two')
+  })
+
+  it('Home and End jump to the first and last enabled item', async () => {
+    const { ws } = setup()
+    opener()
+    ws.showContextMenu({ x: 10, y: 10, items: [...items, { label: 'Three', action: () => {} }, { label: 'Four', action: () => {} }], initialFocus: 'first-item' })
+    await nextTick(); await nextTick()
+    await press('ArrowDown')                // Two
+    await press('End')
+    expect(focusedLabel()).toBe('Four')
+    await press('ArrowUp')                  // Three
+    await press('Home')
+    expect(focusedLabel()).toBe('One')
   })
 
   it('Escape closes the menu and gives focus back to what opened it', async () => {
@@ -598,6 +649,7 @@ describe('keyboard', () => {
     const action = vi.fn()
     ws.showContextMenu({ x: 10, y: 10, items: [{ label: 'Go', action }] })
     await nextTick(); await nextTick()
+    await press('ArrowDown')
     ;(document.activeElement as HTMLElement).click()
     await nextTick()
     expect(action).toHaveBeenCalledTimes(1)

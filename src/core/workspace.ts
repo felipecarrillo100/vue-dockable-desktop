@@ -23,8 +23,8 @@ import { isSerializable } from './serializable'
 import { PanelRegistry } from './registry'
 import type { PanelDefaultOptions } from './registry'
 import { EventBus } from './eventBus'
-import { menuPosition } from './contextMenu'
-import type { ContextMenuItem, ShowContextMenuOptions } from './contextMenu'
+import { menuInitialFocus, menuPosition } from './contextMenu'
+import type { ContextMenuItem, ContextMenuRequest, ShowContextMenuOptions } from './contextMenu'
 import type { BuiltInEvents } from './eventBus'
 import { defaultMessages, formatLabel } from './messages'
 import { createToolbarState } from './toolbarState'
@@ -198,7 +198,7 @@ export interface Workspace<TEvents extends object = Record<string, unknown>> {
   /** Dismiss the open menu, if any. */
   closeContextMenu(): void
   /** The pending menu request, or `null`. @internal */
-  readonly contextMenu: ComputedRef<{ x: number; y: number; items: ContextMenuItem[] } | null>
+  readonly contextMenu: ComputedRef<ContextMenuRequest | null>
 
   /**
    * Toolbar selection state, for items that are not controlled by the caller.
@@ -274,7 +274,7 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
    * track, or it caches the answer from before the panel ever registered.
    */
   const panelMenuVersion = ref(0)
-  const menu = shallowRef<{ x: number; y: number; items: ContextMenuItem[] } | null>(null)
+  const menu = shallowRef<ContextMenuRequest | null>(null)
   const messages = { ...defaultMessages, ...(config.messages ?? {}) } as Record<keyof typeof defaultMessages, MessageDescriptor>
   const zIndexBase = config.zIndexBase ?? 1000
   let maxZ = zIndexBase
@@ -940,7 +940,7 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
     },
     showContextMenu: (options) => {
       options.event?.preventDefault?.()
-      menu.value = { ...menuPosition(options), items: options.items }
+      menu.value = { ...menuPosition(options), items: options.items, initialFocus: menuInitialFocus(options) }
     },
     closeContextMenu: () => { menu.value = null },
     contextMenu: computed(() => menu.value),

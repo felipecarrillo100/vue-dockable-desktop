@@ -589,6 +589,13 @@ A skin sets its own font as `--vdd-skin-font-family` — declared by each built-
 | `--vdd-panel-toolbar-btn-border` | `1px solid var(--vdd-panel-float-border)` | `soft` button chip edge. |
 | `--vdd-panel-toolbar-separator-color` | `var(--vdd-toolbar-separator-color, rgba(255, 255, 255, 0.09))` | Separator inside a panel toolbar. |
 
+### Focus rings
+
+| Token | Default | What it paints |
+|---|---|---|
+| `--vdd-focus-ring` | `2px solid var(--vdd-accent-color)` | Outline on a toolbar, rail or panel toolbar button reached from the keyboard (`:focus-visible`). Read with that fallback rather than declared, so it follows the skin's or your brand's accent wherever it is drawn. |
+| `--vdd-context-menu-focus-ring` | `var(--vdd-focus-ring)` | Outline on a context-menu item that has keyboard focus. |
+
 ### Toolbar and rail buttons
 
 | Token | Default | What it paints |

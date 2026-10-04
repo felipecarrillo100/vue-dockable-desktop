@@ -87,24 +87,35 @@ watch(request, async (next) => {
     { width: box.width, height: box.height },
     { width: window.innerWidth, height: window.innerHeight },
   )
-  // Keyboard users land in the menu. The built-in markup only: a slot manages its own focus.
-  enabledItems(el)[0]?.focus({ preventScroll: true })
+  // Focus moves into the menu: onto the menu itself, nothing highlighted, unless it was opened from
+  // the keyboard. Focusing an item made the browser's focus ring come and go with the user's
+  // previous interaction. The built-in markup only: a slot manages its own focus.
+  if (next.initialFocus === 'first-item') enabledItems(el)[0]?.focus({ preventScroll: true })
+  else el.focus({ preventScroll: true })
 })
 
 // ── keyboard ───────────────────────────────────────────────────────────────
 const enabledItems = (menu: Element) =>
   Array.from(menu.querySelectorAll<HTMLButtonElement>('button[role^="menuitem"]:not(:disabled)'))
 
-/** Up/Down move between enabled items, wrapping; Tab leaves the menu. Enter/Space are the buttons' own. */
+/**
+ * Up/Down move between enabled items, wrapping; Home/End jump to the ends; Tab leaves the menu.
+ * From the menu itself (nothing highlighted) Down reaches the first item and Up the last.
+ * Enter/Space are the buttons' own.
+ */
 function onMenuKey(event: KeyboardEvent): void {
   if (event.key === 'Tab') { close(true); return }
-  if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
+  if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
   event.preventDefault()
   const list = enabledItems(event.currentTarget as Element)
   if (list.length === 0) return
   const at = list.indexOf(document.activeElement as HTMLButtonElement)
-  const step = event.key === 'ArrowDown' ? 1 : -1
-  list[(at + step + list.length) % list.length]!.focus({ preventScroll: true })
+  const last = list.length - 1
+  const next = event.key === 'Home' ? 0
+    : event.key === 'End' ? last
+      : event.key === 'ArrowDown' ? (at + 1) % list.length
+        : at < 0 ? last : (at - 1 + list.length) % list.length
+  list[next]!.focus({ preventScroll: true })
 }
 
 /**
@@ -257,6 +268,7 @@ const submenuStyle = computed(() => ws.state.isRtl
       :dir="ws.state.dir"
       data-vdd-menu
       role="menu"
+      tabindex="-1"
       aria-orientation="vertical"
       @keydown="onMenuKey"
     >
@@ -329,6 +341,7 @@ const submenuStyle = computed(() => ws.state.isRtl
       :dir="ws.state.dir"
       data-vdd-submenu
       role="menu"
+      tabindex="-1"
       @keydown="onMenuKey"
       @pointerenter="clearTimers()"
       @pointerleave="openSubmenu = null"
