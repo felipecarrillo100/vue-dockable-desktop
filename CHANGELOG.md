@@ -11,6 +11,25 @@ correspondence lives, alongside the feature-by-feature map in [docs/PARITY.md](d
 
 ## [Unreleased]
 
+## [1.7.2] — 2026-10-04
+
+**Parity: react-dockable-desktop 7.6.2.**
+
+### Fixed
+
+- **Workspace toolbar and sidebar rail buttons relied on the browser's own button padding**
+  (`1px 6px` in Chrome) on a page without a CSS reset. With the library's `border-box` sizing that
+  padding came out of their 36px and 44px, which capped their icons at 24px and 32px, so a
+  `--vdd-chrome-icon-size` above 24px squeezed toolbar icons. Both set `padding: 0`; nothing changes
+  at the default icon size, or on a page that already resets button padding.
+- rdd 7.6.2 also fixed a squashed × in the taskbar preview; vdd's × is a `<span>`, so it was never
+  affected.
+
+### Tests
+
+- `test/core/stylesheet.test.ts`: the toolbar and rail button rules declare `padding: 0` (seen
+  failing with either removed).
+
 ## [1.7.1] — 2026-10-04
 
 **Parity: react-dockable-desktop 7.6.1** (internal restructuring). No behaviour, API or visual

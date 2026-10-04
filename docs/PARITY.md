@@ -213,6 +213,15 @@ quietly dropped from it.
 Every "substitute", "rewrite" and "moot" above must be justified in its test file's header
 comment, so a reviewer can see the trade rather than discover a silent gap.
 
+### rdd 7.6.2 icon-button padding, traced
+
+| rdd 7.6.2 | vdd 1.7.2 |
+|---|---|
+| `.rdd-tooltip-close-x` padding | already: vdd's × is a `<span role="button">` |
+| `.rdd-toolbar-btn` padding | `.vdd-toolbar-btn` padding |
+| `.rdd-sidebar-tab-btn` padding | `.vdd-sidebar-tab-btn` padding |
+| `hostPage.browser.ts` | `test/core/stylesheet.test.ts` |
+
 ### rdd 7.6.0 context-menu focus, traced
 
 | rdd 7.6.0 | vdd 1.7.0 |

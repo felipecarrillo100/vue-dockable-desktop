@@ -2289,6 +2289,8 @@ body.vdd-dragging-active {
   cursor: pointer;
   font-size: var(--vdd-chrome-icon-size, 22px);
   line-height: 1;
+  /* The icon is centred by flex; the browser's button padding must not eat into the box (1.7.2). */
+  padding: 0;
 }
 
 /* Icons in rail buttons: SVG icons follow the chrome icon size whatever their own width/height
@@ -3113,6 +3115,8 @@ html.vdd-no-animations [class*="vdd-"]::after {
   transition: color 0.15s ease, background-color 0.15s ease;
   font-size: var(--vdd-chrome-icon-size, 22px);
   line-height: 1;
+  /* The icon is centred by flex; the browser's button padding must not eat into the box (1.7.2). */
+  padding: 0;
 }
 
 .vdd-toolbar-btn svg {

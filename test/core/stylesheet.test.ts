@@ -32,6 +32,17 @@ const rule = (selector: string): string | null => {
   return m ? m[0] : null
 }
 
+// A <button> keeps the browser's own padding (1px 6px in Chrome) unless something resets it, and
+// every vdd- element is border-box, so on a page without a CSS reset that padding came out of the
+// toolbar's 36px and the rail's 44px and capped their icons at 24px / 32px (rdd 7.6.2).
+describe('icon buttons do not depend on the host page\'s button padding (rdd 7.6.2)', () => {
+  it('the workspace toolbar and sidebar rail buttons reset their padding', () => {
+    for (const selector of ['.vdd-toolbar-btn', '.vdd-sidebar-tab-btn']) {
+      expect(rule(selector)?.replace(/\/\*[\s\S]*?\*\//g, ''), selector).toMatch(/(^|[;{\s])padding:\s*0\s*;/)
+    }
+  })
+})
+
 describe('SP1: .vdd-side-panel stays position: fixed', () => {
   it('does not regress to position: absolute', () => {
     // position: absolute makes the panel's containing block whatever positioned ancestor the
