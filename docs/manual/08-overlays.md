@@ -279,10 +279,19 @@ Pass `event` and the menu appears at the pointer, clamped to stay on screen; pas
 instead to place it yourself. It closes on Escape, on an outside click, and when an item
 runs.
 
-From the keyboard: the menu takes focus when it opens, ArrowDown and ArrowUp move between the
-items that are enabled, Enter or Space runs one, and Tab or Escape closes the menu. Closing
-from the keyboard, or by running an item, hands focus back to whatever had it before. A
-submenu opens on hover or on click.
+Focus moves into the menu when it opens: onto the menu itself, with no item highlighted, so the
+menu looks the same every time, whether it was opened with the mouse, from script (a map
+library's own right-click handling calling `showContextMenu`, say) or after a key press. A
+keyboard `contextmenu` event (the ContextMenu key or Shift+F10, which report no pointer
+position) opens on the first enabled item instead, and so does `initialFocus: 'first-item'`:
+pass it when you open a menu from your own keyboard shortcut.
+
+From the keyboard: ArrowDown and ArrowUp move between the items that are enabled, wrapping (from
+the menu itself ArrowDown reaches the first item and ArrowUp the last), Home and End jump to the
+ends, Enter or Space runs one, and Tab or Escape closes the menu. Closing from the keyboard, or by
+running an item, hands focus back to whatever had it before. A submenu opens on hover or on
+click. An item with keyboard focus draws the skin's focus ring, never the browser's default:
+`--vdd-context-menu-focus-ring`, by default `--vdd-focus-ring`.
 
 Four item kinds:
 

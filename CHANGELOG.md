@@ -11,6 +11,54 @@ correspondence lives, alongside the feature-by-feature map in [docs/PARITY.md](d
 
 ## [Unreleased]
 
+## [1.7.0] — 2026-10-04
+
+**Parity: react-dockable-desktop 7.6.0.** Context menus open with nothing highlighted, the same
+every time.
+
+### Changed
+
+- **A context menu opens with focus on the menu itself, no item highlighted.** It used to focus
+  its first item, and whether the browser then drew a focus ring depended on the user's previous
+  interaction: a menu opened from script (a map library's right-click calling `showContextMenu`,
+  say) showed a ring after a page load or a key press and none after a mouse click. ArrowDown
+  reaches the first item and ArrowUp the last.
+- **A keyboard `contextmenu` event** (the ContextMenu key or Shift+F10, which report no pointer
+  position) **still opens on the first item**, and so does `initialFocus: 'first-item'`.
+
+### Added
+
+- **`initialFocus?: 'menu' | 'first-item'`** on `ShowContextMenuOptions`
+  (`ws.showContextMenu`, `useContextMenu()`).
+- **Home and End** in context menus, as in rdd.
+- **`--vdd-context-menu-focus-ring`**: the outline on a menu item with keyboard focus, by default
+  `--vdd-focus-ring` (the skin's accent). Both are now documented in the theming chapter; they are
+  read with a fallback rather than declared, so they follow the skin's or your brand's accent.
+
+### Fixed
+
+- **Menu items drew the browser's default focus ring** instead of the skin's.
+- **ArrowUp from a menu with nothing highlighted would have gone to the second-to-last item**; it
+  goes to the last.
+
+### Upgrading
+
+- Nothing to change for menus opened with the mouse or from script. If you open a menu from your
+  own keyboard shortcut, pass `initialFocus: 'first-item'` so it starts on an item.
+- Tests that expected the first item to have focus right after `showContextMenu` should press
+  ArrowDown first, or open the menu with `initialFocus: 'first-item'`.
+
+### Tests
+
+- `test/components/contextMenu.test.ts`: the menu itself is focused on open; `initialFocus`;
+  keyboard and mouse `contextmenu` events; ArrowDown/ArrowUp from the menu; Home and End. Each was
+  seen failing with its part of the fix removed.
+
+### Documentation
+
+- Overlays chapter: initial focus, the option, keys, the focus ring. Theming chapter: a "Focus
+  rings" table with `--vdd-focus-ring` and `--vdd-context-menu-focus-ring`.
+
 ## [1.6.0] — 2026-10-04
 
 **Parity: react-dockable-desktop 7.5.0.** Toolbar buttons: the library sizes the icon inside its
