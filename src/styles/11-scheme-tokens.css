@@ -1,0 +1,112 @@
+[data-color-scheme="light"] {
+  /* The default skin's light-mode accent (the blue its light tokens were already drawn in). */
+  --vdd-accent-color: var(--vdd-brand-accent, #0066cc);
+  --vdd-bg-primary: var(--vdd--b-bg-primary, #f8f9fa);
+  --vdd-bg-workspace: var(--vdd--b-bg-workspace, #f1f5f9);
+  --vdd-bg-panel: var(--vdd--b-bg-panel, #ffffff);
+  --vdd-bg-tab-bar: var(--vdd--b-bg-tab-bar, #e9ecef);
+  --vdd-text-primary: var(--vdd--b-text-primary, #212529);
+  --vdd-text-secondary: var(--vdd--b-text-secondary, #6c757d);
+  --vdd-border-color: rgba(0, 0, 0, 0.08);
+
+  --vdd-sidebar-bg: var(--vdd--b-sidebar-bg, #f8f9fa);
+  --vdd-sidebar-tabs-bg: var(--vdd--b-sidebar-tabs-bg, #e9ecef);
+  --vdd-sidebar-border: rgba(0, 0, 0, 0.08);
+  --vdd-sidebar-card-bg: var(--vdd--b-sidebar-card-bg, #ffffff);
+  --vdd-sidebar-card-border: rgba(0, 0, 0, 0.08);
+  --vdd-sidebar-card-active-bg: color-mix(in srgb, var(--vdd-accent-color) 5%, transparent);
+  --vdd-sidebar-card-active-border: color-mix(in srgb, var(--vdd-accent-color) 30%, transparent);
+  --vdd-sidebar-text-title: var(--vdd--b-sidebar-text-title, #212529);
+  --vdd-sidebar-text-muted: var(--vdd--b-sidebar-text-muted, #6c757d);
+  --vdd-sidebar-badge-bg: var(--vdd--b-sidebar-badge-bg, #e9ecef);
+  --vdd-sidebar-badge-text: var(--vdd--b-sidebar-badge-text, #495057);
+  --vdd-sidebar-btn-front-border: var(--vdd-accent-color);
+  --vdd-sidebar-btn-front-text: var(--vdd-accent-color);
+  --vdd-sidebar-btn-front-bg: transparent;
+  --vdd-sidebar-btn-front-hover-bg: color-mix(in srgb, var(--vdd-accent-color) 8%, transparent);
+  --vdd-tab-icon-active: var(--vdd-accent-color);
+  --vdd-tab-icon-inactive: var(--vdd--b-tab-icon-inactive, #555c66);
+  --vdd-tab-btn-active-bg: var(--vdd--b-tab-btn-active-bg, #f8f9fa); /* Seamless merge look */
+  --vdd-sidebar-btn-hover-bg: rgba(0, 0, 0, 0.05);
+  --vdd-sidebar-card-hover-border: color-mix(in srgb, var(--vdd-accent-color) 30%, transparent);
+  --vdd-sidebar-card-hover-bg: rgba(0, 0, 0, 0.03);
+  --vdd-sidebar-card-active-shadow: color-mix(in srgb, var(--vdd-accent-color) 8%, transparent);
+  --vdd-sidebar-drawer-header-bg: rgba(0, 0, 0, 0.04);
+  --vdd-toolbar-btn-hover-bg: rgba(0, 0, 0, 0.05);
+  --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 10%, transparent);
+  --vdd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--vdd-accent-color) 16%, transparent);
+  --vdd-toolbar-separator-color: rgba(0, 0, 0, 0.1);
+  /* Light skin window overrides */
+  --vdd-window-bg: color-mix(in srgb, var(--vdd--b-window-bg, rgb(243 244 246)) calc(var(--vdd-window-opacity, 0.9) * 100%), transparent);
+  --vdd-window-border: rgba(0, 0, 0, 0.08);
+  --vdd-window-border-focused: rgba(0, 0, 0, 0.28);
+  --vdd-window-header-bg: rgba(0, 0, 0, 0.04);
+  --vdd-window-text: var(--vdd--b-window-text, #212529);
+  --vdd-window-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+  --vdd-window-shadow-focused: 0 16px 36px rgba(0, 0, 0, 0.12);
+  /* Light skin modal overrides */
+  --vdd-modal-curtain-bg: rgba(0, 0, 0, 0.5);
+  --vdd-modal-bg: rgba(255, 255, 255, 0.97);
+  --vdd-modal-border: rgba(0, 0, 0, 0.1);
+  --vdd-modal-header-bg: rgba(0, 0, 0, 0.04);
+  --vdd-modal-header-border: rgba(0, 0, 0, 0.08);
+  --vdd-modal-close-hover-color: var(--vdd--b-modal-close-hover-color, #212529);
+  /* Light skin side panel overrides */
+  --vdd-side-panel-bg: rgba(255, 255, 255, 0.97);
+  --vdd-side-panel-border: rgba(0, 0, 0, 0.1);
+  --vdd-side-panel-header-bg: rgba(0, 0, 0, 0.04);
+  --vdd-side-panel-header-border: rgba(0, 0, 0, 0.08);
+  --vdd-side-panel-close-hover-color: var(--vdd--b-side-panel-close-hover-color, #212529);
+  /* Light skin grid/docked panel overrides */
+  --vdd-border-panel: rgba(0, 0, 0, 0.08);
+  --vdd-bg-tab-inactive: var(--vdd--b-bg-tab-inactive, #e9ecef);
+  --vdd-text-tab-inactive: var(--vdd--b-text-tab-inactive, #495057);
+  --vdd-text-tab-active: var(--vdd--b-text-tab-active, #212529);
+  /* Light skin tab and control button hover colors */
+  --vdd-bg-tab-hover: var(--vdd--b-bg-tab-hover, #dee2e6);
+  --vdd-text-tab-hover: var(--vdd--b-text-tab-hover, #212529);
+  --vdd-close-btn-hover-bg: rgba(0, 0, 0, 0.08);
+  --vdd-close-btn-hover-color: var(--vdd--b-close-btn-hover-color, #212529);
+  --vdd-close-btn-color: var(--vdd--b-close-btn-color, #6c757d);
+  --vdd-close-btn-active-color: var(--vdd--b-close-btn-active-color, #212529);
+  --vdd-tab-indicator-focused: var(--vdd-accent-color);
+  --vdd-tab-indicator-unfocused: rgba(0, 0, 0, 0.25);
+  --vdd-tab-bg-active-focused: var(--vdd-bg-panel);
+  --vdd-tab-bg-active-unfocused: color-mix(in srgb, var(--vdd--b-tab-bg-active-unfocused, rgb(220 224 230)) 65%, transparent);
+  --vdd-tab-text-active-focused: var(--vdd--b-tab-text-active-focused, #212529);
+  --vdd-tab-text-active-unfocused: var(--vdd--b-tab-text-active-unfocused, #6c757d);
+  --vdd-resizer-bg: rgba(0, 0, 0, 0.08);
+  --vdd-custom-btn-bg: rgba(0, 0, 0, 0.03);
+  --vdd-custom-btn-border: rgba(0, 0, 0, 0.08);
+  --vdd-custom-btn-hover-bg: rgba(0, 0, 0, 0.08);
+  --vdd-custom-btn-hover-color: var(--vdd--b-custom-btn-hover-color, #212529);
+  /* Light skin taskbar theme variables */
+  --vdd-taskbar-bg: color-mix(in srgb, var(--vdd--b-taskbar-bg, rgb(248 249 250)) 85%, transparent);
+  --vdd-taskbar-border: rgba(0, 0, 0, 0.08);
+  --vdd-taskbar-nav-color: rgba(0, 0, 0, 0.5);
+  --vdd-taskbar-item-bg: rgba(255, 255, 255, 0.65);
+  --vdd-taskbar-item-hover-bg: rgba(255, 255, 255, 0.85);
+  --vdd-taskbar-item-border: rgba(0, 0, 0, 0.08);
+  --vdd-taskbar-item-text: var(--vdd-accent-color);
+  /* Light skin scrollbar theme variables */
+  --vdd-scrollbar-thumb: rgba(0, 0, 0, 0.15);
+  --vdd-scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
+  --vdd-scrollbar-track: rgba(0, 0, 0, 0.02);
+  /* Light skin mockup panel inner theme variables */
+  --vdd-panel-card-bg: rgba(0, 0, 0, 0.03);
+  --vdd-panel-card-border: rgba(0, 0, 0, 0.08);
+  --vdd-panel-text: var(--vdd--b-panel-text, #212529);
+  --vdd-panel-title-color: var(--vdd-accent-color);
+  /* ── Panel Overlay — Toolbar (light) ── */
+  --vdd-panel-toolbar-fg: rgba(0, 0, 0, 0.55);
+  --vdd-panel-toolbar-fg-hover: rgba(0, 0, 0, 0.85);
+  --vdd-panel-toolbar-btn-hover-bg: rgba(0, 0, 0, 0.08);
+  --vdd-panel-toolbar-btn-active-bg: var(--vdd-accent-color);
+  --vdd-panel-toolbar-separator-color: rgba(0, 0, 0, 0.1);
+  /* ── Panel Overlay — Floating Window (light) ── */
+  --vdd-panel-float-bg: rgba(255, 255, 255, 0.96);
+  --vdd-panel-float-border: rgba(0, 0, 0, 0.1);
+  --vdd-panel-float-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --vdd-panel-float-shadow-active: 0 8px 28px rgba(0, 0, 0, 0.2);
+}
+

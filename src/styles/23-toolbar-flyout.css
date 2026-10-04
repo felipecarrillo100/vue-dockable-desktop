@@ -1,0 +1,161 @@
+/* ==========================================================================
+   TOOLBAR GROUP FLYOUT
+   ========================================================================== */
+
+.vdd-toolbar-group-flyout {
+  position: fixed;
+  z-index: calc(var(--vdd-z-base, 1000) + 7000);
+  background: var(--vdd-sidebar-bg, var(--vdd-bg-panel));
+  border: 1px solid var(--vdd-sidebar-border);
+  border-radius: calc(8px * var(--vdd-radius-scale, 1));
+  padding: 4px;
+  min-width: 168px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.15);
+  animation: vdd-toolbar-flyout-in 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes vdd-toolbar-flyout-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Animation origin matches the edge closest to the toolbar button */
+.vdd-toolbar-group-flyout.vdd-left   { transform-origin: top left; }
+.vdd-toolbar-group-flyout.vdd-right  { transform-origin: top right; }
+.vdd-toolbar-group-flyout.vdd-top    { transform-origin: top left; }
+.vdd-toolbar-group-flyout.vdd-bottom { transform-origin: bottom left; }
+/* RTL: physical sides swap, so animation origin flips horizontally */
+[dir="rtl"] .vdd-toolbar-group-flyout.vdd-left   { transform-origin: top right; }
+[dir="rtl"] .vdd-toolbar-group-flyout.vdd-right  { transform-origin: top left; }
+[dir="rtl"] .vdd-toolbar-group-flyout.vdd-top    { transform-origin: top right; }
+[dir="rtl"] .vdd-toolbar-group-flyout.vdd-bottom { transform-origin: bottom right; }
+
+[dir="rtl"] .vdd-toolbar-group-flyout-label {
+  text-align: right;
+}
+
+.vdd-toolbar-group-flyout-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border: 1px solid transparent;
+  border-radius: calc(6px * var(--vdd-radius-scale, 1));
+  background: transparent;
+  color: var(--vdd-sidebar-text-title, var(--vdd-text-primary));
+  cursor: pointer;
+  width: 100%;
+  text-align: start;
+  font-size: 0.8125rem;
+  font-family: inherit;
+  flex-shrink: 0;
+  transition: background-color 0.1s ease, color 0.1s ease;
+}
+
+.vdd-toolbar-group-flyout-item:hover:not(:disabled) {
+  background-color: var(--vdd-toolbar-btn-hover-bg);
+  color: var(--vdd-sidebar-text-title, var(--vdd-text-primary));
+}
+
+.vdd-toolbar-group-flyout-item:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.vdd-toolbar-group-flyout-item.vdd-active {
+  color: var(--vdd-tab-icon-active);
+  background-color: var(--vdd-toolbar-btn-radio-active-bg);
+}
+
+.vdd-toolbar-group-flyout-icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.vdd-toolbar-group-flyout-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vdd-toolbar-group-flyout-shortcut {
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  color: var(--vdd-text-secondary);
+  opacity: 0.7;
+}
+
+.vdd-toolbar-group-flyout-sep {
+  height: 1px;
+  background: var(--vdd-toolbar-separator-color);
+  margin: 3px 4px;
+  flex-shrink: 0;
+}
+
+
+/* Button base — used in ConfirmationForm and similar dialogs */
+.vdd-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: monospace;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: calc(4px * var(--vdd-radius-scale, 1));
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  user-select: none;
+  line-height: 1.2;
+}
+
+.vdd-btn-sm {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.vdd-btn-outline {
+  background: transparent;
+  border: 1px solid var(--vdd-text-secondary, #6c757d);
+  color: var(--vdd-text-secondary, #6c757d);
+}
+
+.vdd-btn-outline:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--vdd-text-primary, #f1f5f9);
+  color: var(--vdd-text-primary, #f1f5f9);
+}
+
+[data-color-scheme="light"] .vdd-btn-outline {
+  border-color: var(--vdd--b-text-secondary, #6c757d);
+  color: var(--vdd--b-text-secondary, #6c757d);
+}
+
+[data-color-scheme="light"] .vdd-btn-outline:hover {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: var(--vdd--b-text-tab-inactive, #495057);
+  color: var(--vdd--b-text-tab-inactive, #495057);
+}
+
+.vdd-btn-primary {
+  background: var(--vdd-accent-color, #38bdf8);
+  border: 1px solid var(--vdd-accent-color, #38bdf8);
+  color: var(--vdd-brand-on-accent, #090b11);
+}
+
+.vdd-btn-primary:hover {
+  filter: brightness(1.1);
+}
+
+[data-color-scheme="light"] .vdd-btn-primary {
+  color: var(--vdd-brand-on-accent, #ffffff);
+}
+

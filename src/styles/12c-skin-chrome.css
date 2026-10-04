@@ -1,0 +1,65 @@
+/* --------------------------------------------------------------------------
+   SKIN 3: Chrome / Browser-Style Preset
+   -------------------------------------------------------------------------- */
+[data-vdd-skin="chrome"] {
+  --vdd-skin-font-family: 'Google Sans Text', 'Google Sans', Roboto, system-ui, -apple-system, 'Segoe UI', sans-serif; /* Google's UI fonts */
+  --vdd-bg-workspace: var(--vdd--b-bg-workspace, #202124);
+  --vdd-bg-panel: var(--vdd--b-bg-panel, #292a2d);
+  --vdd-bg-tab-bar: var(--vdd--b-bg-tab-bar, #202124);
+  --vdd-window-bg: color-mix(in srgb, var(--vdd--b-window-bg, rgb(41 42 45)) calc(var(--vdd-window-opacity, 1.0) * 100%), transparent);
+  --vdd-window-border: var(--vdd--b-window-border, #3c4043);
+  --vdd-window-header-bg: var(--vdd--b-window-header-bg, #202124);
+  --vdd-accent-color: var(--vdd-brand-accent, #8ab4f8);
+  --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
+  --vdd-border-panel: var(--vdd--b-border-panel, #3c4043);
+  --vdd-bg-tab-inactive: var(--vdd--b-bg-tab-inactive, #202124);
+  --vdd-text-tab-inactive: var(--vdd--b-text-tab-inactive, #9aa0a6);
+  --vdd-text-tab-active: var(--vdd--b-text-tab-active, #ffffff);
+  --vdd-panel-card-bg: var(--vdd--b-panel-card-bg, #202124);
+  --vdd-panel-card-border: var(--vdd--b-panel-card-border, #3c4043);
+  --vdd-window-text: var(--vdd--b-window-text, #ffffff);
+  --vdd-panel-text: var(--vdd--b-panel-text, #e8eaed);
+  --vdd-tab-icon-active: var(--vdd-accent-color);
+  --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 14%, transparent);
+  --vdd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--vdd-accent-color) 22%, transparent);
+}
+
+[data-vdd-skin="chrome"][data-color-scheme="light"] {
+  --vdd-bg-workspace: var(--vdd--b-bg-workspace, #dee1e6);
+  --vdd-bg-panel: var(--vdd--b-bg-panel, #ffffff);
+  --vdd-bg-tab-bar: var(--vdd--b-bg-tab-bar, #dee1e6);
+  --vdd-window-bg: color-mix(in srgb, var(--vdd--b-window-bg, rgb(255 255 255)) calc(var(--vdd-window-opacity, 1.0) * 100%), transparent);
+  --vdd-window-border: var(--vdd--b-window-border, #cbd5e1);
+  --vdd-window-header-bg: var(--vdd--b-window-header-bg, #dee1e6);
+  --vdd-accent-color: var(--vdd-brand-accent, #1a73e8);
+  --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
+  --vdd-border-panel: var(--vdd--b-border-panel, #dadce0);
+  --vdd-bg-tab-inactive: var(--vdd--b-bg-tab-inactive, #dee1e6);
+  --vdd-text-tab-inactive: var(--vdd--b-text-tab-inactive, #474747);
+  --vdd-text-tab-active: var(--vdd--b-text-tab-active, #1f1f1f);
+  --vdd-panel-card-bg: var(--vdd--b-panel-card-bg, #f1f3f4);
+  --vdd-panel-card-border: var(--vdd--b-panel-card-border, #dadce0);
+  --vdd-window-text: var(--vdd--b-window-text, #1f1f1f);
+  --vdd-panel-text: var(--vdd--b-panel-text, #1f1f1f);
+  --vdd-panel-title-color: var(--vdd-accent-color);
+  --vdd-close-btn-color: var(--vdd--b-close-btn-color, #474747);
+  --vdd-close-btn-active-color: var(--vdd--b-close-btn-active-color, #1f1f1f);
+  --vdd-tab-icon-active: var(--vdd-accent-color);
+  --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 12%, transparent);
+  --vdd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--vdd-accent-color) 16%, transparent);
+}
+
+/* Chrome tab angled geometry shapes */
+[data-vdd-skin="chrome"] .vdd-workspace-tab {
+  clip-path: polygon(10px 0%, calc(100% - 10px) 0%, 100% 100%, 0% 100%);
+  padding: 0 18px !important;
+  margin-right: -4px !important;
+  border-right: none !important;
+}
+[data-vdd-skin="chrome"] .vdd-workspace-tab.vdd-active {
+  z-index: 5;
+}
+[data-vdd-skin="chrome"] .vdd-workspace-tab.vdd-active::before {
+  display: none !important;
+}
+

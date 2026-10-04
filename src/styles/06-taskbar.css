@@ -1,0 +1,261 @@
+/* Taskbar Sibling Footer Styling */
+/* ── autohide mode: absolute overlay, collapses to peek strip ── */
+/*
+ * The taskbar sits above the workspace content.
+ *
+ * rdd set `zIndex: 100` inline on its footer; ported here because it is load-bearing, not
+ * decorative. Without it the autohide overlay is covered by whatever the grid puts at the
+ * bottom edge — a split divider's invisible 8px hit-box was enough to swallow every
+ * `pointerenter`, so the peek strip could not be hovered at all. Found by the M7 browser
+ * gate; the same class of omission as the structural flex styles in M4.
+ *
+ * Below floating windows on purpose: those stack from `--vdd-z-base` (1000), matching rdd.
+ */
+.vdd-taskbar-footer-container {
+  position: relative;
+  z-index: 100;
+}
+
+.vdd-taskbar-footer-container.vdd-taskbar-mode-autohide {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  transform: translateY(calc(100% - 8px));
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.vdd-taskbar-footer-container.vdd-taskbar-mode-autohide.vdd-taskbar-expanded {
+  transform: translateY(0);
+}
+
+.vdd-taskbar-peek-handle {
+  position: absolute;
+  top: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--vdd-accent-color, #38bdf8);
+  opacity: 0.5;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.vdd-taskbar-footer-container.vdd-taskbar-mode-autohide.vdd-taskbar-expanded .vdd-taskbar-peek-handle {
+  opacity: 0;
+}
+
+@media (pointer: coarse) {
+  .vdd-taskbar-footer-container.vdd-taskbar-mode-autohide {
+    transform: translateY(calc(100% - 12px));
+  }
+}
+
+.vdd-taskbar-footer-container {
+  background-color: var(--vdd-taskbar-bg) !important;
+  border-top: 1px solid var(--vdd-border-panel) !important;
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  flex-shrink: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1rem;
+}
+
+.vdd-taskbar-nav-btn {
+  color: var(--vdd-taskbar-nav-color) !important;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: monospace;
+  padding: 0;
+  text-decoration: none;
+  font-size: 0.875rem;
+  line-height: 1;
+}
+
+.vdd-taskbar-nav-btn:hover {
+  color: var(--vdd-accent-color) !important;
+}
+
+/* macOS/Win11 Glassmorphic Taskbar */
+.vdd-taskbar-glassmorphic-item {
+  background: var(--vdd-taskbar-item-bg) !important;
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  border: 1px solid var(--vdd-taskbar-item-border) !important;
+  color: var(--vdd-taskbar-item-text) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: calc(4px * var(--vdd-radius-scale, 1));
+  cursor: pointer;
+}
+
+.vdd-taskbar-glassmorphic-item:hover {
+  background: var(--vdd-taskbar-item-hover-bg) !important;
+  border-color: var(--vdd-accent-color, #38bdf8) !important;
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
+}
+
+/* Minimalist Taskbar Icon-Only & Premium Tooltip Rules */
+.vdd-taskbar-item-icon {
+  font-size: 22px !important;
+  line-height: 1 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vdd-taskbar-item-icon svg,
+.vdd-taskbar-item-icon img {
+  width: 22px !important;
+  height: 22px !important;
+  max-width: 22px !important;
+  max-height: 22px !important;
+  object-fit: contain;
+  display: block;
+}
+
+/* It rests 8px above its icon at translateY(-100%), with an 8px hover bridge filling the gap.
+   It enters from *above* its resting place: rising from below — as it used to, from -90% —
+   put the preview, and then its bridge, over the icon for the first frames, so a quick click
+   meant for the icon landed on the preview. Measured in Chrome: from below, even a 6px offset
+   left the bridge over the icon's top 6px. */
+@keyframes vdd-tooltip-fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(calc(-100% - 6px));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-100%);
+  }
+}
+
+/*
+ * The hover preview stacks above everything in the workspace.
+ *
+ * rdd set `zIndex: 999999` inline on this element, so the ported stylesheet had no z-index at
+ * all and the preview came out at `auto`: a split divider painted over it, and the pointer
+ * could never reach the preview to click it. Expressed against `--vdd-z-base` like the rest
+ * of the library's chrome, so `zIndexBase` moves it with everything else.
+ *
+ * This is the third value rdd carried inline rather than in CSS (after the structural flex
+ * styles and the taskbar's own z-index) — all three were load-bearing, and all three were
+ * found by a browser gate rather than by reading.
+ */
+.vdd-taskbar-item-tooltip {
+  z-index: calc(var(--vdd-z-base, 1000) + 8000);
+  background: var(--vdd-bg-panel, #1e1e1e) !important;
+  color: var(--vdd-text-primary, #ffffff) !important;
+  padding: 8px !important;
+  border-radius: calc(6px * var(--vdd-radius-scale, 1));
+  font-size: 11px !important;
+  font-family: var(--vdd-font-family);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--vdd-taskbar-item-border, rgba(255, 255, 255, 0.1)) !important;
+  animation: vdd-tooltip-fade-in 0.15s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Invisible bridge so mouse transitions smoothly to tooltip. It spans the 8px gap exactly;
+   any taller and it covers the top of the icon. */
+.vdd-taskbar-item-tooltip::before {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  height: 8px;
+  background: transparent;
+}
+
+.vdd-taskbar-item-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: var(--vdd-bg-panel, #1e1e1e) transparent transparent transparent;
+}
+
+/* Live preview thumbnail styles.
+   rdd additionally shipped `.vdd-taskbar-item-preview-host .luciad canvas` rules, hard-coding
+   a specific third-party mapping library's class name into a framework-agnostic stylesheet.
+   Dropped — an application can style its own content inside the preview host itself.
+   See docs/PARITY.md, divergence D10. */
+/*
+ * The thumbnail frame is clickable; its *contents* are not.
+ *
+ * rdd sets `pointer-events: none` on the frame itself, so a click anywhere over the
+ * thumbnail — which is most of the preview — passes through the tooltip entirely and does
+ * nothing. Only its little header row responds. Here the frame accepts the click (and the
+ * tooltip's handler restores the panel) while everything inside stays inert, so the live
+ * panel in the preview can never be interacted with by accident.
+ * See docs/PARITY.md divergence D11.
+ */
+.vdd-taskbar-item-preview-frame {
+  border-radius: calc(4px * var(--vdd-radius-scale, 1));
+  overflow: hidden;
+  background: #000000;
+  border: 1px solid var(--vdd-taskbar-item-border, rgba(255, 255, 255, 0.15));
+  position: relative;
+  margin-top: 4px;
+  user-select: none !important;
+}
+
+.vdd-taskbar-item-preview-host,
+.vdd-taskbar-item-preview-letter {
+  pointer-events: none !important;
+}
+
+.vdd-taskbar-item-preview-host {
+  transform-origin: top left;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.vdd-taskbar-item-preview-host * {
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+
+
+.vdd-tooltip-close-x {
+  width: 18px;
+  height: 18px;
+  border-radius: calc(3px * var(--vdd-radius-scale, 1));
+  background: transparent !important;
+  border: none !important;
+  color: var(--vdd-close-btn-color, var(--vdd-text-secondary, #888888)) !important;
+  cursor: pointer;
+  transition: opacity 0.12s ease, background-color 0.12s ease, color 0.12s ease;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.75;
+}
+
+.vdd-tooltip-close-x:hover {
+  background: var(--vdd-close-btn-hover-bg) !important;
+  color: var(--vdd-close-btn-hover-color) !important;
+  opacity: 1 !important;
+}
+.vdd-scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+

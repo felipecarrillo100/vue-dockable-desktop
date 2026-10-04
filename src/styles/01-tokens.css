@@ -1,0 +1,252 @@
+/*
+ * vue-dockable-desktop — stylesheet.
+ *
+ * Ported from react-dockable-desktop 6.2.0 and completed: every class is `vdd-` prefixed and
+ * every custom property is `--vdd-*`, with no exceptions. rdd's own migration had been left
+ * unfinished — ~35 unprefixed tokens (`--sidebar-*`, `--tab-*`, `--toolbar-*`), four bare
+ * classes, two dead rules and 30 demo-only `.sb-*` rules were still shipping in its published
+ * `styles.css`. All of that is resolved here and enforced by scripts/gates/css-prefix.mjs.
+ *
+ * Tokens live on `:root` deliberately, not scoped to the workspace element: the context menu,
+ * toasts, toolbar flyouts and the overlay search dropdown all teleport to `document.body`, and
+ * `<VddSidebar>` is normally an *ancestor* of `<VddDesktop>`. CSS variables only cascade
+ * downward, so scoping them would leave those parts unthemed.
+ *
+ * See docs/decisions/0008-css-prefix.md and docs/manual/10-theming.md.
+ */
+
+:root {
+  /* The font of all the library's chrome. `inherit` hands it to the host page instead.
+     Neither Outfit nor Inter is loaded by the library: load one yourself, or override this on
+     :root (menus, flyouts and toasts teleport to <body>, so :root is what reaches everything).
+     A skin picks its own font through --vdd-skin-font-family, never by declaring --vdd-font-family
+     itself: that would override the consumer's :root value on the element carrying data-vdd-skin.
+     This resolves on <html>, which <VddDesktop> gives data-vdd-skin too. */
+  --vdd-font-family: var(--vdd-skin-font-family, 'Outfit', 'Inter', system-ui, -apple-system, sans-serif);
+  --vdd-styles-loaded: 1; /* sentinel — checked at mount to detect missing CSS import */
+  --vdd-z-base: 1000; /* base for floating windows + all chrome overlays; override via WindowManagerProvider's zIndexBase */
+  --vdd-bg-primary: var(--vdd--b-bg-primary, #090b11);
+  --vdd-bg-workspace: var(--vdd--b-bg-workspace, #0f111a);
+  --vdd-bg-panel: var(--vdd--b-bg-panel, #141722);
+  --vdd-bg-tab-bar: var(--vdd--b-bg-tab-bar, #0d0f16);
+  --vdd-text-primary: var(--vdd--b-text-primary, #f1f5f9);
+  --vdd-text-secondary: var(--vdd--b-text-secondary, #94a3b8);
+  --vdd-border-color: rgba(255, 255, 255, 0.08);
+  /* Branding: an app sets --vdd-brand-accent / --vdd-brand-on-accent on :root, and every skin reads
+     them first (var(--vdd-brand-accent, <skin colour>)). The library only reads them — declared
+     here or in a skin, they would override the app's value on the element carrying data-vdd-skin.
+     Every tint of the accent is a color-mix() of --vdd-accent-color, never a copied rgba(). */
+  --vdd-accent-color: var(--vdd-brand-accent, #38bdf8); /* Modern Cyan/Sky-blue accent */
+  --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
+  --vdd-header-button-gap: 4px; /* Configurable gap spacing between titlebar action buttons */
+  /* Window skins variables */
+  --vdd-window-bg: color-mix(in srgb, var(--vdd--b-window-bg, rgb(20 22 28)) calc(var(--vdd-window-opacity, 0.85) * 100%), transparent);
+  --vdd-window-border: rgba(255, 255, 255, 0.08);
+  --vdd-window-border-focused: rgba(255, 255, 255, 0.28);
+  --vdd-window-header-bg: rgba(0, 0, 0, 0.25);
+  --vdd-window-text: var(--vdd--b-window-text, #f8f9fa);
+  --vdd-window-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  --vdd-window-shadow-focused: 0 24px 50px rgba(0, 0, 0, 0.55);
+  /* Modal theme variables */
+  --vdd-modal-curtain-bg: color-mix(in srgb, var(--vdd--b-modal-curtain-bg, rgb(9 11 17)) 65%, transparent);
+  --vdd-modal-bg: color-mix(in srgb, var(--vdd--b-modal-bg, rgb(20 23 34)) 95%, transparent);
+  --vdd-modal-border: rgba(255, 255, 255, 0.08);
+  --vdd-modal-header-bg: rgba(0, 0, 0, 0.15);
+  --vdd-modal-header-border: rgba(255, 255, 255, 0.06);
+  --vdd-modal-close-hover-color: var(--vdd--b-modal-close-hover-color, #ffffff);
+  --vdd-side-panel-bg: color-mix(in srgb, var(--vdd--b-side-panel-bg, rgb(20 23 34)) 88%, transparent);
+  --vdd-side-panel-border: rgba(255, 255, 255, 0.08);
+  --vdd-side-panel-header-bg: rgba(0, 0, 0, 0.15);
+  --vdd-side-panel-header-border: rgba(255, 255, 255, 0.06);
+  --vdd-side-panel-close-hover-color: var(--vdd--b-side-panel-close-hover-color, #ffffff);
+  /* Grid/Docked panel theme variables */
+  --vdd-border-panel: rgba(255, 255, 255, 0.08);
+  --vdd-bg-tab-inactive: var(--vdd--b-bg-tab-inactive, #0c0d12);
+  --vdd-text-tab-inactive: var(--vdd--b-text-tab-inactive, #858b99);
+  --vdd-text-tab-active: var(--vdd--b-text-tab-active, #ffffff);
+  /* Tab and control button hover colors */
+  --vdd-bg-tab-hover: var(--vdd--b-bg-tab-hover, #171a22);
+  --vdd-text-tab-hover: var(--vdd--b-text-tab-hover, #e2e8f0);
+  --vdd-close-btn-hover-bg: rgba(255, 255, 255, 0.12);
+  --vdd-close-btn-hover-color: var(--vdd--b-close-btn-hover-color, #ffffff);
+  --vdd-close-btn-color: var(--vdd--b-close-btn-color, #858b99);
+  --vdd-close-btn-active-color: var(--vdd--b-close-btn-active-color, #e2e8f0);
+  /* Tab focus states */
+  --vdd-tab-indicator-focused: var(--vdd-accent-color, #38bdf8);
+  --vdd-tab-indicator-unfocused: rgba(255, 255, 255, 0.3);
+  --vdd-tab-bg-active-focused: var(--vdd-bg-panel);
+  --vdd-tab-bg-active-unfocused: color-mix(in srgb, var(--vdd--b-tab-bg-active-unfocused, rgb(20 23 34)) 55%, transparent);
+  --vdd-tab-text-active-focused: var(--vdd-text-tab-active, #ffffff);
+  --vdd-tab-text-active-unfocused: rgba(255, 255, 255, 0.65);
+  --vdd-resizer-bg: rgba(255, 255, 255, 0.08);
+  --vdd-custom-btn-bg: rgba(255, 255, 255, 0.03);
+  --vdd-custom-btn-border: rgba(255, 255, 255, 0.05);
+  --vdd-custom-btn-hover-bg: rgba(255, 255, 255, 0.12);
+  --vdd-custom-btn-hover-color: var(--vdd--b-custom-btn-hover-color, #ffffff);
+  /* Taskbar theme variables */
+  --vdd-taskbar-bg: rgba(0, 0, 0, 0.75);
+  --vdd-taskbar-border: rgba(255, 255, 255, 0.1);
+  --vdd-taskbar-nav-color: rgba(255, 255, 255, 0.5);
+  --vdd-taskbar-item-bg: color-mix(in srgb, var(--vdd--b-taskbar-item-bg, rgb(15 23 42)) 60%, transparent);
+  --vdd-taskbar-item-hover-bg: color-mix(in srgb, var(--vdd--b-taskbar-item-hover-bg, rgb(15 23 42)) 80%, transparent);
+  --vdd-taskbar-item-border: rgba(255, 255, 255, 0.08);
+  --vdd-taskbar-item-text: var(--vdd-accent-color, #38bdf8);
+  /* Scrollbar theme variables */
+  --vdd-scrollbar-thumb: rgba(255, 255, 255, 0.1);
+  --vdd-scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
+  --vdd-scrollbar-track: rgba(255, 255, 255, 0.01);
+  /* Mockup Panel inner theme variables */
+  --vdd-panel-card-bg: rgba(0, 0, 0, 0.2);
+  --vdd-panel-card-border: rgba(255, 255, 255, 0.1);
+  --vdd-panel-text: var(--vdd-text-primary);
+  --vdd-panel-title-color: var(--vdd-accent-color, #38bdf8);
+  /* ── Panel Overlay — Toolbar ── */
+  --vdd-panel-toolbar-padding: 8px;
+  --vdd-panel-toolbar-gap: 4px;
+  --vdd-panel-toolbar-btn-size: 32px;
+  --vdd-panel-toolbar-btn-radius: 6px;
+  --vdd-panel-toolbar-fg: rgba(255, 255, 255, 0.65);
+  --vdd-panel-toolbar-fg-hover: rgba(255, 255, 255, 0.95);
+  --vdd-panel-toolbar-btn-hover-bg: var(--vdd-toolbar-btn-hover-bg, rgba(255, 255, 255, 0.08));
+  /* "On" is a solid accent chip with a white icon, the same in every buttonVariant: the toolbar
+     floats over panel content the library can't see, so a tint can't be relied on to show. In dark
+     the accent is deepened (65 % accent, 35 % black) so the white icon and the chip both clear 3:1
+     for bright accents; the light scheme uses the plain accent. */
+  --vdd-panel-toolbar-btn-active-bg: color-mix(in srgb, var(--vdd-accent-color) 65%, #000000);
+  --vdd-panel-toolbar-btn-active-color: var(--vdd-brand-on-accent, #ffffff);
+  /* buttonVariant="soft": each button gets its own near-opaque chip (the floating-widget surface)
+     with a hairline edge, so it reads over light, dark or busy content without any shadow. */
+  --vdd-panel-toolbar-btn-bg: var(--vdd-panel-float-bg);
+  --vdd-panel-toolbar-btn-bg-hover: color-mix(in srgb, var(--vdd-panel-float-bg), var(--vdd-panel-toolbar-fg-hover) 14%);
+  --vdd-panel-toolbar-btn-border: 1px solid var(--vdd-panel-float-border);
+  --vdd-panel-toolbar-separator-color: var(--vdd-toolbar-separator-color, rgba(255, 255, 255, 0.09));
+  /* Icon sizes. The library sizes the icon inside its own buttons, whatever icon library the app
+     uses: icon fonts follow font-size, SVG icons follow width/height. Apps pass no size. */
+  --vdd-panel-toolbar-icon-size: 20px;
+  --vdd-chrome-icon-size: 22px;
+  /* Workspace toolbar toggle "on": it sits on known chrome next to radio buttons, so a tint plus an
+     accent edge and an accent icon (--vdd-toolbar-btn-toggle-active-bg is set per scheme and skin). */
+  --vdd-toolbar-btn-toggle-active-color: var(--vdd-tab-icon-active);
+  --vdd-toolbar-btn-toggle-active-border: var(--vdd-tab-icon-active);
+  /* ── Panel Overlay — Floating Window ── */
+  --vdd-panel-float-bg: color-mix(in srgb, var(--vdd--b-panel-float-bg, rgb(22 24 34)) 92%, transparent);
+  --vdd-panel-float-border: rgba(255, 255, 255, 0.1);
+  --vdd-panel-float-radius: 8px;
+  --vdd-panel-float-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --vdd-panel-float-shadow-active: 0 8px 28px rgba(0, 0, 0, 0.55);
+  --vdd-panel-float-header-bg: var(--vdd-window-header-bg, rgba(0, 0, 0, 0.25));
+  --vdd-panel-float-header-bg-active: var(--vdd-window-header-bg, rgba(0, 0, 0, 0.25));
+  --vdd-panel-float-title-color: var(--vdd-window-text, #f8f9fa);
+  --vdd-panel-float-title-color-active: var(--vdd-window-text, #f8f9fa);
+  /* ── Sidebar, tab-icon and toolbar-button tokens ──
+     These are the library's *dark* values, and they live here rather than in a
+     `[data-color-scheme="dark"]` block because dark is the base look: an application signals it
+     by **removing** `data-color-scheme`, so a dark-scoped block matches nothing in the normal
+     case. Until 1.1.0 they were scoped that way, which left them undefined exactly when they
+     were needed — and fifteen of them are read with no `var()` fallback, so the declaration was
+     dropped rather than defaulted. The sidebar, its drawer and the workspace toolbar rendered
+     with no background and inherited text in dark mode; the selected rail icon had no colour at
+     all. `[data-color-scheme="light"]` overrides these, which is all a scheme block should ever
+     do, and a gate rule now rejects a token whose only home is such a block. */
+  --vdd-sidebar-bg: var(--vdd--b-sidebar-bg, #1e2024);
+  --vdd-sidebar-tabs-bg: var(--vdd--b-sidebar-tabs-bg, #141619);
+  --vdd-sidebar-border: rgba(255, 255, 255, 0.08);
+  --vdd-sidebar-card-bg: rgba(255, 255, 255, 0.03);
+  --vdd-sidebar-card-border: rgba(255, 255, 255, 0.08);
+  --vdd-sidebar-card-active-bg: color-mix(in srgb, var(--vdd-accent-color) 6%, transparent);
+  --vdd-sidebar-card-active-border: color-mix(in srgb, var(--vdd-accent-color) 30%, transparent);
+  --vdd-sidebar-text-title: var(--vdd--b-sidebar-text-title, #f8f9fa);
+  --vdd-sidebar-text-muted: var(--vdd--b-sidebar-text-muted, #8a90a0);
+  --vdd-sidebar-badge-bg: var(--vdd--b-sidebar-badge-bg, #2d3139);
+  --vdd-sidebar-badge-text: var(--vdd--b-sidebar-badge-text, #b0b5c0);
+  --vdd-sidebar-btn-front-border: var(--vdd-accent-color);
+  --vdd-sidebar-btn-front-text: var(--vdd-accent-color);
+  --vdd-sidebar-btn-front-bg: transparent;
+  --vdd-sidebar-btn-front-hover-bg: color-mix(in srgb, var(--vdd-accent-color) 10%, transparent);
+  --vdd-tab-icon-active: var(--vdd-accent-color);
+  --vdd-tab-icon-inactive: var(--vdd--b-tab-icon-inactive, #9ea4b0);
+  --vdd-tab-btn-active-bg: var(--vdd--b-tab-btn-active-bg, #1e2024); /* Seamless merge look */
+  --vdd-sidebar-btn-hover-bg: rgba(255, 255, 255, 0.05);
+  --vdd-sidebar-card-hover-border: color-mix(in srgb, var(--vdd-accent-color) 25%, transparent);
+  --vdd-sidebar-card-hover-bg: rgba(255, 255, 255, 0.04);
+  --vdd-sidebar-card-active-shadow: color-mix(in srgb, var(--vdd-accent-color) 8%, transparent);
+  --vdd-sidebar-drawer-header-bg: rgba(0, 0, 0, 0.12);
+  --vdd-toolbar-btn-hover-bg: rgba(255, 255, 255, 0.06);
+  --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 14%, transparent);
+  --vdd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--vdd-accent-color) 22%, transparent);
+  --vdd-toolbar-separator-color: rgba(255, 255, 255, 0.09);
+  /* Sidebar active-tab design tokens */
+  --vdd-tab-btn-active-shadow: none;
+  /* Toolbar active-button design tokens */
+  --vdd-toolbar-btn-active-shadow: none;
+  /* Scheme-independent measurements and off-by-default effects. The values are the ones the
+     `var()` reads already fell back to, so nothing renders differently; declaring them is what
+     makes `:root` a complete inventory for a skin author. */
+  --vdd-tab-accent-bar-width: 3px;
+  --vdd-tab-btn-active-glow: none;
+  --vdd-tab-btn-active-radius: 0px;
+  --vdd-tab-btn-active-width: 100%;
+  --vdd-toolbar-accent-bar-width: 3px;
+  --vdd-toolbar-btn-active-glow: none;
+}
+
+/* Brand surfaces (7.3.0): each surface a skin declares reads --vdd--b-<token> first. These are
+   mixes of the application's --vdd-brand-surface and --vdd-brand-text. --vdd--b-base is the surface,
+   written as a mix with the text so that it is valid only when *both* are set; every other value is
+   built on it and has no fallback. While either input is unset they are all invalid, and every
+   surface falls back to the skin's own colour. Internal, not API — declared only here, where :root
+   resolves the brand variables. */
+:root {
+  --vdd--b-base: color-mix(in srgb, var(--vdd-brand-surface) 100%, var(--vdd-brand-text));
+  --vdd--b-bg-panel: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 6%);
+  --vdd--b-bg-primary: var(--vdd--b-base);
+  --vdd--b-bg-tab-bar: color-mix(in srgb, var(--vdd--b-base), black 10%);
+  --vdd--b-bg-tab-hover: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 10%);
+  --vdd--b-bg-tab-inactive: color-mix(in srgb, var(--vdd--b-base), black 10%);
+  --vdd--b-bg-workspace: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 3%);
+  --vdd--b-border-panel: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 14%);
+  --vdd--b-close-btn-active-color: color-mix(in srgb, var(--vdd-brand-text) 100%, var(--vdd--b-base));
+  --vdd--b-close-btn-color: color-mix(in srgb, var(--vdd-brand-text) 62%, var(--vdd--b-base));
+  --vdd--b-close-btn-hover-color: color-mix(in srgb, var(--vdd-brand-text) 100%, var(--vdd--b-base));
+  --vdd--b-custom-btn-hover-color: color-mix(in srgb, var(--vdd-brand-text) 100%, var(--vdd--b-base));
+  --vdd--b-dock-target-bg: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 6%);
+  --vdd--b-dock-target-center-bg: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 12%);
+  --vdd--b-modal-bg: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 6%);
+  --vdd--b-modal-close-hover-color: color-mix(in srgb, var(--vdd-brand-text) 100%, var(--vdd--b-base));
+  --vdd--b-modal-curtain-bg: color-mix(in srgb, var(--vdd--b-base), black 20%);
+  --vdd--b-panel-card-bg: color-mix(in srgb, var(--vdd--b-base), black 6%);
+  --vdd--b-panel-card-border: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 16%);
+  --vdd--b-panel-float-bg: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 6%);
+  --vdd--b-panel-text: color-mix(in srgb, var(--vdd-brand-text) 100%, var(--vdd--b-base));
+  --vdd--b-panel-toolbar-frosted-bg: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 6%);
+  --vdd--b-placeholder-bg: color-mix(in srgb, var(--vdd-brand-text) 62%, var(--vdd--b-base));
+  --vdd--b-side-panel-bg: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 6%);
+  --vdd--b-side-panel-close-hover-color: color-mix(in srgb, var(--vdd-brand-text) 100%, var(--vdd--b-base));
+  --vdd--b-sidebar-badge-bg: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 16%);
+  --vdd--b-sidebar-badge-text: color-mix(in srgb, var(--vdd-brand-text) 62%, var(--vdd--b-base));
+  --vdd--b-sidebar-bg: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 4%);
+  --vdd--b-sidebar-card-bg: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 8%);
+  --vdd--b-sidebar-tabs-bg: color-mix(in srgb, var(--vdd--b-base), black 10%);
+  --vdd--b-sidebar-text-muted: color-mix(in srgb, var(--vdd-brand-text) 62%, var(--vdd--b-base));
+  --vdd--b-sidebar-text-title: color-mix(in srgb, var(--vdd-brand-text) 100%, var(--vdd--b-base));
+  --vdd--b-tab-bg-active-unfocused: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 3%);
+  --vdd--b-tab-btn-active-bg: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 9%);
+  --vdd--b-tab-icon-inactive: color-mix(in srgb, var(--vdd-brand-text) 62%, var(--vdd--b-base));
+  --vdd--b-tab-text-active-focused: color-mix(in srgb, var(--vdd-brand-text) 100%, var(--vdd--b-base));
+  --vdd--b-tab-text-active-unfocused: color-mix(in srgb, var(--vdd-brand-text) 62%, var(--vdd--b-base));
+  --vdd--b-taskbar-bg: color-mix(in srgb, var(--vdd--b-base), black 10%);
+  --vdd--b-taskbar-item-bg: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 6%);
+  --vdd--b-taskbar-item-hover-bg: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 12%);
+  --vdd--b-text-primary: color-mix(in srgb, var(--vdd-brand-text) 100%, var(--vdd--b-base));
+  --vdd--b-text-secondary: color-mix(in srgb, var(--vdd-brand-text) 62%, var(--vdd--b-base));
+  --vdd--b-text-tab-active: color-mix(in srgb, var(--vdd-brand-text) 100%, var(--vdd--b-base));
+  --vdd--b-text-tab-hover: color-mix(in srgb, var(--vdd-brand-text) 100%, var(--vdd--b-base));
+  --vdd--b-text-tab-inactive: color-mix(in srgb, var(--vdd-brand-text) 62%, var(--vdd--b-base));
+  --vdd--b-toast-bg: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 10%);
+  --vdd--b-window-bg: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 6%);
+  --vdd--b-window-border: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 14%);
+  --vdd--b-window-border-focused: color-mix(in srgb, var(--vdd--b-base), var(--vdd-brand-text) 30%);
+  --vdd--b-window-header-bg: color-mix(in srgb, var(--vdd--b-base), black 10%);
+  --vdd--b-window-text: color-mix(in srgb, var(--vdd-brand-text) 100%, var(--vdd--b-base));
+}
+

@@ -1,0 +1,72 @@
+/* Every element the library renders carries an vdd- prefixed class (see
+   CLAUDE.md's prefix convention) — this targets exactly those elements
+   directly, never their descendants, so a consumer's own content nested
+   inside (tab renderContent, panel/modal body content) is never touched.
+   Without this, several rules combining padding with a fixed/percentage
+   min-height/max-height/height (e.g. .vdd-side-panel-header,
+   .vdd-toolbar-strip) render at a size that depends on whatever box-sizing
+   the host page happens to set globally — MUI's CssBaseline and Bootstrap's
+   reboot both reset it via a bare `*` selector, but a plain page with no
+   such reset leaves the browser default (content-box) in effect, so the
+   exact same CSS renders at a visibly different size purely depending on
+   which app it's dropped into. Deliberately no !important: this selector's
+   specificity (0,1,0) already beats an accidental bare `*` reset (both
+   examples above are (0,0,0)) unconditionally, regardless of stylesheet
+   load order, while still losing — via source order at the resulting tie —
+   to a consumer's own deliberate, equally-specific override of a specific
+   vdd- class, which normally loads after this stylesheet. */
+[class*="vdd-"] {
+  box-sizing: border-box;
+}
+
+/*
+ * The library does not style the host page.
+ *
+ * react-dockable-desktop sets `height: 100%; overflow: hidden` on `html, body, #root`,
+ * because a percentage-height chain needs a real height all the way up. That works, but it
+ * reaches outside the library's own DOM and silently changes the page of any app that
+ * embeds a workspace in part of a view. vdd asks the application to give the workspace a
+ * height instead, warns in development when it has none, and offers this opt-in helper.
+ *
+ * See docs/PARITY.md section 4, divergence D8.
+ */
+/* The compound selector is for `<VddDesktop class="vdd-fill-viewport">`: there the class sits
+   on the same element as `.vdd-workspace`, whose `height: 100%` comes later in this file with
+   equal specificity and would otherwise win. */
+.vdd-fill-viewport,
+.vdd-workspace.vdd-fill-viewport {
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Form controls don't inherit a font by default. Only the library's own controls (those with a
+   vdd- class) are told to, never the consumer's inputs and buttons inside a panel. Without it the
+   rail and toolbar buttons kept the browser's button font whatever --vdd-font-family said
+   (rdd 6.4.0; found by the M15 branding gate). */
+:where(button, input, select, textarea)[class*="vdd-"] {
+  font-family: inherit;
+}
+
+/* Cosmetic properties are scoped to the library's own root element only — never
+   the consumer's page, html/body, or their own mount div. */
+.vdd-workspace {
+  background-color: var(--vdd-bg-primary);
+  color: var(--vdd-text-primary);
+  font-family: var(--vdd-font-family);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Chrome rendered outside the workspace root — the sidebar and toolbar around it, and the
+   modals, drawers, toasts, menus and flyouts mounted beside it or teleported to <body> — does
+   not inherit from .vdd-workspace, so it reads the token itself. Without this it took the host
+   page's body font. */
+.vdd-sidebar-layout,
+.vdd-toolbar-strip,
+.vdd-modal-overlay,
+.vdd-side-panel,
+.vdd-toast-container,
+.vdd-toolbar-group-flyout,
+.vdd-panel-toolbar-search__dropdown {
+  font-family: var(--vdd-font-family);
+}
+

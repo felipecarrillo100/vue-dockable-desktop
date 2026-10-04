@@ -1,0 +1,98 @@
+/* Stacked Modal Classes */
+.vdd-modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: calc(var(--vdd-z-base, 1000) + 9000);
+  animation: vdd-fade-in 0.18s ease-out;
+}
+
+.vdd-modal-curtain {
+  position: absolute;
+  inset: 0;
+  background-color: var(--vdd-modal-curtain-bg);
+  backdrop-filter: blur(6px);
+}
+
+.vdd-modal-window {
+  position: relative;
+  background: var(--vdd-modal-bg);
+  border: 1px solid var(--vdd-modal-border);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  border-radius: calc(12px * var(--vdd-radius-scale, 1));
+  display: flex;
+  flex-direction: column;
+  color: var(--vdd-text-primary);
+  max-width: 90%;
+  max-height: 90vh;
+  animation: vdd-scale-up 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden;
+}
+
+.vdd-modal-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--vdd-modal-header-border);
+  background-color: var(--vdd-modal-header-bg);
+}
+
+.vdd-modal-icon {
+  margin-right: 10px;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+}
+
+.vdd-modal-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+  flex-grow: 1;
+}
+
+.vdd-modal-close-button {
+  background: transparent;
+  border: none;
+  color: var(--vdd-text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: calc(4px * var(--vdd-radius-scale, 1));
+  transition: all 0.15s ease;
+}
+
+.vdd-modal-close-button:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--vdd-modal-close-hover-color);
+}
+
+.vdd-modal-body {
+  padding: 0;
+  overflow-y: auto;
+  max-height: calc(90vh - 70px);
+}
+
+/* Modal Sizes */
+.vdd-modal-size-small { 
+  width: 420px; 
+}
+.vdd-modal-size-medium { 
+  width: 560px; 
+}
+.vdd-modal-size-large { 
+  width: 800px; 
+}
+.vdd-modal-size-fullscreen {
+  width: 98vw;
+  height: 96vh;
+}
+.vdd-modal-size-auto { 
+  width: auto; 
+  min-width: 300px; 
+}
+

@@ -11,6 +11,29 @@ correspondence lives, alongside the feature-by-feature map in [docs/PARITY.md](d
 
 ## [Unreleased]
 
+## [1.7.1] — 2026-10-04
+
+**Parity: react-dockable-desktop 7.6.1** (internal restructuring). No behaviour, API or visual
+change.
+
+### Internal
+
+- **The stylesheet is built from area files.** `src/styles/NN-area.css` (tokens, base, tabs, grid,
+  taskbar, floating windows, context menu, drop zones, one file per skin, sidebar, modals, drawers,
+  RTL, toolbar, panel overlay, toasts, the Vue port's own structure…) are concatenated in file-name
+  order into `src/index.css`, which is generated and committed, and published as
+  `dist/styles.css`. The published stylesheet is byte-identical to 1.7.0 apart from a header
+  comment. To change a style, edit the area file and run `npm run css` (or `npm run css:watch`);
+  `npm run css:check` and a unit test fail if `src/index.css` is out of date. The gates read
+  `src/index.css` as before.
+
+### Tests
+
+- The M15 colour baseline (`scripts/gates/browser/fixtures/m15-branding-baseline.json`, which M16
+  also reads) is regenerated for 1.6.0's intended toolbar changes (toggle "on" colours and edge,
+  the new tokens, the vscode/macos light-mode hover), which 1.6.0 shipped without refreshing it.
+  Nothing in this release changes a colour.
+
 ## [1.7.0] — 2026-10-04
 
 **Parity: react-dockable-desktop 7.6.0.** Context menus open with nothing highlighted, the same

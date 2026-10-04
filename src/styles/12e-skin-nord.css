@@ -1,0 +1,57 @@
+/* --------------------------------------------------------------------------
+   SKIN 5: Nordic Frost Preset (Nord Theme)
+   -------------------------------------------------------------------------- */
+[data-vdd-skin="nord"] {
+  --vdd-skin-font-family: 'Avenir Next', 'Nunito', 'Segoe UI', system-ui, sans-serif; /* no official font: a softer humanist sans */
+  --vdd-bg-workspace: var(--vdd--b-bg-workspace, #2e3440);
+  --vdd-bg-panel: var(--vdd--b-bg-panel, #3b4252);
+  --vdd-bg-tab-bar: var(--vdd--b-bg-tab-bar, #2e3440);
+  --vdd-window-bg: color-mix(in srgb, var(--vdd--b-window-bg, rgb(59 66 82)) calc(var(--vdd-window-opacity, 1.0) * 100%), transparent);
+  --vdd-window-border: var(--vdd--b-window-border, #434c5e);
+  --vdd-window-header-bg: var(--vdd--b-window-header-bg, #2e3440);
+  --vdd-accent-color: var(--vdd-brand-accent, #88c0d0);
+  --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 20%, transparent);
+  --vdd-border-panel: var(--vdd--b-border-panel, #434c5e);
+  --vdd-bg-tab-inactive: var(--vdd--b-bg-tab-inactive, #2e3440);
+  --vdd-text-tab-inactive: var(--vdd--b-text-tab-inactive, #d8dee9);
+  --vdd-text-tab-active: var(--vdd--b-text-tab-active, #eceff4);
+  --vdd-panel-card-bg: var(--vdd--b-panel-card-bg, #2e3440);
+  --vdd-panel-card-border: var(--vdd--b-panel-card-border, #4c566a);
+  --vdd-close-btn-color: var(--vdd--b-close-btn-color, #d8dee9);
+  --vdd-close-btn-active-color: var(--vdd-accent-color);
+  --vdd-scrollbar-thumb: color-mix(in srgb, var(--vdd-accent-color) 25%, transparent);
+  --vdd-scrollbar-thumb-hover: color-mix(in srgb, var(--vdd-accent-color) 40%, transparent);
+  --vdd-window-text: var(--vdd--b-window-text, #eceff4);
+  --vdd-panel-text: var(--vdd--b-panel-text, #eceff4);
+  --vdd-tab-icon-active: var(--vdd-accent-color);
+  --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 14%, transparent);
+  --vdd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--vdd-accent-color) 22%, transparent);
+}
+
+[data-vdd-skin="nord"][data-color-scheme="light"] {
+  --vdd-bg-workspace: var(--vdd--b-bg-workspace, #e5e9f0);
+  --vdd-bg-panel: var(--vdd--b-bg-panel, #eceff4);
+  --vdd-bg-tab-bar: var(--vdd--b-bg-tab-bar, #e5e9f0);
+  --vdd-window-bg: color-mix(in srgb, var(--vdd--b-window-bg, rgb(236 239 244)) calc(var(--vdd-window-opacity, 1.0) * 100%), transparent);
+  --vdd-window-border: var(--vdd--b-window-border, #d8dee9);
+  --vdd-window-header-bg: var(--vdd--b-window-header-bg, #e5e9f0);
+  --vdd-accent-color: var(--vdd-brand-accent, #5e81ac);
+  --vdd-accent-glow: color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
+  --vdd-border-panel: var(--vdd--b-border-panel, #d8dee9);
+  --vdd-bg-tab-inactive: var(--vdd--b-bg-tab-inactive, #e5e9f0);
+  --vdd-text-tab-inactive: var(--vdd--b-text-tab-inactive, #4c566a);
+  --vdd-text-tab-active: var(--vdd--b-text-tab-active, #2e3440);
+  --vdd-panel-card-bg: var(--vdd--b-panel-card-bg, #e5e9f0);
+  --vdd-panel-card-border: var(--vdd--b-panel-card-border, #d8dee9);
+  --vdd-close-btn-color: var(--vdd--b-close-btn-color, #4c566a);
+  --vdd-close-btn-active-color: var(--vdd-accent-color);
+  --vdd-scrollbar-thumb: color-mix(in srgb, var(--vdd-accent-color) 20%, transparent);
+  --vdd-scrollbar-thumb-hover: color-mix(in srgb, var(--vdd-accent-color) 35%, transparent);
+  --vdd-window-text: var(--vdd--b-window-text, #2e3440);
+  --vdd-panel-text: var(--vdd--b-panel-text, #2e3440);
+  --vdd-panel-title-color: var(--vdd-accent-color);
+  --vdd-tab-icon-active: var(--vdd-accent-color);
+  --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 12%, transparent);
+  --vdd-toolbar-btn-toggle-active-bg: color-mix(in srgb, var(--vdd-accent-color) 16%, transparent);
+}
+

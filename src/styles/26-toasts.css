@@ -1,0 +1,103 @@
+/* ── Toast ── */
+
+/* Color tokens — match confirmation-alert-* palette exactly */
+:root {
+  --vdd-toast-info-color:    #67e8f9;
+  --vdd-toast-success-color: #4ade80;
+  --vdd-toast-warning-color: #fbbf24;
+  --vdd-toast-error-color:   #f87171;
+  --vdd-toast-bg: var(--vdd--b-toast-bg, #2a2d32);
+  --vdd-toast-border:        rgba(255, 255, 255, 0.14);
+}
+[data-color-scheme="light"] {
+  --vdd-toast-info-color:    #0369a1;
+  --vdd-toast-success-color: #15803d;
+  --vdd-toast-warning-color: #b45309;
+  --vdd-toast-error-color:   #b91c1c;
+  --vdd-toast-bg: var(--vdd--b-toast-bg, #ffffff);
+  --vdd-toast-border:        rgba(0, 0, 0, 0.14);
+}
+
+/* Position containers */
+.vdd-toast-container {
+  position: fixed; z-index: calc(var(--vdd-z-base, 1000) + 9100);
+  display: flex; gap: 8px; padding: 16px;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+.vdd-toast-container--top-right    { top: var(--vdd-toast-offset-top, 0px); right: 0; flex-direction: column; }
+.vdd-toast-container--top-left     { top: var(--vdd-toast-offset-top, 0px); left:  0; flex-direction: column; }
+.vdd-toast-container--bottom-right { bottom: var(--vdd-toast-offset-bottom, 0px); right: 0; flex-direction: column-reverse; }
+.vdd-toast-container--bottom-left  { bottom: var(--vdd-toast-offset-bottom, 0px); left:  0; flex-direction: column-reverse; }
+/* newestOnTop override inverts the column direction */
+.vdd-toast-container--newest-top.vdd-toast-container--bottom-right,
+.vdd-toast-container--newest-top.vdd-toast-container--bottom-left  { flex-direction: column; }
+.vdd-toast-container--newest-bottom.vdd-toast-container--top-right,
+.vdd-toast-container--newest-bottom.vdd-toast-container--top-left  { flex-direction: column-reverse; }
+
+/* Individual toast — base card */
+.vdd-toast {
+  pointer-events: all; position: relative; overflow: hidden;
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 20px 14px; border-radius: calc(6px * var(--vdd-radius-scale, 1));
+  background: var(--vdd-toast-bg, #2a2d32);
+  border: 1px solid var(--vdd-toast-border, rgba(255,255,255,0.14)); border-inline-start-width: 3px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.4), 0 2px 8px rgba(0,0,0,.2);
+  color: var(--vdd-sidebar-text-title, #cccccc);
+  font-size: 13.5px; line-height: 1.4; width: 100%;
+  transition: opacity 200ms ease, transform 200ms ease,
+              max-height 300ms ease, padding 300ms ease, margin 300ms ease;
+}
+/* Reserve space for the absolute-positioned close button */
+.vdd-toast:has(.vdd-toast__close) { padding-inline-end: 32px; }
+
+/* Type-specific: solid background, accent inline-start border only */
+.vdd-toast--info    { border-inline-start-color: var(--vdd-toast-info-color); }
+.vdd-toast--success { border-inline-start-color: var(--vdd-toast-success-color); }
+.vdd-toast--warning { border-inline-start-color: var(--vdd-toast-warning-color); }
+.vdd-toast--error   { border-inline-start-color: var(--vdd-toast-error-color); }
+
+/* Entry animation classes toggled by JS on next frame */
+.vdd-toast--entering        { opacity: 0; transform: translateX(110%); }
+.vdd-toast--entering-left   { opacity: 0; transform: translateX(-110%); }
+.vdd-toast--fade-entering   { opacity: 0; transform: translateX(0); }
+.vdd-toast--visible         { opacity: 1; transform: translateX(0); }
+/* Exit: fade out + height collapse for gravity slide effect */
+.vdd-toast--exiting {
+  opacity: 0; max-height: 0 !important;
+  padding-top: 0; padding-bottom: 0; margin: 0;
+}
+
+/* Icon */
+.vdd-toast__icon { flex-shrink: 0; width: 16px; height: 16px; margin-top: 1px; }
+.vdd-toast--info    .vdd-toast__icon { color: var(--vdd-toast-info-color); }
+.vdd-toast--success .vdd-toast__icon { color: var(--vdd-toast-success-color); }
+.vdd-toast--warning .vdd-toast__icon { color: var(--vdd-toast-warning-color); }
+.vdd-toast--error   .vdd-toast__icon { color: var(--vdd-toast-error-color); }
+
+/* Body & close button */
+.vdd-toast__body { flex: 1; min-width: 0; word-break: break-word; }
+.vdd-toast__close {
+  position: absolute; top: 8px; inset-inline-end: 10px;
+  background: none; border: none; cursor: pointer;
+  opacity: .5; padding: 2px; color: inherit; line-height: 1;
+}
+.vdd-toast__close:hover { opacity: 1; }
+
+/* Progress bar */
+.vdd-toast__progress {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+  transform-origin: left; animation: vdd-toast-shrink linear forwards;
+}
+.vdd-toast--paused .vdd-toast__progress { animation-play-state: paused; }
+.vdd-toast--info    .vdd-toast__progress { background: var(--vdd-toast-info-color); }
+.vdd-toast--success .vdd-toast__progress { background: var(--vdd-toast-success-color); }
+.vdd-toast--warning .vdd-toast__progress { background: var(--vdd-toast-warning-color); }
+.vdd-toast--error   .vdd-toast__progress { background: var(--vdd-toast-error-color); }
+
+@keyframes vdd-toast-shrink { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+/* Toast RTL: flip icon/body order and progress bar collapse direction */
+[dir="rtl"] .vdd-toast           { flex-direction: row-reverse; }
+[dir="rtl"] .vdd-toast__progress { transform-origin: right; }
+

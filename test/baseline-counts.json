@@ -7,7 +7,7 @@
   "registry.test.ts": 9,
   "serializable.test.ts": 12,
   "stretch.test.ts": 12,
-  "stylesheet.test.ts": 36,
+  "stylesheet.test.ts": 37,
   "round-trip.test.ts": 27,
   "usePanel.test.ts": 18,
   "useWorkspace.test.ts": 9,

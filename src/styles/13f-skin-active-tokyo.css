@@ -1,0 +1,36 @@
+/* --------------------------------------------------------------------------
+   tokyo — Neon Pulse (accent-blue tint, vivid neon glow)
+   -------------------------------------------------------------------------- */
+[data-vdd-skin="tokyo"] {
+  --vdd-tab-btn-active-bg: color-mix(in srgb, var(--vdd-accent-color) 10%, transparent);
+  --vdd-tab-btn-active-shadow: inset 0 0 16px color-mix(in srgb, var(--vdd-accent-color) 12%, transparent);
+  --vdd-tab-btn-active-glow: drop-shadow(0 0 6px color-mix(in srgb, var(--vdd-accent-color) 65%, transparent));
+  --vdd-tab-accent-bar-width: 2px;
+  --vdd-toolbar-btn-radio-active-bg: color-mix(in srgb, var(--vdd-accent-color) 10%, transparent);
+  --vdd-toolbar-btn-active-shadow: inset 0 0 16px color-mix(in srgb, var(--vdd-accent-color) 12%, transparent);
+  --vdd-toolbar-btn-active-glow: drop-shadow(0 0 6px color-mix(in srgb, var(--vdd-accent-color) 65%, transparent));
+  --vdd-toolbar-accent-bar-width: 2px;
+}
+[data-vdd-skin="tokyo"] .vdd-sidebar-tabs-strip.vdd-left .vdd-sidebar-tab-btn.vdd-active {
+  box-shadow: var(--vdd-tab-btn-active-shadow), inset 3px 0 12px color-mix(in srgb, var(--vdd-accent-color) 18%, transparent) !important;
+}
+[data-vdd-skin="tokyo"] .vdd-sidebar-tabs-strip.vdd-right .vdd-sidebar-tab-btn.vdd-active {
+  box-shadow: var(--vdd-tab-btn-active-shadow), inset -3px 0 12px color-mix(in srgb, var(--vdd-accent-color) 18%, transparent) !important;
+}
+[data-vdd-skin="tokyo"] .vdd-toolbar-strip.vdd-left .vdd-toolbar-btn-radio.vdd-active,
+[data-vdd-skin="tokyo"] .vdd-toolbar-strip.vdd-left .vdd-toolbar-btn-group.vdd-active {
+  box-shadow: var(--vdd-toolbar-btn-active-shadow), inset 3px 0 12px color-mix(in srgb, var(--vdd-accent-color) 18%, transparent) !important;
+}
+[data-vdd-skin="tokyo"] .vdd-toolbar-strip.vdd-right .vdd-toolbar-btn-radio.vdd-active,
+[data-vdd-skin="tokyo"] .vdd-toolbar-strip.vdd-right .vdd-toolbar-btn-group.vdd-active {
+  box-shadow: var(--vdd-toolbar-btn-active-shadow), inset -3px 0 12px color-mix(in srgb, var(--vdd-accent-color) 18%, transparent) !important;
+}
+[data-vdd-skin="tokyo"] .vdd-toolbar-strip.vdd-top .vdd-toolbar-btn-radio.vdd-active,
+[data-vdd-skin="tokyo"] .vdd-toolbar-strip.vdd-top .vdd-toolbar-btn-group.vdd-active {
+  box-shadow: var(--vdd-toolbar-btn-active-shadow), inset 0 -3px 12px color-mix(in srgb, var(--vdd-accent-color) 18%, transparent) !important;
+}
+[data-vdd-skin="tokyo"] .vdd-toolbar-strip.vdd-bottom .vdd-toolbar-btn-radio.vdd-active,
+[data-vdd-skin="tokyo"] .vdd-toolbar-strip.vdd-bottom .vdd-toolbar-btn-group.vdd-active {
+  box-shadow: var(--vdd-toolbar-btn-active-shadow), inset 0 3px 12px color-mix(in srgb, var(--vdd-accent-color) 18%, transparent) !important;
+}
+
