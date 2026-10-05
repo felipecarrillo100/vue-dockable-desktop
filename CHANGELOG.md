@@ -11,6 +11,21 @@ correspondence lives, alongside the feature-by-feature map in [docs/PARITY.md](d
 
 ## [Unreleased]
 
+**Parity: react-dockable-desktop 7.7.1.** Two desktops on one page no longer strip each other's
+skin.
+
+### Fixed
+
+- **Unmounting one desktop stripped `<html>` of the other's skin, animations opt-out and stacking
+  base** (`data-vdd-skin`, `vdd-no-animations`, `--vdd-z-base`), and each desktop overwrote the
+  other's while both were mounted. The most recently mounted desktop now decides these, and
+  unmounting it hands them back to the others instead of removing them. Teleported chrome (menus,
+  toasts, flyouts, modals) therefore follows the newest desktop's skin when two desktops use
+  different skins.
+
+rdd 7.7.1 also fixed panel DOM, sizes and lifecycle handlers shared between workspaces. None of it
+applied here: vdd's panel cache has been per desktop from the start.
+
 ### Internal
 
 Faster checks, the same checks. Nothing in the published package changes.
