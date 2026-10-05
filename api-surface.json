@@ -1,6 +1,7 @@
 {
   "exports": [
     "PanelRegistry",
+    "VddAlert",
     "VddConfirm",
     "VddContextMenu",
     "VddDesktop",
@@ -51,11 +52,13 @@
     "version"
   ],
   "types": [
+    "AlertOptions",
     "AlertType",
     "BuiltInEvents",
     "ButtonVariant",
     "ColorScheme",
     "ConfirmDiscard",
+    "ConfirmOptions",
     "ContainerType",
     "ContextMenuCheckbox",
     "ContextMenuItem",

@@ -136,6 +136,9 @@ export const COMPOSED_CLASSES = {
   // `vdd-confirmation-alert-${alertType}` — VddConfirm
   'vdd-confirmation-alert-${alertType}': ['info', 'warning', 'success', 'danger']
     .map(t => `vdd-confirmation-alert-${t}`),
+  // `vdd-dialog-icon-${type}` — VddDialogIcon
+  'vdd-dialog-icon-${type}': ['info', 'warning', 'success', 'danger']
+    .map(t => `vdd-dialog-icon-${t}`),
   // `vdd-modal-size-${size}` — VddModalHost
   'vdd-modal-size-${size}': ['small', 'medium', 'large', 'fullscreen', 'auto']
     .map(s => `vdd-modal-size-${s}`),

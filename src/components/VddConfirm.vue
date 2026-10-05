@@ -8,9 +8,11 @@
  * `requestClose()` awaiting forever if the user pressed Escape.
  */
 import { onBeforeUnmount, onMounted, useTemplateRef } from 'vue'
+import type { Component } from 'vue'
 import { useWorkspace } from '../composables/useWorkspace'
 import { usePanel } from '../composables/usePanel'
 import type { AlertType, Label } from '../types'
+import VddDialogIcon from './VddDialogIcon.vue'
 
 const props = withDefaults(defineProps<{
   message: Label
@@ -23,7 +25,12 @@ const props = withDefaults(defineProps<{
   onCancel?: () => void
   /** Called exactly once, whichever way the dialog closes. `ok` says which. */
   onSettled?: (ok: boolean) => void
-}>(), { alertType: 'info', yesNo: false })
+  /**
+   * The icon left of the message (1.8.0): omit it for the built-in question mark, pass `null`
+   * for none, or pass a component. Coloured by `alertType`.
+   */
+  icon?: Component | null
+}>(), { alertType: 'info', yesNo: false, icon: undefined })
 
 const ws = useWorkspace()
 const panel = usePanel()
@@ -64,7 +71,10 @@ onBeforeUnmount(() => settle(false))
       <span>{{ alert }}</span>
     </div>
 
-    <div class="vdd-confirmation-message">{{ ws.format(message) }}</div>
+    <div class="vdd-dialog-content">
+      <VddDialogIcon :icon="icon" :type="alertType" question />
+      <div class="vdd-confirmation-message">{{ ws.format(message) }}</div>
+    </div>
 
     <div class="vdd-confirmation-actions">
       <button type="button" class="vdd-btn vdd-btn-sm vdd-btn-outline" data-vdd-confirm-cancel @click="cancel">

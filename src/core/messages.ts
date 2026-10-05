@@ -31,6 +31,9 @@ export const defaultMessages = {
   yes: { id: 'vdd.yes', defaultMessage: 'Yes' },
   no: { id: 'vdd.no', defaultMessage: 'No' },
   ok: { id: 'vdd.ok', defaultMessage: 'OK' },
+  // The default titles of useModals().confirm() and .alert() (1.8.0).
+  confirmTitle: { id: 'vdd.confirmTitle', defaultMessage: 'Confirmation' },
+  alertTitle: { id: 'vdd.alertTitle', defaultMessage: 'Information' },
   closeTooltip: { id: 'vdd.closeTooltip', defaultMessage: 'Close' },
   scrollTabsLeft: { id: 'vdd.scrollTabsLeft', defaultMessage: 'Scroll tabs left' },
   scrollTabsRight: { id: 'vdd.scrollTabsRight', defaultMessage: 'Scroll tabs right' },

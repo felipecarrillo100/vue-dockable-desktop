@@ -2,6 +2,33 @@ import { computed } from 'vue'
 import type { Component, ComputedRef } from 'vue'
 import { useWorkspace } from './useWorkspace'
 import type { ModalOptions, OverlayInstance, SidePanelOptions } from '../core/overlays'
+import type { AlertType, Label } from '../types'
+import VddConfirm from '../components/VddConfirm.vue'
+import VddAlert from '../components/VddAlert.vue'
+
+/** Options of `useModals().confirm()`. The title defaults to the `confirmTitle` message. */
+export interface ConfirmOptions {
+  message: Label
+  title?: Label
+  alert?: string
+  alertType?: AlertType
+  icon?: Component | null
+  /** Label the buttons "Yes"/"No" rather than "OK"/"Cancel". */
+  yesNo?: boolean
+  /** @default 'small' */
+  size?: ModalOptions['size']
+}
+
+/** Options of `useModals().alert()`. The title defaults to the `alertTitle` message. */
+export interface AlertOptions {
+  message: Label
+  title?: Label
+  alertType?: AlertType
+  icon?: Component | null
+  okLabel?: Label
+  /** @default 'small' */
+  size?: ModalOptions['size']
+}
 
 /**
  * The modal stack.
@@ -26,14 +53,30 @@ export function useModals(): {
   /** Close, honouring the modal's close guard and dirty state. */
   close: (id: string, options?: { force?: boolean }) => Promise<void>
   closeAll: () => void
+  /**
+   * Open a `<VddConfirm>` (1.8.0). Resolves `true` for the confirm button, `false` for cancel and
+   * for any dismissal — Escape, the backdrop, the ×, or a close by code.
+   */
+  confirm: (options: ConfirmOptions) => Promise<boolean>
+  /** Open a `<VddAlert>` (1.8.0). Resolves once it is closed, however. */
+  alert: (options: AlertOptions) => Promise<void>
 } {
-  const { overlays } = useWorkspace()
+  const ws = useWorkspace()
+  const { overlays } = ws
   return {
     stack: computed(() => overlays.state.modals),
     topmost: computed(() => overlays.state.modals[overlays.state.modals.length - 1] ?? null),
     open: overlays.openModal,
     close: (id, options) => overlays.requestClose(id, options),
     closeAll: overlays.closeAllModals,
+    confirm: ({ message, title, alert, alertType, icon, yesNo, size = 'small' }) => new Promise<boolean>((resolve) => {
+      overlays.openModal(VddConfirm, { message, alert, alertType, icon, yesNo, onSettled: resolve },
+        { title: title ?? ws.messages.confirmTitle, size })
+    }),
+    alert: ({ message, title, alertType, icon, okLabel, size = 'small' }) => new Promise<void>((resolve) => {
+      overlays.openModal(VddAlert, { message, alertType, icon, okLabel, onSettled: resolve },
+        { title: title ?? ws.messages.alertTitle, size })
+    }),
   }
 }
 

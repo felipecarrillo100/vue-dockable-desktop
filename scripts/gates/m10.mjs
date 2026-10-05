@@ -22,6 +22,7 @@ const modalHost = src('src/components/VddModalHost.vue')
 const sidePanelHost = src('src/components/VddSidePanelHost.vue')
 const frame = src('src/components/VddOverlayFrame.vue')
 const confirm = src('src/components/VddConfirm.vue')
+const alert = src('src/components/VddAlert.vue')
 const toast = src('src/core/toast.ts')
 const toasts = src('src/components/VddToasts.vue')
 const toastItem = src('src/components/VddToastItem.vue')
@@ -59,6 +60,10 @@ must(/onBeforeUnmount\(\(\) => overlays\.setConfirmRenderer\(null\)\)/.test(moda
 must(/onBeforeUnmount\(\(\) => settle\(false\)\)/.test(confirm),
   'the question must resolve when dismissed by Escape, the backdrop or the x')
 must(/if \(settled\) return/.test(confirm), 'it must resolve exactly once')
+// The alert (1.8.0) answers to the same rule: an acknowledgement nobody hears is a hang too.
+must(/onBeforeUnmount\(\(\) => settle\(\)\)/.test(alert),
+  'the alert must settle when dismissed by Escape, the backdrop or the x')
+must(/if \(settled\) return/.test(alert), 'the alert must settle exactly once')
 
 // ── 3. Escape routing, stated once ─────────────────────────────────────────
 // rdd expressed the same rule twice in two shapes: `modals.length === 0` in the drawer and

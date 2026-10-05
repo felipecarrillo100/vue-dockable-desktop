@@ -6,7 +6,7 @@
  */
 
 /** The library version, mirroring `package.json`. */
-export const version = '1.7.2'
+export const version = '1.8.0'
 
 // ─── The workspace ───────────────────────────────────────────────────────────
 // `createWorkspace()` returns both the imperative API and a Vue plugin, the shape
@@ -25,6 +25,7 @@ export { default as VddSidePanels } from './components/VddSidePanels.vue'
 export { default as VddModals } from './components/VddModals.vue'
 export { default as VddToasts } from './components/VddToasts.vue'
 export { default as VddConfirm } from './components/VddConfirm.vue'
+export { default as VddAlert } from './components/VddAlert.vue'
 
 // ─── Panel overlay — toolbars and floating widgets inside one panel ──────────
 export { default as VddPanelOverlay } from './components/VddPanelOverlay.vue'
@@ -46,6 +47,7 @@ export { useToolbar } from './composables/useToolbar'
 export { usePanel } from './composables/usePanel'
 export type { UsePanelReturn } from './composables/usePanel'
 export { useModals, useSidePanels } from './composables/useOverlays'
+export type { ConfirmOptions, AlertOptions } from './composables/useOverlays'
 export { useFloatingWidgets } from './composables/usePanelOverlay'
 export {
   usePanelContribution,
