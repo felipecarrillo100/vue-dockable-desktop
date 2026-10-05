@@ -468,6 +468,23 @@ check('M16 catches the dark brand surface under [data-color-scheme="dark"]', 'do
   s => s.replace(':root:not([data-color-scheme="light"]) {\n  --vdd-brand-surface', '[data-color-scheme="dark"] {\n  --vdd-brand-surface'),
   'node scripts/gates/m16.mjs')
 
+// The rules ADR 0020 updated (1.8.x): each still fails on the defect it is for.
+check('M2 catches a pure module importing vue', 'src/core/stretch.ts',
+  s => "import { ref } from 'vue'\n" + s,
+  'node scripts/gates/m2.mjs')
+
+check('M5 catches the clamp no longer keeping the title bar grabbable', 'src/core/anchorGeometry.ts',
+  s => s.replace('view.width - 100', 'view.width - 0'),
+  'node scripts/gates/m5.mjs')
+
+check('M5 catches anchored windows being clamped too', 'src/core/anchorGeometry.ts',
+  s => s.replace('if (!anchored) {', 'if (true) {'),
+  'node scripts/gates/m5.mjs')
+
+check('M5 catches the desktop no longer clamping through clampFloatingRect', 'src/components/VddDesktop.vue',
+  s => s.replace('clampFloatingRect(current, view, w.anchor != null)', 'current'),
+  'node scripts/gates/m5.mjs')
+
 // The 1.5.0 rules: the fixes stay documented, and the manual stops claiming the old limits.
 check('M17 catches the frost section removed', 'docs/manual/10-theming.md',
   s => s.replace('## Frosted glass and your own overlays\n', '## Frosted glass\n'),
@@ -487,6 +504,17 @@ if (existsSync(hidden)) {
                  output: (r.stderr || r.stdout).trim().split('\n').slice(0, 2).join(' | ') })
   copyFileSync(`${hidden}.selftest-backup`, hidden)
   unlinkSync(`${hidden}.selftest-backup`)
+}
+
+// Leave the tree as a gate expects it. Four checks rebuild dist/ from a mutated source and one
+// overwrites the coverage report with a run that had a test file blanked; the sources are restored
+// but those outputs are not, so a following M13 or api-surface would read stale results. Rebuild
+// both from the restored tree.
+process.stdout.write('\n  restoring dist/ and the coverage report from the restored sources …\n')
+const rebuilt = run('npm run build >/dev/null 2>&1 && npm run gate:sweep >/dev/null 2>&1')
+if (rebuilt.status !== 0) {
+  results.push({ name: 'selftest leaves dist/ and coverage fresh', caught: false,
+                 output: 'npm run build && npm run gate:sweep failed after the checks' })
 }
 
 const failed = results.filter(r => !r.caught)

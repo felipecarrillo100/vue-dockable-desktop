@@ -9,7 +9,8 @@ const must = (cond, msg) => { if (!cond) failures.push(msg) }
 // 1. The pure modules must not import Vue. This is the architectural claim of M2: the tree
 //    maths, resize maths, stretch algebra and layout parsing are testable and reusable
 //    without a framework, and cannot quietly acquire a dependency on one.
-const PURE = ['dragResize', 'layoutTree', 'stretch', 'anchorGeometry', 'rtl', 'serialize']
+// `rtl` was here until M13 deleted it as dead code (ADR 0020).
+const PURE = ['dragResize', 'layoutTree', 'stretch', 'anchorGeometry', 'serialize']
 for (const name of PURE) {
   const path = `src/core/${name}.ts`
   must(existsSync(path), `missing ${path}`)

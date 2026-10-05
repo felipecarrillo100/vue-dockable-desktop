@@ -32,11 +32,17 @@ const anchorBlock = win.slice(win.indexOf('if (w.anchor)'), win.indexOf('return 
 must(!/\bleft:|\bright:/.test(anchorBlock),
   'the anchored branch must not set physical left/right — that defeats the mirroring')
 
-// 3. Resizing a workspace must not leave a window unreachable.
+// 3. Resizing a workspace must not leave a window unreachable. The arithmetic is the pure
+//    clampFloatingRect (it lived inline in VddDesktop.vue until it moved — ADR 0020), and the
+//    desktop applies it to every window, saying whether each is anchored.
 const desktop = readFileSync('src/components/VddDesktop.vue', 'utf8')
-must(/view\.width - 100/.test(desktop), 'the clamp must keep part of the title bar grabbable')
-must(/if \(!w\.anchor\)/.test(desktop),
+const geometry = readFileSync('src/core/anchorGeometry.ts', 'utf8')
+const clamp = geometry.slice(geometry.indexOf('export function clampFloatingRect'))
+must(/view\.width - 100/.test(clamp), 'the clamp must keep part of the title bar grabbable')
+must(/if \(!anchored\)/.test(clamp),
   'position must be clamped only for free-floating windows: an anchored window is placed by its anchor')
+must(/clampFloatingRect\(current, view, w\.anchor != null\)/.test(desktop),
+  'the desktop must clamp every floating window through clampFloatingRect, passing whether it is anchored')
 
 // 4. All eight handles, and none while maximized.
 must((win.match(/'n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'/) ?? []).length === 1,

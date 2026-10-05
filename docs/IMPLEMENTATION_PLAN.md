@@ -57,6 +57,20 @@ These are the point of the whole scheme. Without them, "all gates green" means n
 | Prefix | `scripts/gates/css-prefix.mjs` — zero unprefixed classes or tokens in `src/index.css` ([0008](decisions/0008-css-prefix.md)) |
 | Public API | `scripts/gates/api-surface.mjs` — exports match the documented surface; an accidental addition or removal fails |
 
+**Two tiers, and one release pass** (1.8.x). Nothing is dropped; it is run less often and without
+repeating itself:
+
+| Command | When | What |
+|---|---|---|
+| `npm run verify` | while working | types, lint and the test suite — about a minute. Not a gate. |
+| `npm run gate:release` | before a release | `gate:sweep`, then every milestone gate M1–M17 in one `npm run gate` call |
+| `npm run gate -- M<n>` | one milestone | exactly as before |
+
+Several milestones in one `npm run gate` call share one standing gate; each milestone's own gate
+and browser gate still run in full. Each step's time is in `artifacts/M<n>/gate.json`. After
+`gate:selftest`, which builds from mutated sources, the selftest itself rebuilds `dist/` and re-runs
+`gate:sweep`, so the next gate never reads its leftovers.
+
 ### Stop-and-ask conditions
 
 Execution halts and reports, rather than improvising, when:
