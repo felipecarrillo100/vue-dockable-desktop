@@ -150,6 +150,10 @@ check('M10 catches confirmDiscard defaulting to true with no renderer', 'src/cor
                  'confirmRenderer?.(request) ?? Promise.resolve(true)'),
   'node scripts/gates/m10.mjs')
 
+check('M10 catches an alert that never settles when dismissed (1.8.0)', 'src/components/VddAlert.vue',
+  s => s.replace('onBeforeUnmount(() => settle())', 'onBeforeUnmount(() => {})'),
+  'node scripts/gates/m10.mjs')
+
 check('M10 catches a host re-implementing its own Escape handler', 'src/components/VddModalHost.vue',
   s => s.replace('const sizeClass = computed',
                  "document.addEventListener('keydown', e => { if (e.key === 'Escape') close() })\nconst sizeClass = computed"),
@@ -372,7 +376,9 @@ check('M13 catches a consumer hook that has quietly gained a rule', 'src/index.c
   s => s + '\n.vdd-row { color: red; }\n',
   'node scripts/gates/m13.mjs')
 
-check('non-vacuity catches a module the suite never executes', 'test/composables/useOverlays.test.ts',
+// useContributions.ts is reached by this one test file only. (It was useOverlays.test.ts until
+// 1.8.0, when dialogs.test.ts began exercising useOverlays.ts too.)
+check('non-vacuity catches a module the suite never executes', 'test/composables/contributions.test.ts',
   _s => 'import { describe, it } from \'vitest\'\ndescribe(\'disabled\', () => { it(\'placeholder\', () => {}) })\n',
   'npx vitest run --coverage --silent >/dev/null 2>&1 && node scripts/gates/non-vacuity.mjs')
 

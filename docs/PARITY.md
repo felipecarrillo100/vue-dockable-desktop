@@ -69,6 +69,7 @@ port; the stylesheets agree on it, prefix aside.
 | `<ToolbarButton>` / `<ToolbarToggle>` / `<ToolbarSearchInput>` | `<VddToolbarButton>` / `<VddToolbarToggle>` / `<VddToolbarSearch>` |
 | `<PanelFloatingWindow>` | `<VddFloatingWidget>` |
 | `<ConfirmationForm>` | `<VddConfirm>` |
+| `RddAlert` (7.7.0) | `<VddAlert>` (1.8.0) |
 
 ### Two-way state → `v-model` ([0005](decisions/0005-vmodel.md))
 
@@ -212,6 +213,21 @@ quietly dropped from it.
 
 Every "substitute", "rewrite" and "moot" above must be justified in its test file's header
 comment, so a reviewer can see the trade rather than discover a silent gap.
+
+### rdd 7.7.0 dialogs, traced
+
+| rdd 7.7.0 | vdd 1.8.0 |
+|---|---|
+| `RddConfirm` `icon` prop, question icon beside the message | `<VddConfirm>` `icon` prop, via the internal `VddDialogIcon.vue` |
+| `RddAlert` | `<VddAlert>` |
+| `useModals().confirm()` / `.alert()`, `ConfirmOptions` / `AlertOptions` | the same, on `useModals()` |
+| `rdd-dialog-icon-{type}` from the `--rdd-toast-*-color` tokens | `vdd-dialog-icon-{type}` from `--vdd-toast-*-color` |
+| `data-rdd-alert-ok`; `data-rdd-confirm-ok` / `-cancel` (new in rdd) | `data-vdd-alert-ok`; the confirm hooks already existed |
+| `alertTitle` message; confirm title from `modalTitle` | `alertTitle` and `confirmTitle` (vdd had no default modal title) |
+| `RddConfirm` `onSettled`; fix: dismissal never settled | already: `<VddConfirm>` settled on unmount since 1.0 |
+| fix: `RddConfirm` overwrote the header icon | already: `<VddConfirm>` cleared it rather than setting one |
+| `onClose` now fires in modals and drawers | already: vdd's panel lifecycle covered overlays |
+| `Dialogs.test.tsx` | `test/components/dialogs.test.ts` |
 
 ### rdd 7.6.2 icon-button padding, traced
 

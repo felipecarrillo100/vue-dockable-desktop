@@ -44,6 +44,7 @@ any component mounts, which is why none of the composables below need a provider
 | `VddModals` | The modal stack. Mount one — the unsaved-changes dialog needs it. [Ch. 8](08-overlays.md) |
 | `VddToasts` | The notification host. Mount one. [Ch. 8](08-overlays.md) |
 | `VddConfirm` | A confirm/cancel dialog body, reusable as a modal. [Ch. 8](08-overlays.md) |
+| `VddAlert` | A message dialog body with one OK button. [Ch. 8](08-overlays.md) |
 | `VddPanelOverlay` | The root for one panel's own toolbars and widgets. [Ch. 7](07-panel-overlay.md) |
 | `VddPanelToolbar` | A toolbar on one edge of a panel. [Ch. 7](07-panel-overlay.md) |
 | `VddFloatingWidget` | A floating widget inside a panel. [Ch. 7](07-panel-overlay.md) |
@@ -59,7 +60,7 @@ the tree does not matter.
 |---|---|
 | `useWorkspace()` | The workspace, anywhere inside the app. Destructuring keeps reactivity. [Ch. 2](02-concepts.md) |
 | `usePanel()` | A panel's view of itself: `isActive`, `isMinimized`, `size`, `close`, `setDirty`, `onBeforeClose`, `onSaveState`. Returns `UsePanelReturn`. [Ch. 3](03-panels.md) |
-| `useModals()`, `useSidePanels()` | Open and close overlays. [Ch. 8](08-overlays.md) |
+| `useModals()`, `useSidePanels()` | Open and close overlays; `useModals().confirm()` / `.alert()` return promises. [Ch. 8](08-overlays.md) |
 | `useContextMenu()` | Open a menu from anywhere. [Ch. 8](08-overlays.md) |
 | `usePanelContextMenu(getter)` | Contribute items to *this panel's* own menu. [Ch. 3](03-panels.md) |
 | `useSidebar()`, `useSidebarTab()` | Control the sidebar, or the tab you are inside. [Ch. 6](06-sidebar-toolbar.md) |
@@ -114,7 +115,7 @@ Grouped by what they describe. All are type-only exports.
 `ContextMenuSubMenu`, `ContextMenuCheckbox`, `ShowContextMenuOptions`.
 
 **Overlays** — `Overlays`, `OverlayInstance`, `OverlayKind`, `OverlayState`,
-`SidePanelOptions`, `ModalOptions`, `ConfirmDiscard`.
+`SidePanelOptions`, `ModalOptions`, `ConfirmDiscard`, `ConfirmOptions`, `AlertOptions`.
 
 **Toasts** — `ToastFunction`, `ToastOptions`, `ResolvedToastOptions`, `ToastType`,
 `ToastPosition`, `ToastAdapter`, `ToastRecord`, `ToastPromiseMessages`.

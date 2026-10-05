@@ -11,6 +11,55 @@ correspondence lives, alongside the feature-by-feature map in [docs/PARITY.md](d
 
 ## [Unreleased]
 
+## [1.8.0] — 2026-10-05
+
+**Parity: react-dockable-desktop 7.7.0.** Ready-made dialogs: the confirmation shows an icon,
+a new alert dialog, and both as promises.
+
+### Added
+
+- **`<VddConfirm>` shows an icon left of its message**: a question mark, coloured by
+  `alertType` (info, success, warning, danger) with the toast colour tokens. The new `icon` prop
+  replaces it with your own component; `icon: null` hides it.
+- **`<VddAlert>`**: a message with a single OK button, for telling rather than asking. Its icon
+  follows `alertType`, with the same `icon` override. Props: `message`, `alertType`, `icon`,
+  `okLabel`, `onSettled`. Focus starts on OK and Enter presses it; Escape, the backdrop and the ×
+  acknowledge it too, unless the modal is `closable: false`. Button hook: `data-vdd-alert-ok`.
+- **`useModals().confirm(options)` and `useModals().alert(options)`** open those dialogs (size
+  `small`) and return a promise: `confirm` resolves `true` for the confirm button and `false` for
+  cancel or any dismissal; `alert` resolves once it is closed. Option types: `ConfirmOptions`,
+  `AlertOptions`.
+- **Message keys `confirmTitle`** ("Confirmation") **and `alertTitle`** ("Information"), the
+  helpers' default titles. A table typed `Record<MessageKey, string>` needs the two new keys.
+- New classes: `vdd-dialog-content`, `vdd-dialog-icon`, `vdd-dialog-icon-{info|success|warning|danger}`.
+
+rdd 7.7.0 also fixed an `RddConfirm` that never answered when dismissed, and one that overwrote
+the modal's header icon. Neither applied here: `<VddConfirm>` already settled on unmount and
+never set a header icon.
+
+### Upgrading
+
+- A confirmation now draws a question mark beside its message. Pass `icon: null` to keep the
+  old look.
+- The line under a confirmation's message is now the border of the new icon row,
+  `.vdd-dialog-content`, so it spans the icon too; it was `.vdd-confirmation-message`'s own
+  `border-bottom`. A stylesheet that restyled that border should target `.vdd-dialog-content`.
+
+### Tests
+
+- `test/components/dialogs.test.ts`: settle-once for every exit of both dialogs (Escape,
+  backdrop, ×, `closeAllModals`, `close(id)`, the buttons); default, custom and hidden icons;
+  the header icon left alone; alert focus, label and `closable: false`; both promise helpers.
+  Each assertion was seen failing with its code removed.
+- M10 checks that `<VddAlert>` settles on unmount and only once (with a selftest mutation). The
+  non-vacuity selftest now blanks `contributions.test.ts`: `useOverlays.ts` is reached by the new
+  dialog tests too, so blanking `useOverlays.test.ts` no longer leaves a module unexecuted.
+- `test/core/stylesheet.test.ts`: every dialog-icon class has a rule coloured from a toast token,
+  and the separator is the icon row's border, not the message's (seen failing with each removed).
+- The M15 colour baseline (`scripts/gates/browser/fixtures/m15-branding-baseline.json`, which M16
+  also reads) is regenerated on purpose: its scenes include a confirmation, whose message now sits
+  in the icon row. Nothing outside that modal changed.
+
 ## [1.7.2] — 2026-10-04
 
 **Parity: react-dockable-desktop 7.6.2.**

@@ -7,7 +7,7 @@
   "registry.test.ts": 9,
   "serializable.test.ts": 12,
   "stretch.test.ts": 12,
-  "stylesheet.test.ts": 38,
+  "stylesheet.test.ts": 40,
   "round-trip.test.ts": 27,
   "usePanel.test.ts": 18,
   "useWorkspace.test.ts": 9,
@@ -40,5 +40,6 @@
   "renderToString.test.ts": 3,
   "fieldReport.test.ts": 6,
   "dragBlur.test.ts": 5,
-  "reviewFixes.test.ts": 8
+  "reviewFixes.test.ts": 8,
+  "dialogs.test.ts": 23
 }

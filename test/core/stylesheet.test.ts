@@ -31,6 +31,20 @@ const rule = (selector: string): string | null => {
   const m = css.match(new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\{[^}]*\\}`))
   return m ? m[0] : null
 }
+describe('the dialog icon row (1.8.0, rdd 7.7.0)', () => {
+  it('every class the dialog icon emits has a rule, and its colour comes from a toast token', () => {
+    expect(rule('.vdd-dialog-icon'), '.vdd-dialog-icon').toMatch(/width:\s*24px/)
+    for (const [type, token] of [['info', 'info'], ['success', 'success'], ['warning', 'warning'], ['danger', 'error']]) {
+      expect(rule(`.vdd-dialog-icon-${type}`), type).toMatch(new RegExp(`color:\\s*var\\(--vdd-toast-${token}-color\\)`))
+    }
+  })
+
+  it('the separator is the row\'s border, so it spans the icon as well as the message', () => {
+    expect(rule('.vdd-dialog-content'), '.vdd-dialog-content').toMatch(/border-bottom:/)
+    expect(rule('.vdd-confirmation-message'), '.vdd-confirmation-message').not.toMatch(/border-bottom:/)
+  })
+})
+
 
 // A <button> keeps the browser's own padding (1px 6px in Chrome) unless something resets it, and
 // every vdd- element is border-box, so on a page without a CSS reset that padding came out of the

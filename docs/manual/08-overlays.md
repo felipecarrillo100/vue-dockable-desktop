@@ -22,7 +22,7 @@ one case where forgetting has a visible consequence.
 ## Modals
 
 ```ts
-const { open, close, closeAll, stack, topmost } = useModals()
+const { open, close, closeAll, stack, topmost, confirm, alert } = useModals()
 
 const id = open(EditFeature, { featureId: 42 }, { title: 'Edit feature', size: 'medium' })
 ```
@@ -33,7 +33,7 @@ never closes another, and a modal opened from inside a modal lands on top of it.
 | Option | |
 |---|---|
 | `title` | Header title. A string or a message descriptor. |
-| `icon` | A component, shown before the title. |
+| `icon` | A component, shown before the title. (The icon beside a `<VddConfirm>` or `<VddAlert>` message is the dialog's own `icon` prop.) |
 | `size` | `small` · `medium` · `large` · `fullscreen` · `auto` (default) |
 | `closable` | `false` removes the × *and* dismissal by Escape or backdrop click. |
 | `bodyPadding` | A number (px) or any CSS value. Unset by default, so content goes edge-to-edge. |
@@ -169,6 +169,68 @@ open(VddConfirm, {
 `yesNo` labels the buttons Yes/No instead of OK/Cancel. `onSettled(ok)` fires exactly once
 however the dialog goes away — button, Escape, backdrop or × — which is what you want when
 you are awaiting an answer rather than reacting to a click.
+
+A question mark sits left of the message, coloured by `alertType` (1.8.0). Pass `icon` — a
+component — to draw your own in its place, or `icon: null` for none. The modal's header icon
+(`ModalOptions.icon`) is separate and left as you set it.
+
+| Prop | |
+|---|---|
+| `message` | The question. A string or a message descriptor. |
+| `alert`, `alertType` | An extra banner above the message, and its colour (`info` default, `warning`, `success`, `danger`). `alertType` colours the icon too. |
+| `icon` | A component, or `null` for none. Default: a question mark. |
+| `yesNo` | Yes/No instead of OK/Cancel. |
+| `onOk`, `onCancel` | The buttons. |
+| `onSettled(ok)` | Once, on every exit. |
+
+The buttons carry `data-vdd-confirm-ok` and `data-vdd-confirm-cancel`.
+
+## `<VddAlert>`
+
+A message and one OK button, for telling rather than asking (1.8.0). Its icon follows
+`alertType` — info, success, warning, danger — with the same `icon` override.
+
+```ts
+open(VddAlert, {
+  message: 'The layer was exported to exports/roads.geojson.',
+  alertType: 'success',
+}, { title: 'Export finished', size: 'small' })
+```
+
+| Prop | |
+|---|---|
+| `message` | The text. |
+| `alertType` | Picks the built-in icon and its colour. Default `info`. |
+| `icon` | A component, or `null` for none. |
+| `okLabel` | The button label. Default: the `ok` message. |
+| `onSettled()` | Once: OK, Enter, Escape, the backdrop, the × or a close by code. |
+
+Focus starts on OK, and Enter presses it. Escape, the backdrop and the × acknowledge it too,
+unless the modal is opened with `closable: false` — then OK is the only way out. The button
+carries `data-vdd-alert-ok`.
+
+## `confirm()` and `alert()` — as promises
+
+`useModals()` opens either dialog and hands back a promise (1.8.0):
+
+```ts
+const { confirm, alert } = useModals()
+
+if (await confirm({ message: 'Delete the selected features?', alertType: 'danger', yesNo: true })) {
+  deleteSelection()
+}
+
+await alert({ message: 'Nothing to export.', alertType: 'warning' })
+```
+
+- `confirm(options)` resolves `true` for the confirm button and `false` for cancel or any
+  dismissal. Options: `message`, `title` (default: the `confirmTitle` message, "Confirmation"),
+  `alert`, `alertType`, `icon`, `yesNo`, `size` (default `small`).
+- `alert(options)` resolves once it is closed, however. Options: `message`, `title` (default:
+  the `alertTitle` message, "Information"), `alertType`, `icon`, `okLabel`, `size` (default
+  `small`).
+
+The option types are `ConfirmOptions` and `AlertOptions`.
 
 ## Toasts
 
