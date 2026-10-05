@@ -14,6 +14,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
 import { clampFloatingRect } from '../core/anchorGeometry'
 import { PanelDomCache } from '../core/panelDom'
+import { claimDocumentMirror, releaseDocumentMirror } from '../core/documentMirror'
 import { providePanelDom } from '../composables/usePanelDom'
 import { provideDragDock } from '../composables/useDragDock'
 import type { Workspace } from '../core/workspace'
@@ -200,22 +201,23 @@ function onTaskbarMenu(panelId: string, event: PointerEvent | MouseEvent): void 
  * fallback silently applies and `createWorkspace({ zIndexBase })` has no effect at all. The
  * option would exist, the stylesheet would read the variable, and nothing would connect them
  * — the same shape as the four dead CSS hookups this library has already shipped.
+ *
+ * Through the document mirror, keyed by this desktop's panel cache: with several desktops on one
+ * page the newest wins, and unmounting one hands `<html>` back to the others rather than clearing it.
  */
 const syncDocument = () => {
-  const root = document.documentElement
-  root.setAttribute('data-vdd-skin', props.skin)
-  root.classList.toggle('vdd-no-animations', props.animations === false)
-  root.style.setProperty('--vdd-z-base', String(ws.config.zIndexBase))
+  claimDocumentMirror(dom, {
+    skin: props.skin,
+    noAnimations: props.animations === false,
+    zBase: ws.config.zIndexBase,
+  })
 }
 watch(() => [props.skin, props.animations, ws.config.zIndexBase], syncDocument)
 onMounted(syncDocument)
 
 onBeforeUnmount(() => {
   observer?.disconnect()
-  const root = document.documentElement
-  root.removeAttribute('data-vdd-skin')
-  root.classList.remove('vdd-no-animations')
-  root.style.removeProperty('--vdd-z-base')
+  releaseDocumentMirror(dom)
   dom.dispose()
 })
 </script>

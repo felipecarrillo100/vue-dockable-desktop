@@ -294,6 +294,39 @@ describe('skin and animations', () => {
   })
 
   /**
+   * Two desktops on one page share `<html>`. Each used to overwrite the other's skin, animations
+   * opt-out and stacking base, and unmounting either removed them for the one still on screen.
+   */
+  it('with two desktops the newest decides, and unmounting it hands <html> back', () => {
+    const root = document.documentElement
+    const a = mount(VddDesktop, { props: { skin: 'nord', animations: false }, global: { plugins: [createWorkspace({ zIndexBase: 2000 })] } })
+    const b = mount(VddDesktop, { props: { skin: 'tokyo' }, global: { plugins: [createWorkspace({ zIndexBase: 3000 })] } })
+    expect(root.getAttribute('data-vdd-skin')).toBe('tokyo')
+    expect(root.classList.contains('vdd-no-animations')).toBe(false)
+    expect(root.style.getPropertyValue('--vdd-z-base')).toBe('3000')
+
+    b.unmount()
+    expect(root.getAttribute('data-vdd-skin')).toBe('nord')
+    expect(root.classList.contains('vdd-no-animations')).toBe(true)
+    expect(root.style.getPropertyValue('--vdd-z-base')).toBe('2000')
+
+    a.unmount()
+    expect(root.getAttribute('data-vdd-skin')).toBeNull()
+    expect(root.classList.contains('vdd-no-animations')).toBe(false)
+    expect(root.style.getPropertyValue('--vdd-z-base')).toBe('')
+  })
+
+  it("changing an older desktop's skin doesn't put it over a newer one", async () => {
+    const a = mount(VddDesktop, { props: { skin: 'nord' }, global: { plugins: [createWorkspace()] } })
+    const b = mount(VddDesktop, { props: { skin: 'tokyo' }, global: { plugins: [createWorkspace()] } })
+    await a.setProps({ skin: 'slate' })
+    expect(document.documentElement.getAttribute('data-vdd-skin')).toBe('tokyo')
+    b.unmount()
+    expect(document.documentElement.getAttribute('data-vdd-skin')).toBe('slate')
+    a.unmount()
+  })
+
+  /**
    * The workspace element needs the skin *and* the colour scheme, because a skin's token block
    * is written `[data-vdd-skin="macos"]` and so matches this element too. With only the skin
    * here, the skin's dark tokens are re-declared closer to the content than the root's light
