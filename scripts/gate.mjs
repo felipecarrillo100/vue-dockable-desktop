@@ -1,11 +1,15 @@
 #!/usr/bin/env node
 /**
- * The gate runner.  `npm run gate -- M3`
+ * The gate runner.  `npm run gate -- M3`, or several: `npm run gate -- M13 M15 M16`
  *
  * Runs the standing gate — types, lint, tests, build, counts, css-prefix, api-surface,
- * docs-api — then the milestone's own gate, then records the result:
- * a row in docs/PROGRESS.md, a manifest in artifacts/M<n>/tree.txt, and the raw
- * outcome in artifacts/M<n>/gate.json.
+ * docs-api — then each milestone's own gate and browser gate, then records the result:
+ * a manifest in artifacts/M<n>/tree.txt and the raw outcome, with each step's time, in
+ * artifacts/M<n>/gate.json.
+ *
+ * Several milestones in one call share one standing gate: it runs once, not once per milestone.
+ * Each milestone's own gate and browser gate still run in full. `npm run gate:release` is the
+ * whole set, once.
  *
  * Exit code 0 only if every check passed. See docs/IMPLEMENTATION_PLAN.md for the
  * integrity rules that make that meaningful — in particular, this file is not to be
@@ -14,23 +18,23 @@
 import { execSync, spawn, spawnSync } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 
-const milestone = (process.argv[2] ?? '').toUpperCase()
-if (!/^M\d+$/.test(milestone)) {
-  console.error('usage: npm run gate -- M<n>')
+const milestones = process.argv.slice(2).map(a => a.toUpperCase())
+if (milestones.length === 0 || !milestones.every(m => /^M\d+$/.test(m))) {
+  console.error('usage: npm run gate -- M<n> [M<n> …]')
   process.exit(2)
 }
 
-const OUT = `artifacts/${milestone}`
-mkdirSync(OUT, { recursive: true })
 mkdirSync('artifacts', { recursive: true })
 
 const run = (name, cmd) => {
   process.stdout.write(`\n── ${name}\n`)
+  const t = Date.now()
   const r = spawnSync(cmd, { shell: true, stdio: 'inherit' })
-  return { name, cmd, ok: r.status === 0, status: r.status }
+  return { name, cmd, ok: r.status === 0, status: r.status, seconds: Math.round((Date.now() - t) / 1000) }
 }
 
-const steps = []
+const prelude = []
+const steps = prelude
 steps.push(run('types', 'npx vue-tsc --noEmit'))
 steps.push(run('lint', 'npx eslint .'))
 // One vitest run, JSON captured so the counts gate can read it without re-running.
@@ -44,14 +48,6 @@ steps.push(run('docs-api', 'node scripts/gates/docs-api.mjs'))
 // The demo builds as a consumer's application would. Only checked once the demo exists, so
 // the earlier milestones' gates are unaffected.
 if (existsSync('demo/vite.config.ts')) steps.push(run('demo:build', 'npm run demo:build'))
-
-const milestoneGate = `scripts/gates/${milestone.toLowerCase()}.mjs`
-if (existsSync(milestoneGate)) {
-  steps.push(run(milestone, `node ${milestoneGate}`))
-} else {
-  steps.push({ name: milestone, cmd: milestoneGate, ok: false, status: 1, missing: true })
-  console.error(`\n── ${milestone}\n  no gate script at ${milestoneGate} — a milestone without its own gate cannot pass`)
-}
 
 /**
  * Browser gates need an app served. Started here so the gate stays one command, and stopped
@@ -104,57 +100,77 @@ async function startApp(app) {
   return { reason: `${app.root} could not start: ports ${app.port}–${app.port + 9} are all in use` }
 }
 
-const browserGate = `scripts/gates/browser/${milestone.toLowerCase()}.mjs`
-if (existsSync(browserGate)) {
-  const declared = readFileSync(browserGate, 'utf8').match(/^\s*\/\/\s*gate:app\s+(\w+)/m)?.[1]
-  const app = APPS[declared ?? 'playground']
-  if (!app) {
-    steps.push({ name: `${milestone} browser`, cmd: `unknown app "${declared}"`, ok: false, status: 1 })
-    console.error(`\n── ${milestone} browser\n  gate:app "${declared}" is not one of ${Object.keys(APPS).join(', ')}`)
-  } else {
-    const { server, port, reason } = await startApp(app)
-    try {
-      if (!server) {
-        steps.push({ name: `${milestone} browser`, cmd: app.root, ok: false, status: 1 })
-        console.error(`\n── ${milestone} browser\n  ${reason}`)
-      } else {
-        // The browser gates default to the app's usual port; this tells them where it really is.
-        process.env.VDD_APP_URL = `http://localhost:${port}/`
-        steps.push(run(`${milestone} browser`, `node ${browserGate}`))
-      }
-    } finally {
-      if (server) try { process.kill(-server.pid) } catch { /* already gone */ }
-    }
-  }
-}
-
-const passed = steps.every(s => s.ok)
-
-// Manifest of the source tree at this gate, so a later regression can be located
-// without version control (docs/IMPLEMENTATION_PLAN.md § Version control).
-try {
-  const files = execSync(
-    "find src test scripts docs -type f \\( -name '*.ts' -o -name '*.vue' -o -name '*.css' -o -name '*.mjs' -o -name '*.md' \\) | sort",
-    { encoding: 'utf8' },
-  ).trim().split('\n').filter(Boolean)
-  writeFileSync(`${OUT}/tree.txt`, execSync(`shasum ${files.map(f => `'${f}'`).join(' ')}`, { encoding: 'utf8' }))
-} catch (e) {
-  writeFileSync(`${OUT}/tree.txt`, `manifest unavailable: ${e.message}\n`)
-}
-
 let tests = null
 try {
   const r = JSON.parse(readFileSync('artifacts/.vitest.json', 'utf8'))
   tests = { total: r.numTotalTests, passed: r.numPassedTests, failed: r.numFailedTests, files: r.testResults?.length ?? 0 }
 } catch { /* tests step already failed */ }
 
-writeFileSync(`${OUT}/gate.json`, JSON.stringify({
-  milestone, passed, at: new Date().toISOString(), tests,
-  steps: steps.map(({ name, ok, status, missing }) => ({ name, ok, status, ...(missing ? { missing } : {}) })),
-}, null, 2) + '\n')
+// Manifest of the source tree, so a later regression can be located without version control
+// (docs/IMPLEMENTATION_PLAN.md § Version control). Taken once: the tree does not change mid-run.
+let manifest
+try {
+  const files = execSync(
+    "find src test scripts docs -type f \\( -name '*.ts' -o -name '*.vue' -o -name '*.css' -o -name '*.mjs' -o -name '*.md' \\) | sort",
+    { encoding: 'utf8' },
+  ).trim().split('\n').filter(Boolean)
+  manifest = execSync(`shasum ${files.map(f => `'${f}'`).join(' ')}`, { encoding: 'utf8' })
+} catch (e) {
+  manifest = `manifest unavailable: ${e.message}\n`
+}
+
+const results = []
+for (const milestone of milestones) {
+  const OUT = `artifacts/${milestone}`
+  mkdirSync(OUT, { recursive: true })
+  const steps = [...prelude]
+
+  const milestoneGate = `scripts/gates/${milestone.toLowerCase()}.mjs`
+  if (existsSync(milestoneGate)) {
+    steps.push(run(milestone, `node ${milestoneGate}`))
+  } else {
+    steps.push({ name: milestone, cmd: milestoneGate, ok: false, status: 1, missing: true })
+    console.error(`\n── ${milestone}\n  no gate script at ${milestoneGate} — a milestone without its own gate cannot pass`)
+  }
+
+  const browserGate = `scripts/gates/browser/${milestone.toLowerCase()}.mjs`
+  if (existsSync(browserGate)) {
+    const declared = readFileSync(browserGate, 'utf8').match(/^\s*\/\/\s*gate:app\s+(\w+)/m)?.[1]
+    const app = APPS[declared ?? 'playground']
+    if (!app) {
+      steps.push({ name: `${milestone} browser`, cmd: `unknown app "${declared}"`, ok: false, status: 1 })
+      console.error(`\n── ${milestone} browser\n  gate:app "${declared}" is not one of ${Object.keys(APPS).join(', ')}`)
+    } else {
+      const { server, port, reason } = await startApp(app)
+      try {
+        if (!server) {
+          steps.push({ name: `${milestone} browser`, cmd: app.root, ok: false, status: 1 })
+          console.error(`\n── ${milestone} browser\n  ${reason}`)
+        } else {
+          // The browser gates default to the app's usual port; this tells them where it really is.
+          process.env.VDD_APP_URL = `http://localhost:${port}/`
+          steps.push(run(`${milestone} browser`, `node ${browserGate}`))
+        }
+      } finally {
+        if (server) try { process.kill(-server.pid) } catch { /* already gone */ }
+      }
+    }
+  }
+
+  const passed = steps.every(s => s.ok)
+  writeFileSync(`${OUT}/tree.txt`, manifest)
+  writeFileSync(`${OUT}/gate.json`, JSON.stringify({
+    milestone, passed, at: new Date().toISOString(), tests,
+    steps: steps.map(({ name, ok, status, missing, seconds }) => ({ name, ok, status, seconds, ...(missing ? { missing } : {}) })),
+  }, null, 2) + '\n')
+  results.push({ milestone, passed, steps })
+}
 
 console.log('\n' + '─'.repeat(60))
-for (const s of steps) console.log(`  ${s.ok ? 'ok  ' : 'FAIL'}  ${s.name}`)
+for (const s of prelude) console.log(`  ${s.ok ? 'ok  ' : 'FAIL'}  ${s.name} (${s.seconds}s)`)
+for (const { steps } of results) {
+  for (const s of steps.slice(prelude.length)) console.log(`  ${s.ok ? 'ok  ' : 'FAIL'}  ${s.name}${s.seconds !== undefined ? ` (${s.seconds}s)` : ''}`)
+}
 if (tests) console.log(`  tests: ${tests.passed}/${tests.total} across ${tests.files} file(s)`)
-console.log(`${milestone} GATE: ${passed ? 'PASS' : 'FAIL'}`)
-process.exit(passed ? 0 : 1)
+for (const { milestone, passed } of results) console.log(`${milestone} GATE: ${passed ? 'PASS' : 'FAIL'}`)
+process.exit(results.every(r => r.passed) ? 0 : 1)

@@ -61,6 +61,34 @@ export const PROPS = ['color', 'background-color', 'background-image', 'border-t
   'border-bottom-color', 'border-left-color', 'outline-color', 'box-shadow', 'fill', 'stroke']
 
 /** Opens a scene with the active states on: a selected sidebar tab, radio and toggle, a focused tab, a minimised panel. */
+/**
+ * Waits until the page is still: two consecutive animation frames with no running CSS transition
+ * or animation and no DOM change — or `ceiling` ms at most, the fixed sleep this replaces, so a
+ * page is never read earlier than the old sleep allowed while something is still moving. Infinite
+ * animations never finish, so they are not waited for. A timer that changes nothing until it fires
+ * is invisible to it, so the waits that exist for one (a hover's dismissal) stay fixed.
+ */
+export async function settle(page, ceiling) {
+  await page.evaluate(async (max) => {
+    const start = performance.now()
+    let mutated = false
+    const observer = new MutationObserver(() => { mutated = true })
+    observer.observe(document.documentElement, { subtree: true, childList: true, attributes: true, characterData: true })
+    const frame = () => new Promise(resolve => requestAnimationFrame(() => resolve(undefined)))
+    const moving = () => document.getAnimations().some(a =>
+      (a.playState === 'running' || a.pending) && a.effect?.getComputedTiming().iterations !== Infinity)
+    try {
+      for (let still = 0; still < 2 && performance.now() - start < max;) {
+        await frame()
+        still = mutated || moving() ? 0 : still + 1
+        mutated = false
+      }
+    } finally {
+      observer.disconnect()
+    }
+  }, ceiling)
+}
+
 export async function openBase(page, open, skin, cs, extra = '') {
   await open(`anim=0&skin=${skin}${cs === 'light' ? '&cs=light' : ''}${extra}`)
   await page.evaluate(() => {
@@ -80,7 +108,7 @@ export async function openBase(page, open, skin, cs, extra = '') {
   await page.click('.vdd-toolbar-btn[aria-label="Snap"]')
   await page.click('[data-vdd-tab="p1"]')
   await page.mouse.move(1, 1)
-  await page.waitForTimeout(300)
+  await settle(page, 300)
 }
 
 /** The overlays on top: the flyout, a drawer, the confirm modal (the primary button), a toast, the context menu. */
@@ -93,19 +121,30 @@ export async function openOverlays(page) {
     app.toast('hello', { duration: 600000 })
     app.menu(40, 40)
   })
-  await page.waitForTimeout(700)
+  await settle(page, 700)
 }
 
 /** Colour-bearing computed properties of every vdd- element under `root` and its pseudo-elements, keyed by a DOM path. */
 export function snapshot(page, root = 'body', tag = '') {
   return page.evaluate(([props, rootSel, prefix]) => {
     const out = {}
-    const seg = el => {
-      const parent = el.parentElement
-      const idx = parent ? Array.prototype.indexOf.call(parent.children, el) : 0
-      return `${el.tagName.toLowerCase()}${[...el.classList].filter(c => c.startsWith('vdd-')).map(c => '.' + c).join('')}:${idx}`
+    // Keyed by library classes, not position (1.8.x): an element's key is its nearest
+    // library-classed ancestor's key plus its own tag and library classes, numbered (#2, #3…)
+    // only where two elements would otherwise share one. A wrapper without a library class, or a
+    // sibling of a different kind, no longer renames everything after it.
+    const keyOf = new Map()
+    const seen = new Map()
+    for (const e of document.querySelectorAll('[class*="vdd-"]')) {
+      const own = [...e.classList].filter(c => c.startsWith('vdd-'))
+      if (!own.length) continue
+      let up = e.parentElement
+      while (up && up !== document.body && !keyOf.has(up)) up = up.parentElement
+      const raw = `${up && keyOf.has(up) ? keyOf.get(up) + '>' : ''}${e.tagName.toLowerCase()}${own.map(c => '.' + c).join('')}`
+      const n = (seen.get(raw) ?? 0) + 1
+      seen.set(raw, n)
+      keyOf.set(e, n === 1 ? raw : `${raw}#${n}`)
     }
-    const path = el => { const p = []; for (let e = el; e && e !== document.body; e = e.parentElement) p.unshift(seg(e)); return p.join('>'); }
+    const path = el => keyOf.get(el) ?? ''
     const rootEl = document.querySelector(rootSel)
     if (!rootEl) return { [`${prefix}MISSING ${rootSel}`]: {} }
     const els = [rootEl, ...rootEl.querySelectorAll('[class*="vdd-"]')].filter(e => e === rootEl || (typeof e.className === 'string' ? e.className : e.className.baseVal))
@@ -163,10 +202,12 @@ export async function hoverSnapshots(page) {
     const loc = page.locator(sel).first()
     if (!(await loc.count())) { out[`hover ${sel} MISSING`] = {}; continue; }
     await loc.hover({ force: true })
-    await page.waitForTimeout(350); // past the hover transitions
+    await settle(page, 350) // past the hover transitions
     await loc.evaluate((el, m) => el.setAttribute(m, ''), `data-m15-probe-${i}`)
     Object.assign(out, await snapshot(page, `[data-m15-probe-${i}]`, `hover ${sel} | `))
     await page.mouse.move(1, 1)
+    // Fixed, not settled: leaving a control starts timers (the taskbar's dismissal) that change
+    // nothing until they fire, so a stillness check cannot see them.
     await page.waitForTimeout(350)
   }
   return out
@@ -182,7 +223,7 @@ export const SCENE_PARTS = ['.vdd-sidebar-tab-btn.vdd-active', '.vdd-toolbar-btn
  * The containers whose frost (and background) moved onto their own ::before in 1.5.0, so a
  * consumer's position: fixed content inside them keeps the viewport. See the M17 browser gate.
  */
-export const FROSTED = /\.vdd-(floating-window|side-panel|panel-float|workspace-panel|panel-toolbar)(\.|:|$)/
+export const FROSTED = /\.vdd-(floating-window|side-panel|panel-float|workspace-panel|panel-toolbar)(\.|:|#|$)/
 
 /**
  * A snapshot taken before 1.5.0 painted a frosted container's background on the element; from

@@ -150,7 +150,9 @@ for (const dir of ['ltr', 'rtl']) {
     await page.mouse.move(src.x + src.width / 2, src.y + src.height / 2)
     await page.mouse.down()
     await page.mouse.move(src.x + src.width / 2 + 20, src.y + src.height / 2, { steps: 4 })
-    await page.mouse.move(dst.x + dst.width * 0.8, dst.y + dst.height / 2, { steps: 8 })   // right half
+    // The target's logical end half: its right half in LTR, its left half in RTL, where a flex row
+    // runs the other way (1.1.2 made tab drops follow it; ADR 0020).
+    await page.mouse.move(dst.x + dst.width * (dir === 'rtl' ? 0.2 : 0.8), dst.y + dst.height / 2, { steps: 8 })
     await page.waitForTimeout(140)
     await page.mouse.up()
     await page.waitForTimeout(220)

@@ -11,6 +11,42 @@ correspondence lives, alongside the feature-by-feature map in [docs/PARITY.md](d
 
 ## [Unreleased]
 
+### Internal
+
+Faster checks, the same checks. Nothing in the published package changes.
+
+- **`npm run verify`** — types, lint and the test suite, about a minute: the check to run while
+  working. **`npm run gate:release`** — the coverage sweep, then every milestone gate M1–M17 in
+  one call: the check to run before a release.
+- **`npm run gate -- M13 M15 M16`** runs several milestones on one standing gate (types, lint,
+  tests, build…) instead of repeating it for each. Each step's time is recorded in
+  `artifacts/M<n>/gate.json`.
+- **The branding gates wait for the page to be still instead of sleeping.** A scene, the overlays
+  and each hover now wait until nothing is animating or changing, with the old sleep as the
+  ceiling; the wait after the pointer leaves a control stays fixed, since the timers it starts are
+  invisible to such a check. M16 checks its three corner scales on one page per scene, and no
+  longer runs the hover walk for corners, which never read it. M15 captures a scene twice only
+  for an unexpected difference. Rewriting both baselines with the new code gave byte-identical
+  fixtures.
+- **The baselines key elements by library class, not position**, so a new wrapper element no
+  longer renames everything after it (this release's dialog row renamed a whole modal). Both
+  fixtures were regenerated once: every scene has the same entries with identical values, under
+  the new keys.
+- **`gate:selftest` leaves the tree fresh**: it rebuilds `dist/` and re-runs the coverage sweep at
+  the end, so a following M13 never reads the report a seeded violation left behind.
+- **Three stale milestone rules updated** ([0020](docs/decisions/0020-stale-milestone-rules.md)):
+  M2 still required `src/core/rtl.ts`, deleted at M13 as dead code; M5 looked for the window clamp
+  where it no longer lives; M6 expected the pre-1.1.2 side for an RTL tab drop. Each keeps its
+  intent and checks today's code, and the new M2 and M5 rules have seeded violations in the
+  selftest (100 rules).
+
+| | before | after |
+|---|---|---|
+| every gate, M1–M17 | ≈26 min (17 standing gates) | ≈9 min (one) |
+| M16 browser gate | 435 s | 137–145 s |
+| M15 browser gate | 236 s | 173–183 s |
+| while working | a gate run | `npm run verify`, ≈1 min |
+
 ## [1.8.0] — 2026-10-05
 
 **Parity: react-dockable-desktop 7.7.0.** Ready-made dialogs: the confirmation shows an icon,

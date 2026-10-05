@@ -23,7 +23,7 @@ import { chromium } from 'playwright-core'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import {
-  SKINS, SCENE_PARTS, FROSTED, colours, diff, hoverSnapshots, intended, isRgb, lines, openBase, openOverlays,
+  SKINS, SCENE_PARTS, FROSTED, colours, diff, hoverSnapshots, intended, isRgb, lines, openBase, openOverlays, settle,
   rgbOf, snapshot, tokens,
 } from '../lib/branding-scenes.mjs'
 
@@ -58,12 +58,23 @@ const PALETTE = [...css.matchAll(/var\(--vdd--b-[\w-]+, (#[0-9a-fA-F]{6}|rgb\((\
 const radii = page => page.evaluate(([corners, frostedSrc]) => {
   const frosted = new RegExp(frostedSrc)
   const out = {}
-  const seg = (el) => {
-    const parent = el.parentElement
-    const idx = parent ? Array.prototype.indexOf.call(parent.children, el) : 0
-    return `${el.tagName.toLowerCase()}${[...el.classList].filter(c => c.startsWith('vdd-')).map(c => '.' + c).join('')}:${idx}`
+  // Keyed by library classes, not position (1.8.x): an element's key is its nearest
+  // library-classed ancestor's key plus its own tag and library classes, numbered (#2, #3…)
+  // only where two elements would otherwise share one. A wrapper without a library class, or a
+  // sibling of a different kind, no longer renames everything after it.
+  const keyOf = new Map()
+  const seen = new Map()
+  for (const e of document.querySelectorAll('[class*="vdd-"]')) {
+    const own = [...e.classList].filter(c => c.startsWith('vdd-'))
+    if (!own.length) continue
+    let up = e.parentElement
+    while (up && up !== document.body && !keyOf.has(up)) up = up.parentElement
+    const raw = `${up && keyOf.has(up) ? keyOf.get(up) + '>' : ''}${e.tagName.toLowerCase()}${own.map(c => '.' + c).join('')}`
+    const n = (seen.get(raw) ?? 0) + 1
+    seen.set(raw, n)
+    keyOf.set(e, n === 1 ? raw : `${raw}#${n}`)
   }
-  const path = (el) => { const p = []; for (let e = el; e && e !== document.body; e = e.parentElement) p.unshift(seg(e)); return p.join('>') }
+  const path = el => keyOf.get(el) ?? ''
   for (const el of document.querySelectorAll('[class*="vdd-"]')) {
     if (!(typeof el.className === 'string' ? el.className : el.className.baseVal)) continue
     for (const pseudo of ['', '::before', '::after']) {
@@ -106,7 +117,15 @@ const open = async (query) => {
   await page.waitForFunction(() => !!window.__vdd && !!window.__app, null, { timeout: 15000 })
 }
 
-/** A scene with every piece of chrome open, or a named failure when one is missing. */
+/** The scene's chrome all open, without the hover walk; throws a named failure when a piece is missing. */
+async function chrome(skin, cs, extra = '') {
+  await openBase(page, open, skin, cs, extra)
+  await openOverlays(page)
+  const absent = await page.evaluate(sels => sels.filter(s => !document.querySelector(s)), SCENE_PARTS)
+  if (absent.length) throw new Error(`${skin}/${cs}${extra}: the scene is incomplete: ${absent.join(', ')}`)
+}
+
+/** A scene with every piece of chrome open, after the hover walk; returns the hover snapshots. */
 async function scene(skin, cs, extra = '') {
   await openBase(page, open, skin, cs, extra)
   const hovers = await hoverSnapshots(page)
@@ -142,8 +161,16 @@ async function run() {
   for (const { skin, cs } of SCENES) {
     const base = fixture.scenes[`${skin}/${cs}`]
     // ── corners: unset, 0 and 1.5 ──
+    // One page for the three scales. --vdd-radius-scale is a custom property on :root (the
+    // playground's `rs` only sets it at start-up), so each scale is set on the open scene, which
+    // settles before its corners are read. No hover walk: corners never read it.
+    await chrome(skin, cs)
     for (const scale of [1, 0, 1.5]) {
-      await scene(skin, cs, scale === 1 ? '' : `&rs=${scale}`)
+      await page.evaluate((s) => {
+        if (s === 1) document.documentElement.style.removeProperty('--vdd-radius-scale')
+        else document.documentElement.style.setProperty('--vdd-radius-scale', String(s))
+      }, scale)
+      await settle(page, 700)
       const d = cornerMismatches(base, await radii(page), scale)
       report[`corners ${skin}/${cs} @${scale}`] = d.length
       if (d.length) fail(`corners ${skin}/${cs} at scale ${scale}: ${d.length} wrong, e.g. ${d.slice(0, 4).join(' | ')}`)
