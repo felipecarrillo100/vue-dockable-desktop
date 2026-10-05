@@ -11,6 +11,8 @@ correspondence lives, alongside the feature-by-feature map in [docs/PARITY.md](d
 
 ## [Unreleased]
 
+## [1.8.1] — 2026-10-05
+
 **Parity: react-dockable-desktop 7.7.1.** Two desktops on one page no longer strip each other's
 skin.
 

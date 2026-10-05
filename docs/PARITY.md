@@ -214,6 +214,16 @@ quietly dropped from it.
 Every "substitute", "rewrite" and "moot" above must be justified in its test file's header
 comment, so a reviewer can see the trade rather than discover a silent gap.
 
+### rdd 7.7.1 two workspaces on one page, traced
+
+| rdd 7.7.1 | vdd 1.8.1 |
+|---|---|
+| per-workspace panel host (DOM, sizes, lifecycle) | already: `PanelDomCache` per desktop since 1.0 |
+| scroll/focus records keyed by element | already: kept on the desktop's own `PanelDomCache` |
+| taskbar preview tooltip found by ref | already: no document-wide query |
+| `<html>` mirror as an owner stack (`utils/documentMirror.ts`) | `core/documentMirror.ts`, used by `VddDesktop.vue` |
+| `TwoWorkspaces.test.tsx` (mirror cases) | `test/components/desktop.test.ts`, "skin and animations" |
+
 ### rdd 7.7.0 dialogs, traced
 
 | rdd 7.7.0 | vdd 1.8.0 |
