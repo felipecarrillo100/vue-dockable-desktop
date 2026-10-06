@@ -10,6 +10,7 @@ import { computed } from 'vue'
 import type { DropPosition } from '../types'
 import { useDragDock } from '../composables/useDragDock'
 import { useWorkspace } from '../composables/useWorkspace'
+import { isDropAllowed } from '../core/dockRules'
 
 const props = defineProps<{ leafId: string }>()
 const drag = useDragDock()
@@ -19,6 +20,18 @@ const POSITIONS: DropPosition[] = ['top', 'bottom', 'left', 'right', 'center']
 const GLYPH: Record<DropPosition, string> = {
   top: '▲', bottom: '▼', left: '◀', right: '▶', center: '▣',
 }
+
+/**
+ * A target the rules forbid isn't offered at all (1.10.0). Zones are drawn by screen side; the move
+ * flips left and right under RTL, and `canDrop` sees the side the move applies.
+ */
+const offered = computed(() => {
+  const dragged = ws.state.draggedPanelId
+  if (dragged === null) return POSITIONS
+  const applied = (p: DropPosition): DropPosition =>
+    ws.state.isRtl && (p === 'left' || p === 'right') ? (p === 'left' ? 'right' : 'left') : p
+  return POSITIONS.filter(p => isDropAllowed(ws, dragged, { kind: 'group', leafId: props.leafId, position: applied(p) }))
+})
 
 const isArmed = (position: DropPosition) =>
   drag?.zone.value?.leafId === props.leafId && drag.zone.value.position === position
@@ -43,7 +56,7 @@ const preview = computed(() => {
   <div class="vdd-dock-drop-zone-overlay">
     <div class="vdd-dock-target-cross">
       <div
-        v-for="position in POSITIONS"
+        v-for="position in offered"
         :key="position"
         class="vdd-dock-target-box"
         :class="[`vdd-dock-target-${position}`, { 'vdd-dock-target-box--active': isArmed(position) }]

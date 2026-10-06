@@ -21,8 +21,9 @@
  */
 import { computed, inject, provide, ref, shallowRef } from 'vue'
 import type { ComputedRef, InjectionKey, Ref } from 'vue'
-import type { DropPosition, FloatAnchor, SplitDirection } from '../types'
+import type { DropPosition, FloatAnchor, PanelDropTarget, SplitDirection } from '../types'
 import { flipZoneHorizontal } from '../core/anchorGeometry'
+import { isDropAllowed } from '../core/dockRules'
 import { findLeaf } from '../core/layoutTree'
 import { tabSide } from '../core/dragResize'
 import type { Workspace } from '../core/workspace'
@@ -127,7 +128,10 @@ export function provideDragDock(ws: Workspace<never>): DragDock {
     corner.value = value
     if (value) edge.value = null
   }
-  const hoverTab = (value: TabTarget | null) => { tab.value = value }
+  /** Whether the dragged panel may be inserted among a group's tabs (1.10.0). */
+  const canInsertInto = (leafId: string) =>
+    draggedId.value !== null && isDropAllowed(ws, draggedId.value, { kind: 'group', leafId, position: 'center' })
+  const hoverTab = (value: TabTarget | null) => { tab.value = value && canInsertInto(value.leafId) ? value : null }
 
   /**
    * Resolve the armed target by hit-testing, for touch.
@@ -149,7 +153,7 @@ export function provideDragDock(ws: Workspace<never>): DragDock {
         zone.value = { leafId: el.dataset.vddLeaf, position: el.dataset.vddDropZone as DropPosition }
         foundZone = true
       }
-      if (!foundTab && el.dataset.vddTab && el.dataset.vddTabLeaf) {
+      if (!foundTab && el.dataset.vddTab && el.dataset.vddTabLeaf && canInsertInto(el.dataset.vddTabLeaf)) {
         const rect = el.getBoundingClientRect()
         tab.value = {
           leafId: el.dataset.vddTabLeaf,
@@ -181,9 +185,14 @@ export function provideDragDock(ws: Workspace<never>): DragDock {
     const armedZone = zone.value
     const armedCorner = corner.value
 
+    // Each target was only offered if the rules allowed it (1.10.0); asking again here covers a rule
+    // that changed mid-drag. A forbidden target, or nowhere when floating is forbidden, does nothing.
+    const ok = (to: PanelDropTarget) => isDropAllowed(ws, panelId, to)
     if (armedEdge) {
-      ws.dockPanelToWorkspaceEdge(panelId, flip(armedEdge) as SplitDirection)
+      const side = flip(armedEdge) as SplitDirection
+      if (ok({ kind: 'edge', side })) ws.dockPanelToWorkspaceEdge(panelId, side)
     } else if (armedTab) {
+      if (!ok({ kind: 'group', leafId: armedTab.leafId, position: 'center' })) { reset(); return }
       let index = armedTab.index
       if (armedTab.side === 'right') index += 1
       // Tab indices come from the DOM, which is pre-removal. `movePanelOrder` removes the
@@ -195,10 +204,12 @@ export function provideDragDock(ws: Workspace<never>): DragDock {
       }
       ws.movePanelOrder(panelId, armedTab.leafId, index)
     } else if (armedZone) {
-      ws.dockPanelToGroup(panelId, armedZone.leafId, flip(armedZone.position))
+      const position = flip(armedZone.position)
+      if (ok({ kind: 'group', leafId: armedZone.leafId, position })) ws.dockPanelToGroup(panelId, armedZone.leafId, position)
     } else if (armedCorner) {
-      ws.floatPanel(panelId, undefined, ws.state.isRtl ? flipZoneHorizontal(armedCorner) : armedCorner)
-    } else {
+      const anchor = ws.state.isRtl ? flipZoneHorizontal(armedCorner) : armedCorner
+      if (ok({ kind: 'float', anchor })) ws.floatPanel(panelId, undefined, anchor)
+    } else if (ok({ kind: 'float', anchor: null })) {
       // Nothing armed: float it where the pointer let go, with the title bar under the cursor.
       ws.floatPanel(panelId, { x: event.clientX - 150, y: event.clientY - 15, width: 450, height: 350 })
     }

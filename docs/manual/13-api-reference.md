@@ -30,6 +30,7 @@ any component mounts, which is why none of the composables below need a provider
 | `messages` | Overrides any subset of the built-in strings. [Ch. 11](11-i18n.md) |
 | `defaultSplitRatio`, `defaultEdgeSplitRatio` | Split fractions, clamped 0.1–0.9. [Ch. 4](04-layout.md) |
 | `zIndexBase` | Base stacking level, mirrored as `--vdd-z-base`. [Ch. 10](10-theming.md) |
+| `canDrop` | `(drop: PanelDrop) => boolean`: veto where users can move panels; a forbidden target isn't offered (1.10.0). [Ch. 4](04-layout.md#controlling-where-users-can-move-panels) |
 | `classes` | Your own classes for the library's chrome (`HostClasses`). [Ch. 11](11-i18n.md) |
 
 ## Components
@@ -87,7 +88,7 @@ storybook.
 | `isSerializable(value)` | Whether a value can round-trip through JSON — the check `saveLayout()` applies to panel props. [Ch. 5](05-persistence.md) |
 | `sectionToTab(section, icon?)` | A contributed section as a sidebar tab. [Ch. 9](09-contributions.md) |
 | `mergeToolbarItems(items, contribution)`, `mergeSidebarTabs(tabs, contribution, icon?)` | The merge helpers, without the composable. [Ch. 9](09-contributions.md) |
-| `startPointerDrag(config)`, `computeResizedRect(dir, dx, dy, start, constraints)` | The drag and resize primitives the library uses for its own windows, exported so you can build resizable UI inside a panel with identical behaviour. [Ch. 7](07-panel-overlay.md) |
+| `startPointerDrag(config)`, `computeResizedRect(dir, dx, dy, start, constraints)` | The drag and resize primitives the library uses for its own windows, exported so you can build resizable UI inside a panel with identical behaviour. A drag also ends on window blur and, since 1.10.0, on a lost pointer capture (the element was removed); `onCancel` then runs instead of `onEnd`. [Ch. 7](07-panel-overlay.md) |
 | `PanelRegistry` | The registry class, for constructing one outside a workspace. Rarely needed. [Ch. 3](03-panels.md) |
 
 ## Types

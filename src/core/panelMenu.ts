@@ -8,6 +8,8 @@
 import type { ContextMenuItem } from './contextMenu'
 import type { PanelDefaultOptions } from './registry'
 import type { Label, MessageDescriptor } from '../types'
+import { isDropAllowed } from './dockRules'
+import type { Workspace } from './workspace'
 
 /**
  * Just enough of the workspace to build a menu, so this module does not depend on the store.
@@ -20,6 +22,10 @@ interface MenuHost {
   format: (label: Label | undefined) => string
   messages: Record<string, MessageDescriptor>
   panelMenuItems: (id: string) => ContextMenuItem[]
+  /** For the docking rules (1.10.0): floating is a move they decide. */
+  state: Workspace<never>['state']
+  registry: Workspace<never>['registry']
+  config: Workspace<never>['config']
 }
 
 export interface PanelMenuActions {
@@ -43,7 +49,9 @@ export function buildPanelMenu(
   actions: PanelMenuActions,
 ): ContextMenuItem[] {
   const items: ContextMenuItem[] = []
-  if (options.canDrag !== false) items.push({ label: host.messages.floatWindow!, action: actions.float })
+  if (options.canDrag !== false && isDropAllowed(host, panelId, { kind: 'float', anchor: null })) {
+    items.push({ label: host.messages.floatWindow!, action: actions.float })
+  }
   if (options.canMinimize !== false) items.push({ label: host.messages.minimizePanel!, action: actions.minimize })
   if (items.length > 0 && options.canClose !== false) items.push({ separator: true })
   if (options.canClose !== false) items.push({ label: host.messages.closeTab!, action: actions.close })
@@ -64,7 +72,12 @@ export function buildTaskbarMenu(
   actions: PanelMenuActions,
 ): ContextMenuItem[] {
   const items: ContextMenuItem[] = [{ label: host.messages.restorePanel!, action: actions.restore }]
-  if (options.canDrag !== false) items.push({ label: host.messages.maximizePanel!, action: actions.maximize })
+  // A panel that was floating only goes back to floating; one from a group is floated, which the
+  // rules decide (1.10.0).
+  const wasFloating = host.state.panels[panelId]?.previousState === 'floating'
+  if (options.canDrag !== false && (wasFloating || isDropAllowed(host, panelId, { kind: 'float', anchor: null }))) {
+    items.push({ label: host.messages.maximizePanel!, action: actions.maximize })
+  }
   if (options.canClose !== false) {
     items.push({ separator: true })
     items.push({ label: host.messages.closePanel!, action: actions.close })

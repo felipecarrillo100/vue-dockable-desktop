@@ -214,6 +214,17 @@ quietly dropped from it.
 Every "substitute", "rewrite" and "moot" above must be justified in its test file's header
 comment, so a reviewer can see the trade rather than discover a silent gap.
 
+### rdd 7.9.0 Release B, traced
+
+| rdd 7.9.0 | vdd 1.10.0 |
+|---|---|
+| `defaultOptions.canFloat` / `canDock` | same, same meaning |
+| `createWorkspace({ canDrop })`, `PanelDrop` / `PanelDropTarget` | same; one helper (`core/dockRules.ts`) used by the drag composable, the zones and the menus |
+| forbidden targets not offered, asked again at release | same; under RTL a corner float is mirrored before `canDrop` sees it, as vdd already mirrored it when floating |
+| `startPointerDrag` ends on blur and lost capture, `onCancel` | blur and `onCancel` since 1.5.1; lost capture added in 1.10.0 |
+| `dockZones.browser.ts`: every zone and edge, LTR and RTL | already covered by the M6 browser gate |
+| API check sees unexported referenced types (rdd's API Extractor report) | n/a: vdd's `api-surface.json` pins export names, not signatures |
+
 ### rdd 7.8.0 Release A, traced
 
 | rdd 7.8.0 | vdd 1.9.0 |

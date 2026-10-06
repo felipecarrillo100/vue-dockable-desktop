@@ -11,6 +11,48 @@ correspondence lives, alongside the feature-by-feature map in [docs/PARITY.md](d
 
 ## [Unreleased]
 
+## [1.10.0] — 2026-10-06
+
+**Parity: react-dockable-desktop 7.9.0.** Control over where users can move panels: per-kind rules and
+an app-wide veto, all opt-in. Without them nothing changes, and the app's own calls are never
+restricted. Same names as rdd 7.9.0.
+
+### Added
+
+- **`canFloat` and `canDock` per kind**, next to `canDrag`, `canMinimize` and `canClose`.
+  `canFloat: false` keeps a panel in the grid: a tab drag can't end in a floating window, and
+  "Float Window" and the taskbar's "Maximize" are hidden. `canDock: false` keeps a panel floating:
+  dragging it offers no group, tab or edge targets.
+- **`canDrop`, an app-wide veto.** `createWorkspace({ canDrop: ({ panelId, component, to }) => boolean })`
+  is asked for every place a dragged panel could go, and for the "Float" and "Maximize" menu items;
+  `to` is a `PanelDropTarget` (a group, an edge, or a float). A forbidden target isn't offered, and
+  it's asked again at release. Positions and corners are the ones the move applies, mirrored under
+  RTL. If it throws, the move is allowed and the error is logged. New types: `PanelDrop`,
+  `PanelDropTarget`.
+- Both apply only to what the user does; the app's own calls always work.
+
+### Fixed
+
+- **A drag built on `startPointerDrag` could outlive its element.** It ended on pointerup,
+  pointercancel and window blur, but not when the capturing element was removed mid-drag (an
+  overlay widget closed during its own drag), which left its listeners attached and its classes on
+  the page. It now also ends on a lost pointer capture, listened for on the document, where browsers
+  fire it; `onCancel` runs if given.
+
+### Docs
+
+- Layout (Chapter 4): **Controlling where users can move panels**. Panels (Chapter 3) and the API
+  reference: the new options. `PARITY.md`: the rdd 7.9.0 trace.
+
+### Tests
+
+- `test/components/releaseB.test.ts` (12 tests): `canFloat` (no float on nothing, no corners, no
+  "Float Window" or "Maximize" from a group, the app's `floatPanel` still works), `canDock` (no group
+  or edge targets, only corners), `canDrop` (its argument, vetoed zones and edges not offered, RTL
+  positions, tab insertion into a vetoed group, rules changed mid-drag for zones and tabs, a throwing
+  `canDrop`, no rules meaning every target), and `startPointerDrag` ending on a lost capture. Each
+  rule was seen failing with it broken. `api-surface.json` gains the two types.
+
 ## [1.9.0] — 2026-10-06
 
 **Parity: react-dockable-desktop 7.8.0.** More control over how the desktop looks and where panels

@@ -37,6 +37,8 @@ panels: {
       canClose: true,
       canMinimize: true,
       canDrag: true,                  // false also prevents floating by drag
+      canFloat: true,                 // false: the user can't float it (1.10.0)
+      canDock: true,                  // false: the user can't dock it (1.10.0)
       disableLivePreview: false,      // taskbar hover shows a letter tile instead
       className: 'app-notes',         // on each panel's own content element (1.9.0)
       tabClassName: 'app-notes-tab',  // on its tab (1.9.0)
