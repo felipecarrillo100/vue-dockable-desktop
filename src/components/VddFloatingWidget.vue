@@ -43,7 +43,7 @@ const props = withDefaults(defineProps<{
   height?: number
   /** `false` disables resize-to-stretch snapping, for content that needs a bounded size. @default true */
   stretchable?: boolean
-}>(), { width: 320, height: 240, stretchable: true })
+}>(), { width: 320, height: 240, stretchable: true, icon: undefined })
 
 /** Whether the widget is mounted. `v-model:open` replaces rdd's `usePanelFloatingWindow()`. */
 const open = defineModel<boolean>('open', { default: true })

@@ -48,6 +48,7 @@ const props = withDefaults(defineProps<{
   newestOnTop: false,
   progressBar: false,
   width: 320,
+  adapter: undefined,
 })
 
 // An adapter is registered on the store, so `toast.*` reaches it even when called from

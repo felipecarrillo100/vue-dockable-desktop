@@ -18,7 +18,7 @@ const props = withDefaults(defineProps<{
   buttonVariant?: ButtonVariant
   /** Button size in pixels (sets `--vdd-panel-toolbar-btn-size`). The icon inside follows `--vdd-panel-toolbar-icon-size`. Left to the stylesheet when unset. */
   buttonSize?: number
-}>(), { variant: 'transparent', buttonVariant: 'ghost' })
+}>(), { variant: 'transparent', buttonVariant: 'ghost', buttonSize: undefined })
 
 const store = usePanelOverlay()
 const el = useTemplateRef<HTMLDivElement>('el')

@@ -50,7 +50,7 @@ These are the point of the whole scheme. Without them, "all gates green" means n
 | Check | Command |
 |---|---|
 | Types | `vue-tsc --noEmit` |
-| Lint | `eslint .` |
+| Lint | `eslint . --max-warnings 0` (a warning fails it too) |
 | Tests | `vitest run` — zero failures, zero unlisted skips |
 | Build | `vite build && vue-tsc --emitDeclarationOnly` — ESM + CJS + `.d.ts` + `styles.css` |
 | Counts | `scripts/gates/counts.mjs` |

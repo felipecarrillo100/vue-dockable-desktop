@@ -11,6 +11,29 @@ correspondence lives, alongside the feature-by-feature map in [docs/PARITY.md](d
 
 ## [Unreleased]
 
+## [1.8.2] — 2026-10-06
+
+**Parity: react-dockable-desktop 7.7.3** (code health). Neither of rdd's last two releases needs a
+port: 7.7.2 fixed panels re-rendering on every workspace change, which vdd never did (each panel
+host reads only its own entry), and 7.7.3 is rdd's own lint and dead-code tooling. This release is
+vdd's matching lint cleanup. No API or behaviour change; the built code differs only in the
+explicit `undefined` prop defaults below.
+
+### Internal
+
+- **A lint warning now fails the gate.** ESLint runs with `--max-warnings 0` in the standing gate
+  (CI), `npm run verify` and `npm run lint`. Warnings never failed anything before, and 721 had
+  built up.
+- **Template-layout rules are off.** `vue/max-attributes-per-line` and five other Vue
+  template-formatting rules accounted for 706 of the 721: they only reflow markup, and the
+  templates keep their own consistent layout.
+- The 12 optional props without a default (`VddAlert`'s `okLabel`, `VddConfirm`'s callbacks, the
+  icon props, and others) declare `undefined` explicitly in `withDefaults`, as `icon` already did.
+  Their behaviour is unchanged.
+- The demo's Markdown preview: the `v-html` lint exemption now covers the right line, and its
+  comment no longer calls the output sanitised. It isn't: `rehype-raw` passes raw HTML through,
+  which is acceptable in a demo that renders only what is typed into its own editor.
+
 ## [1.8.1] — 2026-10-05
 
 **Parity: react-dockable-desktop 7.7.1.** Two desktops on one page no longer strip each other's

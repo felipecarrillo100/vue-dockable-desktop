@@ -214,6 +214,14 @@ quietly dropped from it.
 Every "substitute", "rewrite" and "moot" above must be justified in its test file's header
 comment, so a reviewer can see the trade rather than discover a silent gap.
 
+### rdd 7.7.2 and 7.7.3, traced
+
+| rdd | vdd 1.8.2 |
+|---|---|
+| 7.7.2: panels no longer re-render on every workspace change | not affected: each `VddPanelMount` reads only its own entry, and Vue tracks per property |
+| 7.7.2: `useWorkspaceState(selector)` re-rendered on every change | not applicable: no selector hook; `useWorkspace()` state is reactive per property |
+| 7.7.3: a real lint gate (types, ESLint at zero warnings, knip) | the gate already ran types and lint; 1.8.2 adds `--max-warnings 0` and clears the 721 warnings |
+
 ### rdd 7.7.1 two workspaces on one page, traced
 
 | rdd 7.7.1 | vdd 1.8.1 |

@@ -192,7 +192,9 @@ function scrollTo(id: string): void {
       @pointerdown="onDividerDown"
     />
 
-    <!-- eslint-disable-next-line vue/no-v-html -- the pipeline's own sanitised output -->
+    <!-- Not sanitised: rehype-raw passes raw HTML through. Acceptable in this demo, which renders
+         only the text typed into this page's own editor. -->
+    <!-- eslint-disable vue/no-v-html -->
     <div
       ref="preview"
       class="dd-markdown"
@@ -200,5 +202,6 @@ function scrollTo(id: string): void {
       style="flex: 1; min-width: 0; overflow: auto"
       v-html="html"
     />
+    <!-- eslint-enable vue/no-v-html -->
   </div>
 </template>

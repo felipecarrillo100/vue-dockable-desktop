@@ -33,6 +33,14 @@ export default [
       // The library renders nothing multi-word-named at the DOM level; component names are
       // Vdd-prefixed files, which this rule does not need to police.
       'vue/multi-word-component-names': 'off',
+      // Template layout is a style choice, not a defect: the templates keep their own consistent
+      // layout, and these rules would only reflow it.
+      'vue/max-attributes-per-line': 'off',
+      'vue/singleline-html-element-content-newline': 'off',
+      'vue/multiline-html-element-content-newline': 'off',
+      'vue/html-indent': 'off',
+      'vue/html-closing-bracket-spacing': 'off',
+      'vue/attributes-order': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/consistent-type-imports': 'error',
       // A leading underscore is the declaration that a binding is deliberately unused —

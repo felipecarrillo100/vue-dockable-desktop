@@ -36,7 +36,7 @@ const run = (name, cmd) => {
 const prelude = []
 const steps = prelude
 steps.push(run('types', 'npx vue-tsc --noEmit'))
-steps.push(run('lint', 'npx eslint .'))
+steps.push(run('lint', 'npx eslint . --max-warnings 0'))
 // One vitest run, JSON captured so the counts gate can read it without re-running.
 steps.push(run('tests', 'npx vitest run --reporter=json --outputFile=artifacts/.vitest.json --reporter=default'))
 steps.push(run('build', 'npm run build'))
