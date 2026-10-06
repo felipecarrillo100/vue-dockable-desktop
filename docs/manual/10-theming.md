@@ -414,6 +414,76 @@ createWorkspace({ zIndexBase: 3000 })
 Floating windows and every piece of library chrome shift together, via `--vdd-z-base`. The
 default is `1000`.
 
+## Your own empty-workspace view
+
+While no panel is docked, the workspace shows a built-in message. Replace it with anything (1.9.0):
+
+```vue
+<VddDesktop>
+  <template #empty-workspace>
+    <WelcomeScreen />
+  </template>
+</VddDesktop>
+```
+
+It fills the empty group: floating windows still show over it, and a window can still be dropped
+onto it to dock. Empty groups inside a split keep the built-in message. To change only its text,
+override `emptyGroup` in `messages`.
+
+## Styling by state and by panel kind
+
+Two hooks let your CSS target the desktop without depending on internal class names (1.9.0).
+Each attribute is present while its state is true and absent otherwise:
+
+| Attribute | On | Present while |
+|-----------|----|---------------|
+| `data-vdd-selected` | tab | it is the tab shown in its group |
+| `data-vdd-focused` | tab, floating window | it is the workspace's active panel |
+| `data-vdd-dirty` | tab | the panel has unsaved changes |
+| `data-vdd-maximized` | floating window | it is maximised |
+
+Tabs carry `data-vdd-tab="<panel id>"` and floating windows `data-vdd-window="<panel id>"`. And
+`className` / `tabClassName` in a kind's registration options add your class to every panel of
+that kind and to its tab ([Chapter 3](03-panels.md#registration-options)).
+
+```css
+[data-vdd-tab][data-vdd-dirty] { box-shadow: inset 0 -2px 0 #f59e0b; }
+[data-vdd-window][data-vdd-focused] { outline: 2px solid var(--vdd-brand-accent); }
+```
+
+## Using it with Vuetify, PrimeVue, Bootstrap or Tailwind
+
+Every class the library renders starts with `vdd-` and every variable with `--vdd-`, so nothing
+collides with a framework's own classes, and the stylesheet never styles `<html>`, `<body>` or
+your markup. Colours and fonts: [Use your UI framework's theme](#use-your-ui-frameworks-theme).
+
+**Dark mode.** The desktop reads `data-color-scheme` on `<html>` (`"light"` is light; anything
+else, or none, is dark) and never sets it. When your framework switches mode, set it too:
+
+```ts
+// Vuetify
+const theme = useTheme()
+watchEffect(() => document.documentElement.setAttribute('data-color-scheme', theme.global.current.value.dark ? 'dark' : 'light'))
+// Bootstrap 5.3: set data-bs-theme and data-color-scheme together
+// Tailwind (system preference): follow matchMedia('(prefers-color-scheme: dark)')
+```
+
+With PrimeVue's `darkModeSelector` class, set the attribute wherever you toggle the class.
+
+**Stacking.** With the default `zIndexBase` of 1000, floating windows start at 1001, and the
+library's drawers are at 9000, context menus 9500, modals 10000 and toasts 10100. A framework
+dialog or menu opened from a panel therefore shows above the floating windows. But **a framework
+popup opened inside one of the library's modals or drawers appears behind it** when the popup is
+rendered into `<body>` (Vuetify's `VMenu`, `VSelect` and `VTooltip`, PrimeVue's overlays,
+Bootstrap's tooltips and popovers). Either raise that popup (Vuetify's `z-index` prop, PrimeVue's
+`zIndex` option, Bootstrap's `--bs-popover-zindex` / `--bs-tooltip-zindex`), or render it inside
+the modal (Vuetify's `attach`, PrimeVue's `appendTo="self"`).
+
+**Overriding styles.** Prefer the `--vdd-*` variables, then the state attributes and your own
+classes. A rule of yours on the library's classes needs equal specificity, and a declaration the
+library marks `!important` needs `!important` too. A version of the stylesheet in a CSS cascade
+layer, which would let any of your rules win, is planned for a later release.
+
 ## Custom classes on library containers
 
 For targeted styling without fighting the cascade:

@@ -41,5 +41,6 @@
   "fieldReport.test.ts": 6,
   "dragBlur.test.ts": 5,
   "reviewFixes.test.ts": 8,
-  "dialogs.test.ts": 23
+  "dialogs.test.ts": 23,
+  "releaseA.test.ts": 15
 }

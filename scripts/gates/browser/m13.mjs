@@ -441,6 +441,11 @@ await step('empty group', async () => {
   })
 })
 
+await step('the app\'s empty-workspace view', async () => {
+  // Still empty from the step above; with the slot, the app's view replaces the built-in message.
+  await drive(() => { window.__app.emptyView.value = true })
+})
+
 await step('light colour scheme', async () => {
   // App-owned: the library reads the attribute, it does not set it.
   await drive(() => document.documentElement.setAttribute('data-color-scheme', 'light'))

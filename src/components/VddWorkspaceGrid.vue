@@ -54,7 +54,10 @@ function onDividerDown(index: number, event: PointerEvent): void {
 </script>
 
 <template>
-  <VddLeafGroup v-if="node.type === 'leaf'" :leaf="node" />
+  <VddLeafGroup v-if="node.type === 'leaf'" :leaf="node">
+    <!-- Only the root grid receives this slot: nested grids below are rendered without it. -->
+    <template v-if="$slots['empty-workspace']" #empty-workspace><slot name="empty-workspace" /></template>
+  </VddLeafGroup>
 
   <div
     v-else

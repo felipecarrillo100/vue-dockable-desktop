@@ -103,6 +103,14 @@ export interface OpenPanelOptions<P extends object = Record<string, unknown>> {
   props?: P
   /** If another open panel of the same `component` has this key, focus that one instead. */
   dedupeKey?: string
+  /**
+   * Dock the new panel beside an open, docked panel: in that panel's group (`position: 'center'`,
+   * as a tab) or in a new group split off on one side of it. `size` is the new group's share of
+   * that split, from 0.1 to 0.9 (the workspace's split ratio when omitted). Wins over
+   * `initialTarget`. If `panel` is not docked (not open, floating or minimised), the new panel is
+   * placed as usual and a warning says why. Applies only to a newly opened panel. (1.9.0)
+   */
+  dockTo?: { panel: string; position: DropPosition; size?: number }
 }
 
 /** The live workspace state. */
@@ -487,19 +495,32 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
       return
     }
 
+    // dockTo beside a docked panel wins over the target (1.9.0).
+    const dockTo = options?.dockTo
+    const dockLeaf = dockTo ? findLeafForPanel(toRaw(state).gridRoot, dockTo.panel) : null
+    if (dockTo && dockLeaf === null) {
+      warn(`openPanel("${resolvedId}") could not dock beside "${dockTo.panel}": that panel is not docked ` +
+        `(not open, floating or minimised), so the new panel was placed as usual.`)
+    }
+
     const propsProvided = options?.props !== undefined
     const info: PanelInfo = {
       id: resolvedId,
       title: options?.title ?? entry?.defaultOptions?.title ?? resolvedId,
       component,
-      state: target === 'floating' ? 'floating' : 'docked',
+      state: dockLeaf === null && target === 'floating' ? 'floating' : 'docked',
       serializable: propsProvided ? isSerializable(toRaw(options!.props)) : true,
       ...(propsProvided ? { props: markRaw(options!.props as Record<string, unknown>) } : {}),
       ...(options?.dedupeKey !== undefined ? { dedupeKey: options.dedupeKey } : {}),
     }
     state.panels = { ...state.panels, [resolvedId]: info }
 
-    if (target === 'floating') {
+    if (dockTo && dockLeaf !== null) {
+      const share = Math.min(0.9, Math.max(0.1, dockTo.size ?? state.splitRatio))
+      state.gridRoot = dockTo.position === 'center'
+        ? addPanelToLeaf(toRaw(state).gridRoot, dockLeaf, resolvedId, { select: shouldFocus })
+        : splitLeafInTree(toRaw(state).gridRoot, dockLeaf, resolvedId, dockTo.position, share)
+    } else if (target === 'floating') {
       addFloating(resolvedId, cascade(favourite), options?.anchor ?? entry?.defaultOptions?.defaultAnchor ?? null)
     } else {
       const leaf = findFirstLeafId(toRaw(state).gridRoot) ?? emptyRoot().id

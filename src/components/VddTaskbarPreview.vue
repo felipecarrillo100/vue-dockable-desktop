@@ -43,7 +43,8 @@ const MAX_H = 140
 
 const panel = computed(() => ws.state.panels[props.panelId])
 const options = computed(() => (panel.value ? ws.registry.get(panel.value.component)?.defaultOptions ?? {} : {}))
-const live = computed(() => options.value.disableLivePreview !== true)
+// A panel that unmounts while hidden (keepAlive: false) has nothing to show while minimised.
+const live = computed(() => options.value.disableLivePreview !== true && options.value.keepAlive !== false)
 
 const source = computed(() => props.cache.sizeOf(props.panelId))
 const scale = computed(() => Math.min(MAX_W / source.value.width, MAX_H / source.value.height))

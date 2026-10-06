@@ -8,6 +8,7 @@
  * docs/decisions/0002-zero-unmount-via-teleport.md.
  */
 import { computed, ref, watchEffect } from 'vue'
+import { findLeaf, findLeafForPanel } from '../core/layoutTree'
 import type { PanelDomCache } from '../core/panelDom'
 import { providePanel } from '../composables/usePanel'
 import { useWorkspace } from '../composables/useWorkspace'
@@ -47,6 +48,22 @@ providePanel({
 
 const target = computed(() => props.cache.elementFor(props.panelId))
 
+/**
+ * `keepAlive: false` (1.9.0): the component is mounted only while the panel is on screen,
+ * floating or the selected tab of its group. Everything above it (this host, its context, its
+ * cache element) stays, so the panel's tab, title and lifecycle carry on.
+ * @see docs/decisions/0021-opt-in-unmount-while-hidden.md
+ */
+const shown = computed(() => {
+  if (entry.value?.defaultOptions?.keepAlive !== false) return true
+  const panel = info.value
+  if (!panel || panel.state === 'minimized') return false
+  if (panel.state === 'floating') return true
+  // Read through the reactive state (not toRaw), so this re-evaluates when the grid changes.
+  const leafId = findLeafForPanel(ws.state.gridRoot, props.panelId)
+  return leafId !== null && findLeaf(ws.state.gridRoot, leafId)?.activePanelId === props.panelId
+})
+
 // Track the rendered size so `usePanel().size` is live without the panel asking for it.
 let observer: ResizeObserver | null = null
 watchEffect((onCleanup) => {
@@ -70,14 +87,14 @@ watchEffect((onCleanup) => {
 
 <template>
   <Teleport :to="target">
-    <div class="vdd-panel-content" :dir="ws.state.dir">
+    <div :class="['vdd-panel-content', entry?.defaultOptions?.className]" :dir="ws.state.dir">
       <component
-        v-if="entry"
+        v-if="entry && shown"
         :is="entry.component"
         v-bind="info?.props ?? {}"
         :panel-id="panelId"
       />
-      <div v-else class="vdd-unregistered-panel">
+      <div v-else-if="!entry" class="vdd-unregistered-panel">
         <strong>Unregistered panel</strong>
         <span>No component is registered for key "{{ info?.component }}".</span>
       </div>
