@@ -90,6 +90,8 @@
     "PanelContribution",
     "PanelDefaultOptions",
     "PanelDefinition",
+    "PanelDrop",
+    "PanelDropTarget",
     "PanelFloatPlacement",
     "PanelInfo",
     "PanelRegistryEntry",

@@ -8,7 +8,7 @@
 import { computed, markRaw, reactive, readonly, ref, shallowRef, toRaw } from 'vue'
 import type { App, Component, ComputedRef, InjectionKey } from 'vue'
 import type {
-  DirtyStateOptions, DropPosition, FloatAnchor, FloatingWindow, Label, LayoutNode,
+  DirtyStateOptions, DropPosition, FloatAnchor, PanelDrop, FloatingWindow, Label, LayoutNode,
   MessageDescriptor, MessageFormatter, PanelInfo, SerializedLayout, SplitDirection,
 } from '../types'
 import {
@@ -70,6 +70,14 @@ export interface WorkspaceConfig {
    * rendered elements, which is the part that can actually break.
    */
   classes?: HostClasses
+  /**
+   * Veto where users can move panels (1.10.0). Called for each place a dragged panel could go, and
+   * for the built-in "Float" and "Maximize" menu items: return `false` and that target isn't offered
+   * and the move doesn't happen. It runs after the kind's own `canFloat` / `canDock`, and only for
+   * what the user does: the app's own calls always work. Keep it fast and pure; it runs while the
+   * pointer moves.
+   */
+  canDrop?: (drop: PanelDrop) => boolean
 }
 
 /** Consumer classes added to the library's chrome. Every field is optional. */

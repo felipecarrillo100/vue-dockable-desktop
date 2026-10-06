@@ -57,6 +57,7 @@ export function startPointerDrag<TStart>(config: PointerDragConfig<TStart>): voi
     element.removeEventListener('pointerup', handleEnd);
     element.removeEventListener('pointercancel', handleCancel);
     window.removeEventListener('blur', handleCancel);
+    document.removeEventListener('lostpointercapture', handleLostCapture, true);
   };
   const handleEnd = () => {
     teardown();
@@ -66,6 +67,9 @@ export function startPointerDrag<TStart>(config: PointerDragConfig<TStart>): voi
     teardown();
     (onCancel ?? onEnd)?.(start);
   };
+  // Removing a capturing element fires lostpointercapture at the document, not the element (1.10.0),
+  // so a drag whose element was removed mid-drag ends there. A normal release ends it first.
+  const handleLostCapture = (e: PointerEvent) => { if (e.pointerId === pointerId) handleCancel(); };
 
   element.addEventListener('pointermove', handleMove);
   element.addEventListener('pointerup', handleEnd);
@@ -73,6 +77,7 @@ export function startPointerDrag<TStart>(config: PointerDragConfig<TStart>): voi
   // The window losing focus ends the drag, as a pointercancel does (1.5.1): after an alt-tab the
   // listeners and the active classes would otherwise outlive the gesture.
   window.addEventListener('blur', handleCancel);
+  document.addEventListener('lostpointercapture', handleLostCapture, true);
 }
 
 // ── Reading direction ────────────────────────────────────────────────────────

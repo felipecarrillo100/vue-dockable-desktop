@@ -6,7 +6,7 @@
  */
 
 /** The library version, mirroring `package.json`. */
-export const version = '1.9.0'
+export const version = '1.10.0'
 
 // ─── The workspace ───────────────────────────────────────────────────────────
 // `createWorkspace()` returns both the imperative API and a Vue plugin, the shape
@@ -151,6 +151,8 @@ export type {
   DirtyStateOptions,
   DropPosition,
   DropTarget,
+  PanelDrop,
+  PanelDropTarget,
   FloatAnchor,
   FloatingWindow,
   Label,
