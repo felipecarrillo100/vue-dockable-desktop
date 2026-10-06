@@ -43,7 +43,8 @@ The taskbar has three modes: `'always'`, `'compact'` (only when something is min
 ## Zero unmount
 
 A minimised panel is off screen but **still running**. So is a panel in a background tab.
-Nothing in this library unmounts a panel until it is closed.
+Nothing in this library unmounts a panel until it is closed, unless its kind opts out with
+`keepAlive: false` (1.9.0; see [Chapter 3](03-panels.md#freeing-a-hidden-panel-keepalive-false)).
 
 The consequence worth internalising: background panels keep their timers, watchers and
 subscriptions live. If a panel polls a server, it keeps polling while minimised unless you

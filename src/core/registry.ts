@@ -29,6 +29,22 @@ export interface PanelDefaultOptions {
    * @see docs/decisions/0014-preserve-scroll-and-focus.md
    */
   preserveScroll?: boolean
+  /**
+   * Class added to each panel of this kind, on its own content element (`.vdd-panel-content`),
+   * which moves with the panel between groups, windows and the taskbar preview. (1.9.0)
+   */
+  className?: string
+  /** Class added to the tab of each panel of this kind. (1.9.0) */
+  tabClassName?: string
+  /**
+   * `false` unmounts the panel's component while it is hidden (an unselected tab, or minimised)
+   * and mounts it afresh when shown, to free what a heavy, rarely shown panel holds. Its own
+   * state is lost each time, and a guard it registered with `onBeforeClose` is not active while
+   * it is unmounted (its dirty flag still is). Its tab, title and lifecycle continue, and the
+   * taskbar shows a letter tile instead of a live preview. @default true
+   * @see docs/decisions/0021-opt-in-unmount-while-hidden.md
+   */
+  keepAlive?: boolean
 }
 
 /** A registered panel kind. */

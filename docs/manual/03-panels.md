@@ -38,10 +38,31 @@ panels: {
       canMinimize: true,
       canDrag: true,                  // false also prevents floating by drag
       disableLivePreview: false,      // taskbar hover shows a letter tile instead
+      className: 'app-notes',         // on each panel's own content element (1.9.0)
+      tabClassName: 'app-notes-tab',  // on its tab (1.9.0)
+      keepAlive: true,                // false: unmount while hidden, see below (1.9.0)
     },
   },
 }
 ```
+
+`className` goes on the panel's own content element (`.vdd-panel-content`), which moves with
+the panel, so it applies docked, floating and in the taskbar preview.
+
+### Freeing a hidden panel (`keepAlive: false`)
+
+By default a panel is never unmounted while it is open (see
+[Zero unmount](02-concepts.md#zero-unmount)). For a heavy kind that is rarely shown,
+`keepAlive: false` trades that for memory: the component unmounts while the panel is **an
+unselected tab or minimised**, and mounts afresh when it is shown again.
+
+- **Its own state is lost each time it is hidden**, and its `onUnmounted` runs: in such a
+  panel, unmounting means *hidden*, not *closed*. Keep what must survive outside it.
+- **A guard it registered with `onBeforeClose` is not active while it is unmounted.** Its dirty
+  flag still is, so closing a hidden dirty panel still asks first.
+- **Its tab, title, dirty flag and container carry on**, and the taskbar shows a letter tile
+  instead of a live preview while it is minimised.
+- A floating window is always shown, so a floating panel stays mounted.
 
 ## Per-instance data
 

@@ -180,6 +180,8 @@ function onHandlePointerDown(dir: ResizeDir, event: PointerEvent): void {
       'vdd-window-focused': isFocused,
     }, ws.classes.window]"
     :data-vdd-window="window.id"
+    :data-vdd-focused="isFocused ? '' : undefined"
+    :data-vdd-maximized="window.maximized ? '' : undefined"
     :dir="ws.state.dir"
     :style="style"
     @pointerdown.capture="ws.focusPanel(window.id)"

@@ -233,7 +233,10 @@ onBeforeUnmount(() => {
     <div ref="viewport" class="vdd-workspace-viewport">
       <VddEdgeZones v-if="drag.dragging.value" />
 
-      <VddWorkspaceGrid :node="ws.state.gridRoot" :path="[]" />
+      <VddWorkspaceGrid :node="ws.state.gridRoot" :path="[]">
+        <!-- Your view while no panel is docked (1.9.0); forwarded to the root group only. -->
+        <template v-if="$slots['empty-workspace']" #empty-workspace><slot name="empty-workspace" /></template>
+      </VddWorkspaceGrid>
 
       <VddFloatingWindow
         v-for="w in ws.state.floating"

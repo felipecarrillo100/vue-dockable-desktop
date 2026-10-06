@@ -34,6 +34,13 @@
 }
 
 /* Empty workspace section placeholder text */
+.vdd-empty-workspace {
+  /* The app's own empty-workspace view: the full group body, none of the built-in message's styling. */
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+}
+
 .vdd-empty-leaf-placeholder {
   width: 100%;
   height: 100%;

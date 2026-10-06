@@ -11,6 +11,55 @@ correspondence lives, alongside the feature-by-feature map in [docs/PARITY.md](d
 
 ## [Unreleased]
 
+## [1.9.0] — 2026-10-06
+
+**Parity: react-dockable-desktop 7.8.0.** More control over how the desktop looks and where panels
+open, all opt-in: without the new options, nothing changes. Same names as rdd 7.8.0, in Vue's idiom.
+
+### Added
+
+- **Your own empty-workspace view.** `<VddDesktop>` takes a `#empty-workspace` slot, shown while no
+  panel is docked in place of the built-in message: a welcome screen, a logo, "Open a file"
+  buttons. Floating windows still show over it, and a window can still be dropped onto it to dock.
+  Empty groups inside a split keep the built-in message.
+- **Open a panel beside another.** `openPanel(id, component, { dockTo: { panel, position, size } })`
+  docks a new panel as a tab in that panel's group (`position: 'center'`) or in a new group split
+  off on one side, taking `size` (0.1–0.9) of the split. It wins over `initialTarget`. If the
+  target isn't docked, the panel is placed as usual and a warning says why.
+- **State attributes for your CSS.** Tabs carry `data-vdd-selected`, `data-vdd-focused` and
+  `data-vdd-dirty`; floating windows carry `data-vdd-focused` and `data-vdd-maximized`. Each is
+  present only while it is true. The existing classes are unchanged.
+- **Per-kind classes.** `className` and `tabClassName` in a kind's `defaultOptions` add your class
+  to every panel of that kind (on its content element, which moves with it) and to its tab.
+- **`keepAlive: false`**, per kind: the component unmounts while the panel is an unselected tab or
+  minimised, and mounts afresh when shown. Its own state is lost each time, and in such a panel
+  `onUnmounted` means hidden, not closed; a guard it registered with `onBeforeClose` is inactive
+  while it is unmounted, though its dirty flag still applies. The default is unchanged: panels
+  stay mounted. Recorded as [ADR 0021](docs/decisions/0021-opt-in-unmount-while-hidden.md), which
+  amends 0002 for kinds that opt in.
+
+### Docs
+
+- Theming (Chapter 10): **Your own empty-workspace view**, **Styling by state and by panel kind**,
+  and **Using it with Vuetify, PrimeVue, Bootstrap or Tailwind** (dark mode, the library's
+  z-index layers, why a framework popup opened inside one of the library's modals appears behind
+  it and the fixes, overriding styles). Layout (Chapter 4): **Opening beside another panel**.
+  Panels (Chapter 3): the new registration options and **Freeing a hidden panel**. Concepts
+  (Chapter 2) notes the `keepAlive: false` exception beside the zero-unmount guarantee.
+- `PARITY.md`: the rdd 7.8.0 trace.
+
+### Tests
+
+- `test/components/releaseA.test.ts` (15 tests): the empty-workspace slot (shown and gone as panels
+  dock and close; empty groups inside a split keep the built-in message), the state attributes on
+  tabs and windows, `dockTo` (sides, centre, size clamping, winning over `initialTarget`, the
+  fallback and its warning, no effect on an open panel), the per-kind classes (also after
+  floating), and `keepAlive: false` (unmount and fresh remount, the default unchanged, no leak
+  over 50 hide/show cycles). Each was seen failing with its feature broken.
+- M13's browser tour gains a step that shows the playground's `#empty-workspace` view, so the new
+  `.vdd-empty-workspace` rule is checked against a real render (the gate first failed on it as a
+  dead rule, which is what it is for).
+
 ## [1.8.2] — 2026-10-06
 
 **Parity: react-dockable-desktop 7.7.3** (code health). Neither of rdd's last two releases needs a

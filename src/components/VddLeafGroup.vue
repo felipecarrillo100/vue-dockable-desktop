@@ -109,8 +109,11 @@ const tabClass = (id: string) => {
         <div
           v-for="(tab, index) in tabs"
           :key="tab.id"
-          :class="tabClass(tab.id)"
+          :class="[tabClass(tab.id), tab.options.tabClassName]"
           :data-vdd-tab="tab.id"
+          :data-vdd-selected="tab.id === selectedId ? '' : undefined"
+          :data-vdd-focused="tab.id === ws.state.activePanelId ? '' : undefined"
+          :data-vdd-dirty="tab.panel.dirty ? '' : undefined"
           :data-vdd-tab-leaf="leaf.id"
           :data-vdd-tab-index="String(index)"
           role="tab"
@@ -179,6 +182,10 @@ const tabClass = (id: string) => {
         persistence port a new host. The panel itself is never re-created.
       -->
       <VddPanelSlot v-if="selectedId" :key="selectedId" :panel-id="selectedId" />
+      <!-- The app's empty-workspace view (1.9.0): only the root group receives the slot. -->
+      <div v-else-if="$slots['empty-workspace'] && tabs.length === 0" class="vdd-empty-workspace">
+        <slot name="empty-workspace" />
+      </div>
       <div v-else class="vdd-empty-leaf-placeholder">
         <span>{{ ws.format(ws.messages.emptyGroup) }}</span>
       </div>

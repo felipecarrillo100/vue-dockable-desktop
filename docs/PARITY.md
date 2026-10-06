@@ -214,6 +214,17 @@ quietly dropped from it.
 Every "substitute", "rewrite" and "moot" above must be justified in its test file's header
 comment, so a reviewer can see the trade rather than discover a silent gap.
 
+### rdd 7.8.0 Release A, traced
+
+| rdd 7.8.0 | vdd 1.9.0 |
+|---|---|
+| `<RddDesktop emptyWorkspace={…}>` | `<VddDesktop>` slot `#empty-workspace` (ADR 0007: markup is a slot), forwarded to the root group only |
+| `data-rdd-selected` / `-focused` / `-dirty` on tabs, `-focused` / `-maximized` on windows | `data-vdd-*`, same names and meaning |
+| `openPanel(…, { dockTo: { panel, position, size } })` | same option, same behaviour; the not-docked case warns outside production, as vdd's other warnings do |
+| `defaultOptions.className` / `tabClassName` | same, on `.vdd-panel-content` and the tab |
+| `defaultOptions.keepAlive: false` | same; recorded as [ADR 0021](decisions/0021-opt-in-unmount-while-hidden.md), amending 0002 |
+| layered stylesheet | not in A: moved to a later phase in all three editions (the stylesheet's `!important`: 266 in rdd, 265 in vdd) |
+
 ### rdd 7.7.2 and 7.7.3, traced
 
 | rdd | vdd 1.8.2 |

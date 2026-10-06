@@ -36,7 +36,7 @@ any component mounts, which is why none of the composables below need a provider
 
 | Component | |
 |---|---|
-| `VddDesktop` | The workspace: grid, floating windows, taskbar. Mount one. [Ch. 1](01-getting-started.md) |
+| `VddDesktop` | The workspace: grid, floating windows, taskbar. Mount one. Slot `#empty-workspace`: your view while no panel is docked ([Ch. 10](10-theming.md#your-own-empty-workspace-view)). [Ch. 1](01-getting-started.md) |
 | `VddContextMenu` | Renders whatever menu is pending. Mount one. [Ch. 8](08-overlays.md) |
 | `VddSidebar`, `VddSecondarySidebar` | Activity bar and drawer, on either edge. [Ch. 6](06-sidebar-toolbar.md) |
 | `VddToolbar` | A strip of tool buttons on any edge. [Ch. 6](06-sidebar-toolbar.md) |
@@ -144,6 +144,7 @@ one, and `docs/PARITY.md` records the reasoning.
 | `usePanelSize` | `usePanel().size` is already a ref |
 | `ContextMenuAdapter` | `<VddContextMenu>`'s default slot |
 | `renderContent`, `renderHeader`, `ManagedWindowConfig.content` | Slots, or a `component` field |
+| `emptyWorkspace` prop on `RddDesktop` (7.8.0) | The `#empty-workspace` slot on `<VddDesktop>` |
 
 ## The surface is gated
 

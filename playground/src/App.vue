@@ -25,6 +25,8 @@ const sidebarTabs = ref<SidebarTab[]>([
 ])
 const openTab = ref<string | null>(null)
 const secondaryTab = ref<string | null>(null)
+/** Whether the desktop gets an #empty-workspace view (1.9.0); off so the built-in message is toured too. */
+const emptyView = ref(false)
 const toolbarVisible = ref(true)
 // The workspace toolbar's edge, and the animations opt-out: both have their own rules, and
 // neither is reachable without being switchable from the outside.
@@ -59,7 +61,7 @@ const toolbarItems = ref<ToolbarItem[]>([
 // sequence of clicks on coordinates.
 ;(window as unknown as Record<string, unknown>).__taskbar = taskbar
 ;(window as unknown as Record<string, unknown>).__app = {
-  taskbar, sidebarTabs, openTab, secondaryTab, toolbarVisible, toolbarItems, Glyph,
+  taskbar, sidebarTabs, openTab, secondaryTab, emptyView, toolbarVisible, toolbarItems, Glyph,
   toastPosition, toastProgress, toastMax, toolbarPosition, animations, skin,
   toast,
   // Each alert type has its own rule, so the gate needs to reach all four.
@@ -148,7 +150,11 @@ const toolbarItems = ref<ToolbarItem[]>([
               :taskbar="taskbar"
               :animations="animations"
               :skin="skin"
-            />
+            >
+              <template v-if="emptyView" #empty-workspace>
+                <p data-playground-empty-view>No panel is open.</p>
+              </template>
+            </VddDesktop>
           </div>
         </div>
       </VddSecondarySidebar>
