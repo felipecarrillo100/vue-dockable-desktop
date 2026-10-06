@@ -24,7 +24,7 @@ const props = withDefaults(defineProps<{
   cache: PanelDomCache
   /** Fallback icon for panels that register none. */
   defaultIcon?: unknown
-}>(), { visibility: 'always' })
+}>(), { visibility: 'always', defaultIcon: undefined })
 
 const emit = defineEmits<{
   /** A long press or right-click on an icon: the host opens a menu for it (M8). */

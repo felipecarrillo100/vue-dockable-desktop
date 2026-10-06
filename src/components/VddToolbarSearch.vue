@@ -30,7 +30,7 @@ const props = withDefaults(defineProps<{
   search: (query: string, signal: AbortSignal) => SearchResult[] | Promise<SearchResult[]>
   /** Debounce in ms. @default 300 */
   debounce?: number
-}>(), { debounce: 300 })
+}>(), { debounce: 300, placeholder: undefined })
 
 const emit = defineEmits<{ select: [result: SearchResult] }>()
 

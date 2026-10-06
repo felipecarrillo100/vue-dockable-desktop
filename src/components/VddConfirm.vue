@@ -30,7 +30,7 @@ const props = withDefaults(defineProps<{
    * for none, or pass a component. Coloured by `alertType`.
    */
   icon?: Component | null
-}>(), { alertType: 'info', yesNo: false, icon: undefined })
+}>(), { alertType: 'info', yesNo: false, icon: undefined, alert: undefined, onOk: undefined, onCancel: undefined, onSettled: undefined })
 
 const ws = useWorkspace()
 const panel = usePanel()

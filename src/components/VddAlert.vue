@@ -23,7 +23,7 @@ const props = withDefaults(defineProps<{
   okLabel?: Label
   /** Called exactly once, whichever way the dialog closes. */
   onSettled?: () => void
-}>(), { alertType: 'info', icon: undefined })
+}>(), { alertType: 'info', icon: undefined, okLabel: undefined, onSettled: undefined })
 
 const ws = useWorkspace()
 const panel = usePanel()

@@ -44,7 +44,7 @@ const props = withDefaults(defineProps<{
   taskbar?: TaskbarVisibility
   /** Fallback icon for panels that register none. */
   defaultPanelIcon?: unknown
-}>(), { skin: 'vscode', animations: true, taskbar: 'always' })
+}>(), { skin: 'vscode', animations: true, taskbar: 'always', defaultPanelIcon: undefined })
 
 const emit = defineEmits<{
   /**

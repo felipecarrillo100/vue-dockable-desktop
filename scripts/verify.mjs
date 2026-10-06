@@ -16,7 +16,7 @@ const run = (name, cmd, args) => {
 }
 
 run('types', 'npx', ['vue-tsc', '--noEmit'])
-run('lint', 'npx', ['eslint', '.'])
+run('lint', 'npx', ['eslint', '.', '--max-warnings', '0'])
 run('tests', 'npx', ['vitest', 'run'])
 
 console.log('\n' + '─'.repeat(60))
