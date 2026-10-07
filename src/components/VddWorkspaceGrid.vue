@@ -5,6 +5,7 @@
  *
  * `path` is the index route from the root to this node — what `updateSplitSizes` addresses.
  */
+import type { TabContentProps } from '../types'
 import { computed } from 'vue'
 import type { LayoutNode } from '../types'
 import { useWorkspace } from '../composables/useWorkspace'
@@ -12,6 +13,11 @@ import { isRtlElement, startPointerDrag } from '../core/dragResize'
 import VddLeafGroup from './VddLeafGroup.vue'
 
 const props = defineProps<{ node: LayoutNode; path: number[] }>()
+
+defineSlots<{
+  'empty-workspace'?: () => unknown
+  'tab-content'?: (tab: TabContentProps) => unknown
+}>()
 
 const ws = useWorkspace()
 const isRow = computed(() => props.node.type === 'branch' && props.node.orientation === 'horizontal')
@@ -57,6 +63,7 @@ function onDividerDown(index: number, event: PointerEvent): void {
   <VddLeafGroup v-if="node.type === 'leaf'" :leaf="node">
     <!-- Only the root grid receives this slot: nested grids below are rendered without it. -->
     <template v-if="$slots['empty-workspace']" #empty-workspace><slot name="empty-workspace" /></template>
+    <template v-if="$slots['tab-content']" #tab-content="tab"><slot name="tab-content" v-bind="tab" /></template>
   </VddLeafGroup>
 
   <div
@@ -67,7 +74,10 @@ function onDividerDown(index: number, event: PointerEvent): void {
   >
     <template v-for="(child, index) in node.children" :key="index">
       <div :style="{ flexGrow: node.sizes[index], flexBasis: `${(node.sizes[index] ?? 0) * 100}%`, overflow: 'hidden', position: 'relative', minWidth: 0, minHeight: 0 }">
-        <VddWorkspaceGrid :node="child" :path="[...path, index]" />
+        <VddWorkspaceGrid :node="child" :path="[...path, index]">
+          <!-- Every group gets the tab content; the empty-workspace view stays with the root. -->
+          <template v-if="$slots['tab-content']" #tab-content="tab"><slot name="tab-content" v-bind="tab" /></template>
+        </VddWorkspaceGrid>
       </div>
       <div
         v-if="index < node.children.length - 1"

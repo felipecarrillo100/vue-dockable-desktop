@@ -7,7 +7,8 @@
  * must never disagree with `activePanelId` — the invariant behind divergence D2.
  */
 import { computed, nextTick, useTemplateRef } from 'vue'
-import type { LayoutLeafNode } from '../types'
+import type { Component } from 'vue'
+import type { LayoutLeafNode, PanelInfo, TabContentProps } from '../types'
 import { useWorkspace } from '../composables/useWorkspace'
 import { useDragDock } from '../composables/useDragDock'
 import { buildPanelMenu } from '../core/panelMenu'
@@ -16,6 +17,11 @@ import VddPanelSlot from './VddPanelSlot.vue'
 import VddDropZones from './VddDropZones.vue'
 
 const props = defineProps<{ leaf: LayoutLeafNode }>()
+
+defineSlots<{
+  'empty-workspace'?: () => unknown
+  'tab-content'?: (tab: TabContentProps) => unknown
+}>()
 
 const ws = useWorkspace()
 const drag = useDragDock()
@@ -49,6 +55,17 @@ const tabs = computed(() => props.leaf.panels.flatMap((id) => {
 }))
 
 const selectedId = computed(() => props.leaf.activePanelId)
+
+/** What the `#tab-content` slot receives for one tab. */
+const tabContent = (id: string, panel: PanelInfo, icon: Component | undefined): TabContentProps => ({
+  panelId: id,
+  component: panel.component,
+  title: ws.format(panel.title),
+  icon,
+  dirty: panel.dirty === true,
+  selected: id === selectedId.value,
+  focused: id === ws.state.activePanelId,
+})
 
 /**
  * Keyboard: one tab stop per group, arrows to move, Delete to close — the core of the WAI-ARIA
@@ -130,10 +147,14 @@ const tabClass = (id: string) => {
           @keydown="onTabKey(index, $event)"
         >
           <span class="vdd-text-truncate">
-            <span v-if="tab.options.icon" class="vdd-workspace-tab-icon">
-              <component :is="tab.options.icon" />
-            </span>
-            <span>{{ ws.format(tab.panel.title) }}{{ tab.panel.dirty ? ' *' : '' }}</span>
+            <!-- The app's content replaces the icon, title and marker; the tab stays ours (1.11.0). -->
+            <slot v-if="$slots['tab-content']" name="tab-content" v-bind="tabContent(tab.id, tab.panel, tab.options.icon)" />
+            <template v-else>
+              <span v-if="tab.options.icon" class="vdd-workspace-tab-icon">
+                <component :is="tab.options.icon" />
+              </span>
+              <span>{{ ws.format(tab.panel.title) }}{{ tab.panel.dirty ? ' *' : '' }}</span>
+            </template>
           </span>
           <span
             v-if="tab.options.canClose !== false"

@@ -7,6 +7,8 @@
  * breaks a saved layout.
  */
 
+import type { Component } from 'vue'
+
 /** A localisable message descriptor. The whole i18n integration surface is resolving one of these to a string. */
 export interface MessageDescriptor {
   /** Translation dictionary key. */
@@ -61,6 +63,28 @@ export interface PanelDrop {
   panelId: string
   component: string
   to: PanelDropTarget
+}
+
+/**
+ * What the `#tab-content` slot of `<VddDesktop>` receives for each tab (1.11.0). `title` is already
+ * formatted and `icon` is the one the built-in content shows, so the built-in content is one line
+ * to re-create: `<component :is="tab.icon" v-if="tab.icon" /> {{ tab.title }}{{ tab.dirty ? ' *' : '' }}`.
+ */
+export interface TabContentProps {
+  /** The panel's instance id. */
+  panelId: string
+  /** The panel's registered kind: branch on it for a per-type look. */
+  component: string
+  /** The title, formatted: messages resolved, functions called. */
+  title: string
+  /** The registration's icon, if it has one. */
+  icon: Component | undefined
+  /** Has unsaved changes; the built-in content shows ` *`. */
+  dirty: boolean
+  /** The tab shown in its group. */
+  selected: boolean
+  /** The workspace's active panel. */
+  focused: boolean
 }
 
 /** A split node: children laid out along one axis with relative sizes summing to 1. */

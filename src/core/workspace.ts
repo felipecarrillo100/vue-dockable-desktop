@@ -6,7 +6,7 @@
  * (docs/decisions/0004-store-outside-components.md).
  */
 import { computed, markRaw, reactive, readonly, ref, shallowRef, toRaw } from 'vue'
-import type { App, Component, ComputedRef, InjectionKey } from 'vue'
+import type { AllowedComponentProps, App, Component, ComputedRef, InjectionKey, VNodeProps } from 'vue'
 import type {
   DirtyStateOptions, DropPosition, FloatAnchor, PanelDrop, FloatingWindow, Label, LayoutNode,
   MessageDescriptor, MessageFormatter, PanelInfo, SerializedLayout, SplitDirection,
@@ -263,12 +263,68 @@ export interface Workspace<TEvents extends object = Record<string, unknown>> {
 /** Injection key for {@link useWorkspace}. */
 export const WORKSPACE_KEY = Symbol('vdd-workspace') as InjectionKey<Workspace<never>>
 
+/** The type-only mark {@link definePanels} puts on a map. No such value exists at runtime. */
+declare const panelsBrand: unique symbol
+
+/** A panel map marked by {@link definePanels}, so `createWorkspace` types `openPanel` from it (1.11.0). */
+export type PanelMap<TPanels extends Record<string, PanelDefinition> = Record<string, PanelDefinition>> =
+  TPanels & { readonly [panelsBrand]: true }
+
+/** A component's props: from `$props` for a component object, from the first argument for a functional one. */
+type PropsOfComponent<C> =
+  C extends new (...args: never[]) => { $props: infer P } ? P
+    : C extends (props: infer P, ...rest: never[]) => unknown ? P
+      : Record<string, unknown>
+
+/**
+ * The props `openPanel` passes to a registered panel: its component's props, without `panelId`
+ * (the library passes it) or Vue's own attributes (`key`, `ref`, `class`, `style`).
+ */
+export type PanelPropsOf<TDefinition> = TDefinition extends { component: infer C }
+  ? Omit<PropsOfComponent<C>, 'panelId' | keyof VNodeProps | keyof AllowedComponentProps>
+  : never
+
+/**
+ * Marks a panel map for typing (1.11.0). Returns it unchanged; a workspace created from it gets a
+ * typed `openPanel`: only registered names, and `props` checked against that panel's component.
+ *
+ * @example
+ * ```ts
+ * const panels = definePanels({ map: { component: MapPanel }, chart: { component: ChartPanel } })
+ * const workspace = createWorkspace({ panels })
+ * workspace.openPanel('c1', 'chart', { props: { series: 3 } })   // checked against ChartPanel's props
+ * ```
+ */
+export function definePanels<const TPanels extends Record<string, PanelDefinition>>(panels: TPanels): PanelMap<TPanels> {
+  return panels as PanelMap<TPanels>
+}
+
+/**
+ * A workspace created from {@link definePanels}: the same object, with `openPanel` typed from the
+ * registry. It goes anywhere a {@link Workspace} goes. `useWorkspace()` stays untyped; keep this
+ * one for typed calls.
+ */
+export interface TypedWorkspace<TPanels extends Record<string, PanelDefinition>, TEvents extends object = Record<string, unknown>>
+  extends Workspace<TEvents> {
+  /** `openPanel`, typed: a registered name, and that panel's props. */
+  openPanel<K extends keyof TPanels & string>(id: string, component: K, options?: OpenPanelOptions<PanelPropsOf<TPanels[K]>>): void
+}
+
+/**
+ * Create a workspace from a map marked by {@link definePanels} (1.11.0): `openPanel` takes only the
+ * registered names, with `props` checked against each panel's component. To name the events as
+ * well, pass both type arguments: `createWorkspace<typeof panels, AppEvents>({ panels })`.
+ */
+export function createWorkspace<TPanels extends Record<string, PanelDefinition>, TEvents extends object = Record<string, unknown>>(
+  config: WorkspaceConfig & { panels: PanelMap<TPanels> },
+): TypedWorkspace<TPanels, TEvents>
 /**
  * Create a workspace.
  *
  * The returned object is both the imperative API and a Vue plugin, matching the
  * `createPinia()` / `createRouter()` shape a Vue developer already knows.
  */
+export function createWorkspace<TEvents extends object = Record<string, unknown>>(config?: WorkspaceConfig): Workspace<TEvents>
 export function createWorkspace<TEvents extends object = Record<string, unknown>>(
   config: WorkspaceConfig = {},
 ): Workspace<TEvents> {

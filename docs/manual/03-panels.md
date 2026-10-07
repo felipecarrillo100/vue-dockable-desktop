@@ -83,6 +83,35 @@ useful when several call sites cannot agree on the same literal id.
 > Whether `props` survive `saveLayout()` depends on whether they are JSON-serialisable. See
 > [chapter 5](05-persistence.md); it is a runtime fact, not a type-level guarantee.
 
+### A typed registry: `definePanels`
+
+Wrap the map in `definePanels()` and the workspace's `openPanel` is typed from it: only registered
+names are accepted, and `props` is checked against that panel's props (without `panelId`, which the
+library passes). Opt-in: a plain map keeps working exactly as before (1.11.0).
+
+```ts
+import { createWorkspace, definePanels } from 'vue-dockable-desktop'
+
+const panels = definePanels({
+  map:   { component: MapPanel },
+  chart: { component: ChartPanel },   // ChartPanel: defineProps<{ panelId: string; series: number }>()
+})
+export const workspace = createWorkspace({ panels })
+
+workspace.openPanel('c1', 'chart', { props: { series: 3 } })    // ✓
+workspace.openPanel('m1', 'mpa')                                // ✗ not a registered panel
+workspace.openPanel('c2', 'chart', { props: { series: '3' } })  // ✗ series is a number
+```
+
+`definePanels` returns its argument unchanged; the typing is all at compile time. With a typed event
+bus as well, pass both type arguments: `createWorkspace<typeof panels, AppEvents>({ panels })`.
+
+The typing comes from the workspace `createWorkspace` returns. `useWorkspace()` returns the untyped
+`Workspace`, so for typed calls inside components, import that same `workspace` (the one you
+installed with `app.use`). The typed workspace is still a `Workspace` and goes anywhere one does.
+Kinds registered later with `registry.register()` aren't in the type; open them through
+`useWorkspace()`.
+
 ### Objects that cross into Vue's reactivity
 
 The workspace's state is `reactive`, and so is anything you store in a `ref()` of your own. An
