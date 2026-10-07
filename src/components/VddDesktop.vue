@@ -28,6 +28,7 @@ import VddEdgeZones from './VddEdgeZones.vue'
 import VddDragGhost from './VddDragGhost.vue'
 import VddTaskbar from './VddTaskbar.vue'
 import type { TaskbarVisibility } from './VddTaskbar.vue'
+import type { TabContentProps } from '../types'
 
 const props = withDefaults(defineProps<{
   /** Built-in skin, or a name you scope your own tokens to. @default 'vscode' */
@@ -45,6 +46,17 @@ const props = withDefaults(defineProps<{
   /** Fallback icon for panels that register none. */
   defaultPanelIcon?: unknown
 }>(), { skin: 'vscode', animations: true, taskbar: 'always', defaultPanelIcon: undefined })
+
+defineSlots<{
+  /** Your view while no panel is docked (1.9.0). */
+  'empty-workspace'?: () => unknown
+  /**
+   * Your own content for each tab in the grid (1.11.0): it replaces the built-in icon, title and
+   * dirty marker. The tab itself (dragging, keyboard, accessibility, its menu, the close button)
+   * stays the library's. Branch on `tab.component` for a per-type look.
+   */
+  'tab-content'?: (tab: TabContentProps) => unknown
+}>()
 
 const emit = defineEmits<{
   /**
@@ -236,6 +248,8 @@ onBeforeUnmount(() => {
       <VddWorkspaceGrid :node="ws.state.gridRoot" :path="[]">
         <!-- Your view while no panel is docked (1.9.0); forwarded to the root group only. -->
         <template v-if="$slots['empty-workspace']" #empty-workspace><slot name="empty-workspace" /></template>
+        <!-- Your tab content (1.11.0); forwarded to every group. -->
+        <template v-if="$slots['tab-content']" #tab-content="tab"><slot name="tab-content" v-bind="tab" /></template>
       </VddWorkspaceGrid>
 
       <VddFloatingWindow

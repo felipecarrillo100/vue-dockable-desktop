@@ -12,6 +12,7 @@ where to read about it. Full signatures live in the `.d.ts`, which your editor a
 | Export | |
 |---|---|
 | `createWorkspace(config?)` | Creates the store **and** a Vue plugin: `app.use(workspace)`. The one thing you always call. [Ch. 1](01-getting-started.md) |
+| `definePanels(panels)` | Marks a panel map so the workspace created from it has a typed `openPanel`: registered names only, `props` checked (1.11.0). [Ch. 3](03-panels.md#a-typed-registry-definepanels) |
 | `WORKSPACE_KEY` | The injection key, for advanced composition — providing a workspace to a subtree yourself. |
 | `version` | The package version, as a string. |
 
@@ -37,7 +38,7 @@ any component mounts, which is why none of the composables below need a provider
 
 | Component | |
 |---|---|
-| `VddDesktop` | The workspace: grid, floating windows, taskbar. Mount one. Slot `#empty-workspace`: your view while no panel is docked ([Ch. 10](10-theming.md#your-own-empty-workspace-view)). [Ch. 1](01-getting-started.md) |
+| `VddDesktop` | The workspace: grid, floating windows, taskbar. Mount one. Slot `#empty-workspace`: your view while no panel is docked ([Ch. 10](10-theming.md#your-own-empty-workspace-view)). Slot `#tab-content="tab"`: your own tab content, given a `TabContentProps` ([Ch. 10](10-theming.md#your-own-tab-content)). [Ch. 1](01-getting-started.md) |
 | `VddContextMenu` | Renders whatever menu is pending. Mount one. [Ch. 8](08-overlays.md) |
 | `VddSidebar`, `VddSecondarySidebar` | Activity bar and drawer, on either edge. [Ch. 6](06-sidebar-toolbar.md) |
 | `VddToolbar` | A strip of tool buttons on any edge. [Ch. 6](06-sidebar-toolbar.md) |
@@ -96,11 +97,11 @@ storybook.
 Grouped by what they describe. All are type-only exports.
 
 **Layout and panels** — `LayoutNode`, `LayoutGridNode`, `LayoutLeafNode`, `SplitOrientation`,
-`SplitDirection`, `DropPosition`, `DropTarget`, `FloatAnchor`, `FloatingWindow`, `PanelInfo`,
+`SplitDirection`, `DropPosition`, `DropTarget`, `PanelDrop`, `PanelDropTarget`, `FloatAnchor`, `FloatingWindow`, `PanelInfo`,
 `PanelState`, `ContainerType`, `PanelDefinition`, `PanelDefaultOptions`, `PanelRegistryEntry`,
-`OpenPanelOptions`, `SerializedLayout`.
+`OpenPanelOptions`, `SerializedLayout`, `TabContentProps`.
 
-**The workspace** — `Workspace`, `WorkspaceConfig`, `WorkspaceState`, `HostClasses`,
+**The workspace** — `Workspace`, `TypedWorkspace`, `PanelMap`, `PanelPropsOf`, `WorkspaceConfig`, `WorkspaceState`, `HostClasses`,
 `BuiltInEvents`, `UsePanelReturn`, `DirtyStateOptions`, `AlertType`.
 
 **Messages** — `Label`, `MessageDescriptor`, `MessageFormatter`, `MessageKey`.
@@ -146,6 +147,7 @@ one, and `docs/PARITY.md` records the reasoning.
 | `ContextMenuAdapter` | `<VddContextMenu>`'s default slot |
 | `renderContent`, `renderHeader`, `ManagedWindowConfig.content` | Slots, or a `component` field |
 | `emptyWorkspace` prop on `RddDesktop` (7.8.0) | The `#empty-workspace` slot on `<VddDesktop>` |
+| `renderTabContent` prop on `RddDesktop` (7.10.0) | The `#tab-content` slot on `<VddDesktop>` |
 
 ## The surface is gated
 

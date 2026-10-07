@@ -6,13 +6,13 @@
  */
 
 /** The library version, mirroring `package.json`. */
-export const version = '1.10.0'
+export const version = '1.11.0'
 
 // ─── The workspace ───────────────────────────────────────────────────────────
 // `createWorkspace()` returns both the imperative API and a Vue plugin, the shape
 // `createPinia()` / `createRouter()` already established.
-export { createWorkspace, WORKSPACE_KEY } from './core/workspace'
-export type { Workspace, WorkspaceConfig, WorkspaceState, PanelDefinition, OpenPanelOptions, HostClasses } from './core/workspace'
+export { createWorkspace, definePanels, WORKSPACE_KEY } from './core/workspace'
+export type { Workspace, TypedWorkspace, PanelMap, PanelPropsOf, WorkspaceConfig, WorkspaceState, PanelDefinition, OpenPanelOptions, HostClasses } from './core/workspace'
 export type { BuiltInEvents } from './core/eventBus'
 
 // ─── Components ──────────────────────────────────────────────────────────────
@@ -153,6 +153,7 @@ export type {
   DropTarget,
   PanelDrop,
   PanelDropTarget,
+  TabContentProps,
   FloatAnchor,
   FloatingWindow,
   Label,

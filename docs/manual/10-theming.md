@@ -430,6 +430,42 @@ It fills the empty group: floating windows still show over it, and a window can 
 onto it to dock. Empty groups inside a split keep the built-in message. To change only its text,
 override `emptyGroup` in `messages`.
 
+## Your own tab content
+
+The `#tab-content` slot replaces what's inside each tab in the grid: the icon, the title and the
+dirty marker (1.11.0). Use it for a badge, a status dot, a two-line title, a different icon per
+state. It's given once, on the desktop; branch on `tab.component` for a per-kind look.
+
+```vue
+<VddDesktop>
+  <template #tab-content="tab">
+    <component :is="tab.icon" v-if="tab.icon" /> {{ tab.title }}
+    <span v-if="tab.dirty" class="unsaved-dot" />
+    <Badge v-if="tab.component === 'inbox'" :count="unread" />
+  </template>
+</VddDesktop>
+```
+
+The slot receives a `TabContentProps`:
+
+| Field | Type | |
+|---|---|---|
+| `panelId` | `string` | The panel's instance id. |
+| `component` | `string` | The panel's registered kind. |
+| `title` | `string` | The title, formatted: messages resolved, functions called. |
+| `icon` | `Component \| undefined` | The registration's icon, if it has one. |
+| `dirty` | `boolean` | Has unsaved changes. |
+| `selected` | `boolean` | The tab shown in its group. |
+| `focused` | `boolean` | The workspace's active panel. |
+
+The built-in content is `<component :is="tab.icon" v-if="tab.icon" /> {{ tab.title }}{{ tab.dirty ? ' *' : '' }}`,
+so starting from it is one line.
+
+The tab itself stays the library's: dragging, keyboard navigation, `role="tab"`, its context menu,
+its state attributes and classes, and the close button all keep working. Keep the content
+non-interactive (no buttons or links): it sits inside the tab, which is the control. Floating-window
+title bars and the taskbar are unchanged.
+
 ## Styling by state and by panel kind
 
 Two hooks let your CSS target the desktop without depending on internal class names (1.9.0).

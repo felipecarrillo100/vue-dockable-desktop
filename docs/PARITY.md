@@ -214,6 +214,15 @@ quietly dropped from it.
 Every "substitute", "rewrite" and "moot" above must be justified in its test file's header
 comment, so a reviewer can see the trade rather than discover a silent gap.
 
+### rdd 7.10.0 Release C, traced
+
+| rdd 7.10.0 | vdd 1.11.0 |
+|---|---|
+| `renderTabContent` prop on `RddDesktop`, `TabContentProps` | the `#tab-content` slot on `<VddDesktop>`, same fields as slot props (ADR 0007: slots over render props); forwarded to every group |
+| `icon`: runtime icon, else the registration's, else `defaultPanelIcon` or the built-in default | the registration's icon or `undefined`: vdd's grid tabs have never shown a runtime or fallback icon, and the slot shows what the built-in content shows |
+| `definePanels`, a `createWorkspace` overload, `TypedWorkspace`, `PanelMap`, `PanelPropsOf` | same names; props from a component object's `$props` or a functional component's first argument, minus `panelId` and Vue's `key`/`ref`/`class`/`style` |
+| type tests: a fixture compiled with the TypeScript API | in the test file itself, which `vue-tsc` checks |
+
 ### rdd 7.9.0 Release B, traced
 
 | rdd 7.9.0 | vdd 1.10.0 |
