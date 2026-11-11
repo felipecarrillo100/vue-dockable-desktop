@@ -184,3 +184,29 @@ describe('definePanels', () => {
     expect(typeof inside).toBe('function')
   })
 })
+
+/**
+ * 1.11.1: the built-in tab content is a flex row (`.vdd-workspace-tab-title`), so its icon centres
+ * on the title, and the title span (`.vdd-workspace-tab-label`) carries its own ellipsis. The slot's
+ * wrapper keeps the 1.11.0 plain block. jsdom does no layout, so these assert the rendered classes;
+ * the measured centring and ellipsis are in `scripts/gates/browser/m17.mjs`, "tab icon".
+ */
+describe('tab title layout (1.11.1)', () => {
+  it('without the slot, the wrapper is the flex row and the title carries the ellipsis class', async () => {
+    const ws = await setup()
+    ws.openPanel('a', 'other', { title: 'Alpha' }); ws.setPanelDirty('a', true); await nextTick()
+    const wrap = $('[data-vdd-tab="a"] > .vdd-text-truncate')!
+    expect(wrap.classList.contains('vdd-workspace-tab-title')).toBe(true)
+    expect(wrap.querySelector(':scope > .vdd-workspace-tab-icon')).not.toBeNull()
+    expect(wrap.querySelector(':scope > .vdd-workspace-tab-label')!.textContent).toBe('Alpha *')
+  })
+
+  it("with the slot, the wrapper stays a plain block and none of the built-in classes appear", async () => {
+    const { slot } = recorder()
+    const ws = await setup(slot)
+    ws.openPanel('a', 'other', { title: 'Alpha' }); await nextTick()
+    const wrap = $('[data-vdd-tab="a"] > .vdd-text-truncate')!
+    expect(wrap.classList.contains('vdd-workspace-tab-title')).toBe(false)
+    expect(wrap.querySelector('.vdd-workspace-tab-label')).toBeNull()
+  })
+})

@@ -214,6 +214,15 @@ quietly dropped from it.
 Every "substitute", "rewrite" and "moot" above must be justified in its test file's header
 comment, so a reviewer can see the trade rather than discover a silent gap.
 
+### vdd 1.11.1 tab icon centring, traced
+
+A vdd-only patch: rdd already centres its tab icon.
+
+| rdd 7.10.0 | vdd 1.11.1 |
+|---|---|
+| `.rdd-workspace-tab-title { display: flex; align-items: center; max-width: 120px }` on the title wrapper (7.1.2) | `.vdd-workspace-tab-title`, flex and centred, without the `max-width`: vdd's tabs have never had one. Only on the built-in content, not on the `#tab-content` wrapper |
+| the ellipsis stays on the wrapper | moved to the title span, `.vdd-workspace-tab-label`: in a flex row the wrapper's `text-overflow` no longer reaches the text, so a long title would be cut with no "…". rdd's long titles were not checked for this |
+
 ### rdd 7.10.0 Release C, traced
 
 | rdd 7.10.0 | vdd 1.11.0 |

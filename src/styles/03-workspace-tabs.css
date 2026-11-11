@@ -77,6 +77,24 @@
   margin-right: 12px;
 }
 
+/* The built-in tab content (icon and title) as one flex row, so the icon centres on the title
+   instead of on the text line, where `vertical-align: middle` left it about 1px low (1.11.1).
+   Not on the #tab-content slot's wrapper: the app's content keeps its 1.11.0 inline layout. */
+.vdd-workspace-tab-title {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+/* In a flex row the wrapper's text-overflow no longer reaches the text, so the title carries
+   its own ellipsis; min-width: 0 lets it shrink below its text width. */
+.vdd-workspace-tab-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Remove original after element separator */
 .vdd-workspace-tab:not(.vdd-active):not(:last-child)::after {
   display: none !important;

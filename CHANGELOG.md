@@ -11,6 +11,30 @@ correspondence lives, alongside the feature-by-feature map in [docs/PARITY.md](d
 
 ## [Unreleased]
 
+## [1.11.1] — 2026-11-11
+
+**Parity: react-dockable-desktop 7.10.0** (unchanged). A panel's tab icon is centred on its title.
+
+### Fixed
+
+- **The tab icon sat about 1px below the title's middle,** for every icon (a component, a bare
+  `<svg>`, an emoji) and in every skin. It was an inline box on the title's text line, and
+  `vertical-align: middle` centres on the lowercase letters, not on the capitals and digits. The
+  tab's icon and title are now one flex row (`.vdd-workspace-tab-title`, as rdd's since 7.1.2) and
+  the icon is centred on the title. Long titles still end in "…": the title span
+  (`.vdd-workspace-tab-label`) now carries the ellipsis itself, which a flex row needs.
+- **Apps that worked around it** (for example `.vdd-workspace-tab-icon { vertical-align: -0.2em }`)
+  should remove the override, or the icon now sits too high.
+- The `#tab-content` slot's content is laid out as in 1.11.0: its wrapper stays a plain block, so
+  the spaces between your own elements are kept. Floating-window title bars were already centred.
+
+### Internal
+
+- M17's browser gate gains a "tab icon" step: in all seven skins, LTR and RTL, the icon's centre is
+  within 0.5px of the title's middle (it was +1.04px), and a squeezed tab cuts a long title with an
+  ellipsis. It fails with either new rule removed. `releaseC.test.ts` asserts the classes, with and
+  without the slot (+2 tests).
+
 ## [1.11.0] — 2026-10-07
 
 **Parity: react-dockable-desktop 7.10.0.** Your own tab content, and an opt-in typed panel registry.

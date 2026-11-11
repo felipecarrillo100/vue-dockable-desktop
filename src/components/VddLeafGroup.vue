@@ -146,14 +146,16 @@ const tabClass = (id: string) => {
           @pointerleave="drag?.dragging.value && drag.hoverTab(null)"
           @keydown="onTabKey(index, $event)"
         >
-          <span class="vdd-text-truncate">
+          <!-- The built-in content is a flex row, so the icon centres on the title (1.11.1); the
+               app's content keeps the plain block it had in 1.11.0. -->
+          <span :class="['vdd-text-truncate', { 'vdd-workspace-tab-title': !$slots['tab-content'] }]">
             <!-- The app's content replaces the icon, title and marker; the tab stays ours (1.11.0). -->
             <slot v-if="$slots['tab-content']" name="tab-content" v-bind="tabContent(tab.id, tab.panel, tab.options.icon)" />
             <template v-else>
               <span v-if="tab.options.icon" class="vdd-workspace-tab-icon">
                 <component :is="tab.options.icon" />
               </span>
-              <span>{{ ws.format(tab.panel.title) }}{{ tab.panel.dirty ? ' *' : '' }}</span>
+              <span class="vdd-workspace-tab-label">{{ ws.format(tab.panel.title) }}{{ tab.panel.dirty ? ' *' : '' }}</span>
             </template>
           </span>
           <span

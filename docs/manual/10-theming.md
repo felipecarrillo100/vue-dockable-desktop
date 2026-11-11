@@ -461,6 +461,12 @@ The slot receives a `TabContentProps`:
 The built-in content is `<component :is="tab.icon" v-if="tab.icon" /> {{ tab.title }}{{ tab.dirty ? ' *' : '' }}`,
 so starting from it is one line.
 
+The built-in content is laid out as a flex row (`.vdd-workspace-tab-title`), so the icon is centred
+on the title, and the title (`.vdd-workspace-tab-label`) ends in "…" when it doesn't fit (1.11.1).
+Your content keeps a plain inline block instead: to centre an icon on it the same way, wrap it in an
+element with `display: flex; align-items: center`, and give the text `min-width: 0; overflow: hidden;
+text-overflow: ellipsis; white-space: nowrap` to keep the "…".
+
 The tab itself stays the library's: dragging, keyboard navigation, `role="tab"`, its context menu,
 its state attributes and classes, and the close button all keep working. Keep the content
 non-interactive (no buttons or links): it sits inside the tab, which is the control. Floating-window

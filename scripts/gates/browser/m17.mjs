@@ -12,6 +12,8 @@
  *              animates; without it, some do; the page's own transitions are untouched
  *   direction  setDirection('rtl'), with no dir on <html>, mirrors the sidebar rail and the toasts,
  *              and setDirection('ltr') restores them; a page-level dir="rtl" still reaches them
+ *   tab icon   (1.11.1) in every skin, LTR and RTL, a tab's icon is centred on its title's middle
+ *              within 0.5px, and a long title is cut with an ellipsis inside its tab
  *
  *   node scripts/gates/browser/m17.mjs     the gate (the playground on :5188, or VDD_APP_URL)
  */
@@ -201,10 +203,75 @@ async function direction() {
   if (page_.sidebar !== 'rtl' || page_.toasts !== 'rtl') fail(`direction: with <html dir="rtl"> and an LTR workspace, ${JSON.stringify(page_)}`)
 }
 
+// ── tab icon (1.11.1) ───────────────────────────────────────────────────────
+
+const SKINS = ['vscode', 'macos', 'chrome', 'slate', 'nord', 'obsidian', 'tokyo']
+const LONG = 'A panel title far too long to fit in its tab'
+
+/**
+ * The tab icon's centre against the title's visual middle (baseline minus half the cap height,
+ * where the eye puts the middle of "Map 1"), and whether a long title ends in an ellipsis.
+ */
+const readTab = () => page.evaluate(() => {
+  const one = (id) => {
+    const tab = document.querySelector(`[data-vdd-tab="${id}"]`)
+    const icon = tab?.querySelector('.vdd-workspace-tab-icon')
+    const label = tab?.querySelector('.vdd-workspace-tab-label')
+    if (!icon || !label) return null
+    const cs = getComputedStyle(label)
+    const g = document.createElement('canvas').getContext('2d')
+    g.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`
+    const cap = g.measureText('H').actualBoundingBoxAscent
+    const mark = document.createElement('span')
+    mark.style.cssText = 'display:inline-block;width:0;height:0;vertical-align:baseline'
+    label.appendChild(mark)
+    const baseline = mark.getBoundingClientRect().bottom
+    mark.remove()
+    const r = icon.getBoundingClientRect()
+    const wrap = label.parentElement.getBoundingClientRect()
+    return {
+      offset: +((r.top + r.height / 2) - (baseline - cap / 2)).toFixed(2),
+      truncated: label.scrollWidth > label.clientWidth,
+      ellipsis: cs.textOverflow,
+      inside: label.getBoundingClientRect().right <= wrap.right + 0.5,
+    }
+  }
+  return { short: one('ti1'), long: one('ti2') }
+})
+
+async function tabIcon() {
+  for (const dir of ['ltr', 'rtl']) {
+    for (const skin of SKINS) {
+      await open(`anim=0&skin=${skin}`)
+      await page.evaluate(([d, long]) => {
+        const ws = window.__vdd
+        if (d === 'rtl') ws.setDirection('rtl')
+        ws.openPanel('ti1', 'icony', { title: 'Map 1' })
+        ws.openPanel('ti2', 'icony', { title: long, initialTarget: 'tabbed' })
+      }, [dir, LONG])
+      await page.waitForTimeout(300)
+      // Tabs grow to their title and shrink only when the strip is full; squeeze this one as a full
+      // strip would, so its title has to be cut.
+      await page.evaluate(() => {
+        const t = document.querySelector('[data-vdd-tab="ti2"]')
+        if (t) { t.style.width = '140px'; t.style.flex = 'none' }
+      })
+      const t = await readTab()
+      const name = `tab icon ${skin}, ${dir}`
+      report[name] = t
+      if (!t.short || !t.long) { fail(`${name}: a tab with an icon is not in the scene`); continue }
+      if (Math.abs(t.short.offset) > 0.5) fail(`${name}: the icon's centre is ${t.short.offset}px from the title's middle (> 0.5)`)
+      if (!t.long.truncated) fail(`${name}: the long title fits its tab — the ellipsis check proves nothing`)
+      if (t.long.ellipsis !== 'ellipsis' || !t.long.inside) fail(`${name}: the long title is not cut with an ellipsis inside its tab ${JSON.stringify(t.long)}`)
+    }
+  }
+}
+
 try {
   await frost()
   await motion()
   await direction()
+  await tabIcon()
 } catch (e) {
   fail(`the run crashed: ${e.message.split('\n')[0]}`)
 } finally {
