@@ -11,6 +11,10 @@ correspondence lives, alongside the feature-by-feature map in [docs/PARITY.md](d
 
 ## [Unreleased]
 
+## [1.11.2] — 2026-11-11
+
+**Parity: react-dockable-desktop 7.10.0** (unchanged).
+
 ## [1.11.1] — 2026-11-11
 
 **Parity: react-dockable-desktop 7.10.0** (unchanged). A panel's tab icon is centred on its title.
