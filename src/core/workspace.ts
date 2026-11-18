@@ -178,6 +178,13 @@ export interface Workspace<TEvents extends object = Record<string, unknown>> {
   updateFloatingPosition(id: string, updates: Partial<Pick<FloatingWindow, 'x' | 'y' | 'width' | 'height' | 'anchor'>>): void
   setPanelDirty(id: string, dirty: boolean, options?: DirtyStateOptions): void
   updatePanelTitle(id: string, title: Label): void
+  /**
+   * Sets the icon shown on an open panel's tab, floating title bar and taskbar button, in place
+   * of its registration's `defaultOptions.icon`. `null` restores the registration's icon. The
+   * icon lives only in memory: `saveLayout()` never writes it, and `loadLayout()` keeps it for a
+   * panel that is still open. An unknown id does nothing (1.12.0).
+   */
+  setPanelIcon(id: string, icon: Component | null): void
   setDirection(dir: 'ltr' | 'rtl'): void
   /** @internal drives drag visuals */
   setDraggedPanelId(id: string | null): void
@@ -357,7 +364,10 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
    */
   function withTitles(parsed: ParsedLayout): ParsedLayout {
     const panels: Record<string, PanelInfo> = {}
-    for (const [id, info] of Object.entries(parsed.panels)) {
+    for (const [id, loaded] of Object.entries(parsed.panels)) {
+      // A runtime icon is a component, so a layout can't hold one: whatever a hand-made JSON put
+      // there is dropped rather than rendered.
+      const { icon: _icon, ...info } = loaded
       panels[id] = info.title ? info : { ...info, title: registry.get(info.component)?.defaultOptions?.title || id }
     }
     const minimized = parsed.minimized.map(m => (m.title ? m : { ...m, title: panels[m.id]?.title || m.id }))
@@ -863,6 +873,15 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
     }
   }
 
+  function setPanelIcon(id: string, icon: Component | null): void {
+    const panel = state.panels[id]
+    if (!panel) return
+    const next = icon ? markRaw(icon) : undefined
+    if (panel.icon === next) return
+    const { icon: _old, ...rest } = panel
+    state.panels = { ...state.panels, [id]: next ? { ...rest, icon: next } : rest }
+  }
+
   function setDirection(dir: 'ltr' | 'rtl'): void {
     if (state.dir === dir) return
     state.dir = dir
@@ -885,7 +904,9 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
       const props = hasDynamic ? (dynamic as Record<string, unknown>) : info.props
       const ok = hasDynamic ? isSerializable(toRaw(dynamic)) : info.serializable
       // A function title (1.5.0) can't be saved; the restored panel takes its registered default.
-      const saved = typeof info.title === 'function' ? (({ title: _t, ...rest }) => rest)(info) as PanelInfo : info
+      // The runtime icon (1.12.0) is a component: never part of a saved layout.
+      const { icon: _icon, ...noIcon } = info
+      const saved = typeof noIcon.title === 'function' ? (({ title: _t, ...rest }) => rest)(noIcon) as PanelInfo : noIcon
       if (ok) included[id] = hasDynamic ? { ...saved, props, serializable: true } : saved
       else excluded.push(id)
     }
@@ -943,10 +964,17 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
         'minimized and panels); the current layout is unchanged.')
       return false
     }
+    // A panel that stays open keeps its runtime icon: the component that set it isn't
+    // re-mounted, so it wouldn't set it again.
+    const panels: Record<string, PanelInfo> = {}
+    for (const [id, info] of Object.entries(parsed.panels)) {
+      const was = state.panels[id]
+      panels[id] = was?.icon && was.component === info.component ? { ...info, icon: was.icon } : info
+    }
     state.gridRoot = parsed.gridRoot
     state.floating = parsed.floating
     state.minimized = parsed.minimized
-    state.panels = parsed.panels
+    state.panels = panels
     state.draggedPanelId = null
     maxZ = Math.max(zIndexBase, ...parsed.floating.map(w => w.z), 0)
 
@@ -1003,7 +1031,7 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
     openPanel, closePanel, requestClosePanel, minimizePanel, restorePanel, floatPanel,
     dockPanel, dockPanelToGroup, dockPanelToWorkspaceEdge, maximizePanel, focusPanel,
     movePanelOrder, closeLeafGroup, updateSplitSizes, updateFloatingPosition,
-    setPanelDirty, updatePanelTitle, setDirection,
+    setPanelDirty, updatePanelTitle, setPanelIcon, setDirection,
     setDraggedPanelId: (id) => { state.draggedPanelId = id },
 
     isOpen: (id) => id in state.panels,

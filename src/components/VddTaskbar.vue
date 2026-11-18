@@ -44,10 +44,11 @@ const hovered = ref<{ id: string; anchor: { left: number; top: number; width: nu
 let collapseTimer: ReturnType<typeof setTimeout> | undefined
 let dismissTimer: ReturnType<typeof setTimeout> | undefined
 
-const items = computed(() => ws.state.minimized.map(entry => ({
-  ...entry,
-  options: ws.registry.get(entry.component)?.defaultOptions ?? {},
-})))
+const items = computed(() => ws.state.minimized.map((entry) => {
+  const options = ws.registry.get(entry.component)?.defaultOptions ?? {}
+  // A runtime icon (1.12.0) wins over the registered one; the taskbar's default comes last.
+  return { ...entry, options, icon: ws.state.panels[entry.id]?.icon ?? options.icon }
+}))
 
 const visible = computed(() => props.visibility === 'always' || items.value.length > 0)
 const scrollable = computed(() => items.value.length > SCROLL_AFTER)
@@ -192,7 +193,7 @@ onBeforeUnmount(() => { clearTimeout(collapseTimer); clearTimeout(dismissTimer) 
         @pointerleave="dismissPreview()"
       >
         <span class="vdd-taskbar-item-icon">
-          <component :is="item.options.icon ?? defaultIcon" v-if="item.options.icon ?? defaultIcon" />
+          <component :is="item.icon ?? defaultIcon" v-if="item.icon ?? defaultIcon" />
           <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="3" width="7" height="9" rx="1" />
             <rect x="14" y="3" width="7" height="5" rx="1" />

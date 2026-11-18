@@ -6,7 +6,7 @@
  */
 
 /** The library version, mirroring `package.json`. */
-export const version = '1.11.2'
+export const version = '1.12.0'
 
 // ─── The workspace ───────────────────────────────────────────────────────────
 // `createWorkspace()` returns both the imperative API and a Vue plugin, the shape
