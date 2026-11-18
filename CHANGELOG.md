@@ -11,6 +11,46 @@ correspondence lives, alongside the feature-by-feature map in [docs/PARITY.md](d
 
 ## [Unreleased]
 
+## [1.12.0] — 2026-11-18
+
+**Parity: react-dockable-desktop 7.10.1.** rdd 7.10.1 was internal and brought rdd in line with what
+vdd already did (managed-widget placement in the overlay's store, the hidden store per document), so it
+needs nothing here. This release adds rdd 7.1.0's per-panel icons, which vdd had not ported: a docked
+or floating panel can change its icon. Same names as rdd.
+
+### Added
+
+- **`usePanel().setIcon(icon)` now works in docked and floating panels.** It changes the panel's
+  tab, floating title bar and taskbar button, and the `icon` the `#tab-content` slot receives;
+  until now it only worked in modals and side panels, and warned "standalone" elsewhere.
+  `setIcon(null)` (or `undefined`) goes back to the registration's `defaultOptions.icon`.
+- **`workspace.setPanelIcon(id, icon | null)`** does the same from outside the panel. An unknown id
+  does nothing, setting the icon a panel already has changes nothing, and it publishes no event.
+- **`PanelInfo.icon`**: the runtime icon, readable as `state.panels[id].icon`. It is never written by
+  `saveLayout()` (the saved JSON is byte for byte what it was without one), and `loadLayout()` keeps
+  it for a panel that stays open with the same component. An `icon` in a hand-made layout is dropped.
+- The taskbar's fallback is unchanged: runtime icon, else the registered one, else
+  `defaultPanelIcon`. Tabs and title bars still show no icon for a panel that has neither.
+
+### Docs
+
+- Panels (Chapter 3): **Changing the icon**. Theming (Chapter 10): the `#tab-content` slot's `icon`.
+  `PARITY.md`: the rdd 7.1.0 trace, and `setPanelIcon` in the actions list.
+
+### Tests
+
+- `test/components/panelIcon.test.ts` (10 tests): the tab, floating title bar and taskbar icon
+  change and `null` restores the registered one; a panel with no registered icon gets one;
+  `#tab-content` receives it; an unknown id and the same icon change no state; `usePanel().setIcon`
+  in a workspace panel, with no standalone warning; `saveLayout` writes no icon and is byte-identical;
+  `loadLayout` keeps it for a panel still open with the same component and drops it when the
+  component changed; a hand-made `icon` is dropped. Each was mutation-checked against the code it
+  covers.
+- **The M15 branding baseline is regenerated.** 1.11.1 changed the tab markup (the title span gained
+  `vdd-workspace-tab-title`, the label its own `vdd-workspace-tab-label`) but kept the old fixture, so
+  M15 and M16 failed on every scene since. The new fixture differs from the old one only in those tab
+  spans (14 scenes × 5 tabs), with no colour or style value changed; M16's corner fixture is unchanged.
+
 ## [1.11.2] — 2026-11-11
 
 **Parity: react-dockable-desktop 7.10.0** (unchanged).

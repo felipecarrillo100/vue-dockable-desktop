@@ -77,7 +77,8 @@ export interface TabContentProps {
   component: string
   /** The title, formatted: messages resolved, functions called. */
   title: string
-  /** The registration's icon, if it has one. */
+  /** The icon the built-in content shows: set at runtime (`setPanelIcon`, `usePanel().setIcon`),
+   *  else the registration's, if it has one. */
   icon: Component | undefined
   /** Has unsaved changes; the built-in content shows ` *`. */
   dirty: boolean
@@ -192,6 +193,10 @@ export interface PanelInfo {
   /** Dedup key: opening the same `component` with the same key focuses this panel instead
    *  of creating another. */
   dedupeKey?: string
+  /** Icon set at runtime with `usePanel().setIcon()` or `workspace.setPanelIcon()`, shown instead
+   *  of the registration's `defaultOptions.icon`. Never saved by `saveLayout()`; `loadLayout()`
+   *  keeps it for a panel that is still open (1.12.0). */
+  icon?: Component
 }
 
 /** The on-disk shape of a saved workspace. Compatible with react-dockable-desktop at `version: 2`. */

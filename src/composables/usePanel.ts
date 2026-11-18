@@ -1,5 +1,5 @@
 import { computed, getCurrentScope, inject, onScopeDispose, provide, ref } from 'vue'
-import type { ComputedRef, InjectionKey, Ref } from 'vue'
+import type { Component, ComputedRef, InjectionKey, Ref } from 'vue'
 import type { ContainerType, DirtyStateOptions, Label } from '../types'
 import { WORKSPACE_KEY } from '../core/workspace'
 import type { Workspace } from '../core/workspace'
@@ -132,6 +132,7 @@ export function usePanel(): UsePanelReturn {
     },
     setIcon: (icon) => {
       if (ctx?.setIcon) ctx.setIcon(icon)
+      else if (workspace && info.value) workspace.setPanelIcon(id, (icon ?? null) as Component | null)
       else warnStandalone('setIcon')
     },
     setDirty: (dirty, options) => {

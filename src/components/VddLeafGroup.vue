@@ -51,7 +51,10 @@ function onTabPointerMove(leafId: string, panelId: string, index: number, event:
 
 const tabs = computed(() => props.leaf.panels.flatMap((id) => {
   const panel = ws.state.panels[id]
-  return panel ? [{ id, panel, options: ws.registry.get(panel.component)?.defaultOptions ?? {} }] : []
+  if (!panel) return []
+  const options = ws.registry.get(panel.component)?.defaultOptions ?? {}
+  // A runtime icon (setPanelIcon, usePanel().setIcon — 1.12.0) wins over the registered one.
+  return [{ id, panel, options, icon: panel.icon ?? options.icon }]
 }))
 
 const selectedId = computed(() => props.leaf.activePanelId)
@@ -150,10 +153,10 @@ const tabClass = (id: string) => {
                app's content keeps the plain block it had in 1.11.0. -->
           <span :class="['vdd-text-truncate', { 'vdd-workspace-tab-title': !$slots['tab-content'] }]">
             <!-- The app's content replaces the icon, title and marker; the tab stays ours (1.11.0). -->
-            <slot v-if="$slots['tab-content']" name="tab-content" v-bind="tabContent(tab.id, tab.panel, tab.options.icon)" />
+            <slot v-if="$slots['tab-content']" name="tab-content" v-bind="tabContent(tab.id, tab.panel, tab.icon)" />
             <template v-else>
-              <span v-if="tab.options.icon" class="vdd-workspace-tab-icon">
-                <component :is="tab.options.icon" />
+              <span v-if="tab.icon" class="vdd-workspace-tab-icon">
+                <component :is="tab.icon" />
               </span>
               <span class="vdd-workspace-tab-label">{{ ws.format(tab.panel.title) }}{{ tab.panel.dirty ? ' *' : '' }}</span>
             </template>

@@ -160,6 +160,29 @@ the overlay, and `setTitle`, `setDirty`, `close` and `onBeforeClose` act on it. 
 have no meaning there and warn in development instead: `minimize()` (an overlay has nowhere to
 minimise to) and `onSaveState()` (overlays are not part of a saved layout).
 
+### Changing the icon
+
+```ts
+const { setIcon } = usePanel()
+watch(status, s => setIcon(s === 'error' ? ErrorIcon : null))
+```
+
+`setIcon(icon)` replaces the registration's `defaultOptions.icon` on the panel's tab, its floating
+title bar, its taskbar button, and the `icon` the `#tab-content` slot receives. `setIcon(null)` (or
+`undefined`) goes back to the registered icon. From outside the panel, the workspace does the same
+(1.12.0):
+
+```ts
+const { setPanelIcon } = useWorkspace()
+setPanelIcon('map-1', SyncingIcon)   // an unknown id does nothing
+setPanelIcon('map-1', null)          // back to the registered icon
+```
+
+The icon is a component, so it lives only in memory: `saveLayout()` never writes it, and
+`loadLayout()` keeps it for a panel that stays open with the same component. A restored panel
+starts with its registered icon. It is readable as `state.panels[id].icon`. Setting it publishes
+no event. In a modal or side panel, `setIcon` changes the overlay's icon as before.
+
 ### Unsaved changes
 
 ```ts

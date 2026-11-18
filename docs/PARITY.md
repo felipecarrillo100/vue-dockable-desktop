@@ -35,7 +35,7 @@ port; the stylesheets agree on it, prefix aside.
 `maximizePanel` · `focusPanel` · `movePanelOrder` · `closeLeafGroup` · `updateSplitSizes` ·
 `updateFloatingPosition` · `isOpen` · `getOpenPanelIds` · `findPanelId` · `saveLayout` ·
 `loadLayout` · `publish` · `subscribe` · `setPanelDirty` · `updatePanelTitle` ·
-`setDirection` · `showContextMenu`
+`setPanelIcon` (1.12.0) · `setDirection` · `showContextMenu`
 
 ### Panel-side contract
 
@@ -50,7 +50,7 @@ port; the stylesheets agree on it, prefix aside.
 | `requestClose(opts)` | `close(opts)` | |
 | `requestMinimize()` | `minimize()` | |
 | `setDirty(v, opts)` | `setDirty(v, opts)` | |
-| `setTitle(t)` / `setIcon(i)` | `setTitle(t)` / `setIcon(i)` | |
+| `setTitle(t)` / `setIcon(i)` | `setTitle(t)` / `setIcon(i)` | In a docked or floating panel, `setIcon` changes its tab, title bar and taskbar icon (1.12.0, as rdd 7.1.0) |
 | `onCloseRequested(guard)` → unsubscribe fn | `onBeforeClose(guard)` | Auto-disposed with the scope; no unsubscribe returned |
 | `registerStateProvider(fn)` → unsubscribe fn | `onSaveState(fn)` | ditto |
 
@@ -223,12 +223,21 @@ A vdd-only patch: rdd already centres its tab icon.
 | `.rdd-workspace-tab-title { display: flex; align-items: center; max-width: 120px }` on the title wrapper (7.1.2) | `.vdd-workspace-tab-title`, flex and centred, without the `max-width`: vdd's tabs have never had one. Only on the built-in content, not on the `#tab-content` wrapper |
 | the ellipsis stays on the wrapper | moved to the title span, `.vdd-workspace-tab-label`: in a flex row the wrapper's `text-overflow` no longer reaches the text, so a long title would be cut with no "…". rdd's long titles were not checked for this |
 
+### rdd 7.1.0 per-panel icons, traced
+
+| rdd 7.1.0 | vdd 1.12.0 |
+|---|---|
+| `workspace.setPanelIcon(id, icon \| null)`: unknown id does nothing, the same icon changes no state, `null` restores the registered icon, no event | same, on `Workspace`; the icon is stored `markRaw` so Vue never proxies a component |
+| `usePanel().setIcon(icon)` in a docked or floating panel calls `setPanelIcon(id, icon ?? null)` | same, under the same condition as `setTitle` (the panel is in the workspace); it no longer warns "standalone" there |
+| `PanelInfo.icon`, shown as runtime ?? registered ?? default on the tab, floating title bar and taskbar, and given to `renderTabContent` | same order; the defaults stay vdd's own: the taskbar falls back to `defaultPanelIcon`, tabs and title bars show none |
+| never written by `saveLayout`; `loadLayout` keeps it for a panel still open with the same component | same; an `icon` in a hand-made layout is dropped on load |
+
 ### rdd 7.10.0 Release C, traced
 
 | rdd 7.10.0 | vdd 1.11.0 |
 |---|---|
 | `renderTabContent` prop on `RddDesktop`, `TabContentProps` | the `#tab-content` slot on `<VddDesktop>`, same fields as slot props (ADR 0007: slots over render props); forwarded to every group |
-| `icon`: runtime icon, else the registration's, else `defaultPanelIcon` or the built-in default | the registration's icon or `undefined`: vdd's grid tabs have never shown a runtime or fallback icon, and the slot shows what the built-in content shows |
+| `icon`: runtime icon, else the registration's, else `defaultPanelIcon` or the built-in default | the registration's icon or `undefined`: vdd's grid tabs have never shown a fallback icon, and the slot shows what the built-in content shows. Since 1.12.0 the runtime icon comes first, as in rdd |
 | `definePanels`, a `createWorkspace` overload, `TypedWorkspace`, `PanelMap`, `PanelPropsOf` | same names; props from a component object's `$props` or a functional component's first argument, minus `panelId` and Vue's `key`/`ref`/`class`/`style` |
 | type tests: a fixture compiled with the TypeScript API | in the test file itself, which `vue-tsc` checks |
 

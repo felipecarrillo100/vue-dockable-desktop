@@ -35,6 +35,8 @@ const HANDLES: ResizeDir[] = ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw']
 
 const panel = computed(() => ws.state.panels[props.window.id])
 const options = computed(() => (panel.value ? ws.registry.get(panel.value.component)?.defaultOptions ?? {} : {}))
+/** A runtime icon (1.12.0) wins over the registered one. */
+const icon = computed(() => panel.value?.icon ?? options.value.icon)
 const isFocused = computed(() => ws.state.activePanelId === props.window.id)
 const isDragged = computed(() => ws.state.draggedPanelId === props.window.id)
 const px = (v: number | string) => (typeof v === 'number' ? `${v}px` : v)
@@ -195,7 +197,7 @@ function onHandlePointerDown(dir: ResizeDir, event: PointerEvent): void {
       @dblclick="ws.maximizePanel(window.id)"
     >
       <span class="vdd-floating-window-title">
-        <span v-if="options.icon" class="vdd-window-title-icon"><component :is="options.icon" /></span>
+        <span v-if="icon" class="vdd-window-title-icon"><component :is="icon" /></span>
         <span>{{ ws.format(panel.title) }}{{ panel.dirty ? ' *' : '' }}</span>
       </span>
       <div class="vdd-titlebar-actions" @pointerdown.stop>

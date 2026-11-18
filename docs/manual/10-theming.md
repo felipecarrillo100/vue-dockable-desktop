@@ -453,7 +453,7 @@ The slot receives a `TabContentProps`:
 | `panelId` | `string` | The panel's instance id. |
 | `component` | `string` | The panel's registered kind. |
 | `title` | `string` | The title, formatted: messages resolved, functions called. |
-| `icon` | `Component \| undefined` | The registration's icon, if it has one. |
+| `icon` | `Component \| undefined` | The icon the built-in content shows: one set at runtime (`setPanelIcon`, `usePanel().setIcon`, 1.12.0), else the registration's, if it has one. |
 | `dirty` | `boolean` | Has unsaved changes. |
 | `selected` | `boolean` | The tab shown in its group. |
 | `focused` | `boolean` | The workspace's active panel. |
