@@ -27,6 +27,7 @@ their state through all of it.
 | 11 | [Internationalisation](11-i18n.md) | drafted — **verified against the shipped API** (M12) |
 | 12 | [Coming from react-dockable-desktop](12-migrating.md) | drafted |
 | 13 | [API reference](13-api-reference.md) | drafted — **generated against the shipped surface** (M13) |
+| 14 | [Widgets out of the panel](14-widgets-out-of-the-panel.md) | drafted — **verified against the shipped API** (1.13.0) |
 
 ## The one thing to know first
 

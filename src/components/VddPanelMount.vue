@@ -13,12 +13,23 @@ import type { PanelDomCache } from '../core/panelDom'
 import { providePanel } from '../composables/usePanel'
 import { useWorkspace } from '../composables/useWorkspace'
 import type { ContainerType } from '../types'
+import { optionsFor } from '../core/panelOptions'
+import VddWidgetContentSlot from './VddWidgetContentSlot.vue'
 
 const props = defineProps<{ panelId: string; cache: PanelDomCache }>()
 
 const ws = useWorkspace()
 const info = computed(() => ws.state.panels[props.panelId])
 const entry = computed(() => (info.value ? ws.registry.get(info.value.component) : undefined))
+/** Its options: its kind's, or a hosted panel's own. */
+const options = computed(() => optionsFor(ws.registry, info.value))
+/**
+ * A hosted panel (7.11) shows a managed widget's content element, rendered by the widget's
+ * overlay in its owner panel; nothing is mounted here, and there is no registration to look up.
+ * Read through the cache's reactive registry, so a new element under the same id is followed.
+ */
+const isHosted = computed(() => !!info.value?.owner)
+const hosted = computed(() => (isHosted.value ? props.cache.hostedContent(props.panelId) : undefined))
 
 /**
  * Which kind of container this panel is in.
@@ -55,7 +66,7 @@ const target = computed(() => props.cache.elementFor(props.panelId))
  * @see docs/decisions/0021-opt-in-unmount-while-hidden.md
  */
 const shown = computed(() => {
-  if (entry.value?.defaultOptions?.keepAlive !== false) return true
+  if (options.value?.keepAlive !== false) return true
   const panel = info.value
   if (!panel || panel.state === 'minimized') return false
   if (panel.state === 'floating') return true
@@ -87,14 +98,20 @@ watchEffect((onCleanup) => {
 
 <template>
   <Teleport :to="target">
-    <div :class="['vdd-panel-content', entry?.defaultOptions?.className]" :dir="ws.state.dir">
+    <div :class="['vdd-panel-content', options?.className]" :dir="ws.state.dir">
+      <VddWidgetContentSlot
+        v-if="hosted"
+        class="vdd-hosted-widget"
+        :el="hosted.el"
+        :cache="hosted.cache"
+      />
       <component
-        v-if="entry && shown"
+        v-else-if="entry && shown"
         :is="entry.component"
         v-bind="info?.props ?? {}"
         :panel-id="panelId"
       />
-      <div v-else-if="!entry" class="vdd-unregistered-panel">
+      <div v-else-if="!entry && !isHosted" class="vdd-unregistered-panel">
         <strong>Unregistered panel</strong>
         <span>No component is registered for key "{{ info?.component }}".</span>
       </div>

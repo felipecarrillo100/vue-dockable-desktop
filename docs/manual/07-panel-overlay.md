@@ -289,15 +289,41 @@ widgets.closeAll()
 `openIds` is a reactive list of what is open, and `isOpen(id)` asks about one. A widget written
 in the template is the simpler option where you can write one.
 
+A managed widget can do more than a template one (1.13.0, rdd 7.11.0): it can **leave the panel**,
+docked beside it, as a tab in its group or floating, and come back without remounting. All of it
+is in [Chapter 14](14-widgets-out-of-the-panel.md); in short:
+
+```ts
+widgets.open('results', {
+  title: 'Results', component: ResultsTable,
+  canDock: true,            // the user may dock it or make it a tab out of the panel; default false
+  canFloat: true,           // the user may float it out of the panel; default false
+  titleMenu: w => [ /* ContextMenuItem[]: the title icon's menu, in your own words */ ],
+  placement: saved,         // open where it was saved (first open of an id only)
+  preserveEmbeds: true,     // an iframe inside doesn't reload when it moves; default false
+})
+widgets.move('results', { to: 'docked', position: 'bottom' })   // → MoveResult
+widgets.location('results')                                    // 'panel' | 'docked' | … | null
+widgets.placement('results')                                   // WidgetPlacement | null, to save
+```
+
+The widget's component is rendered once, teleported into an element of its own,
+`div.vdd-panel-float__content` (the full width and height of the body), so it can move out of the
+panel and back without remounting. Content laid out with `height: 100%` fills the widget as
+before, and the body still scrolls; CSS on the body's direct child (`.vdd-panel-float__body > …`)
+no longer matches the content (1.13.0).
+
 **`anchor`, `stretch`, `width` and `height` are initial values here, not live state.** The
 overlay seeds a widget from them the first time you open that id and owns its placement from
 then on, so a drag or a resize-to-stretch survives — including a later `open()` on the same id,
 which refreshes the widget's content and leaves it where the user put it. `close(id)` forgets
 the placement, so closing and reopening is how you reset it.
 
-The consequence worth knowing: a managed widget's placement is not readable, so it cannot be
-persisted the way a template widget's `v-model:placement` can. If you need to restore widgets
-where the user left them, declare them in the template and own the model.
+To restore managed widgets where the user left them, save `widgets.placement(id)` for each open
+id and give it back as `open(id, { …, placement })` after a reload (1.13.0; see
+[Saving and restoring](14-widgets-out-of-the-panel.md#saving-and-restoring-placement)). Before
+1.13.0 a managed widget's placement could not be read, and only a template widget's
+`v-model:placement` could be persisted.
 
 > In 1.0.0 these gestures were discarded: the overlay bound the model to a fresh object literal,
 > so every render reset the widget to the corner `open()` named. Fixed in 1.0.1.
@@ -337,7 +363,8 @@ must follow the language should read the locale itself rather than receive alrea
 | `open` + `onClose` | `v-model:open` |
 | `defaultAnchor` + `defaultStretch` + `stretch` + `onPlacementChange` | one `v-model:placement` |
 | `usePanelFloatingWindow()` | a `ref` plus `v-model:open` — there is no hook |
-| `usePanelFloatingWindowManager()` | `useFloatingWidgets()`, with `open`/`close` rather than `openManaged`/`closeManaged` |
+| `usePanelFloatingWindowManager()` | `useFloatingWidgets()`, with `open`/`close` rather than `openManaged`/`closeManaged`; `move`, `location` and `placement` keep rdd 7.11.0's names |
+| `ManagedWindowConfig.content` | `component` + `props` |
 
 Two things behave better rather than differently:
 

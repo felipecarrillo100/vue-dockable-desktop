@@ -28,8 +28,8 @@
  * geometry that *cannot* be faked — whether a handle is actually hittable — is the browser
  * gate's job (D5).
  */
-import { describe, it, expect, vi, afterEach } from 'vitest'
-import { defineComponent, h, nextTick, ref } from 'vue'
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest'
+import { defineComponent, h, inject, nextTick, onMounted, onUnmounted, provide, ref } from 'vue'
 import type { Component, Ref } from 'vue'
 import { mount } from '@vue/test-utils'
 import type { VueWrapper } from '@vue/test-utils'
@@ -1329,7 +1329,10 @@ describe('PO31–PO35: a managed widget owns its placement', () => {
       render(host())
       openBottomRight()
       await nextTick()
-      expect(store.managedPlacements.w1).toEqual({ anchor: 'bottom-right', stretch: null })
+      // The whole placement since 7.11 (M2): docked or free, position and size as well.
+      expect(store.managedPlacements.w1).toEqual({
+        anchor: 'bottom-right', stretch: null, mode: 'docked', freePos: null, size: { w: 260, h: 220 },
+      })
 
       api.close('w1')
       await nextTick()
@@ -1339,6 +1342,220 @@ describe('PO31–PO35: a managed widget owns its placement', () => {
       store.setManagedPlacement('w1', { anchor: 'top-left', stretch: null })
       expect('w1' in store.managedPlacements).toBe(false)
       expect(widgets()).toHaveLength(0)
+    } finally {
+      restore()
+    }
+  })
+})
+
+// ─── PO36–PO39 ───────────────────────────────────────────────────────────────
+
+/**
+ * 7.11 (rdd), milestone M2 of "widgets out of the panel": a managed widget's content is
+ * teleported, once for the widget's whole life, into its own element
+ * (`div.vdd-panel-float__content`), which the frame's body only shows; and the overlay keeps the
+ * whole placement. So the frame can unmount and mount again (a widget moved out of its panel has
+ * none) with the content's state and DOM untouched, and come back where it was.
+ */
+describe('PO36–PO39: a managed widget renders its content once, into its own element', () => {
+  let api: ReturnType<typeof useFloatingWidgets>
+  const lifecycle = { mounted: 0, unmounted: 0 }
+  const HOST_KEY = 'po36-host'
+
+  /** Stateful content that records its lifecycle and reads injections from above it. */
+  const Counter = defineComponent({
+    name: 'Counter',
+    setup() {
+      const n = ref(0)
+      const host = inject<string>(HOST_KEY, 'none')
+      const widgets = useFloatingWidgets()
+      onMounted(() => { lifecycle.mounted++ })
+      onUnmounted(() => { lifecycle.unmounted++ })
+      return () => h('button', {
+        id: 'po-count',
+        'data-host': host,
+        'data-has-overlay': String(Array.isArray(widgets.openIds.value)),
+        onClick: () => { n.value++ },
+      }, String(n.value))
+    },
+  })
+
+  const host = () => {
+    const Probe = defineComponent({
+      name: 'Probe',
+      setup() { api = useFloatingWidgets(); return () => h('span') },
+    })
+    return defineComponent({
+      components: { VddPanelOverlay, VddFloatingWidget },
+      setup() { provide(HOST_KEY, 'the-panel'); return { Probe } },
+      template: `
+        <VddPanelOverlay>
+          <component :is="Probe" />
+          <VddFloatingWidget widget-id="decl" title="Decl" :width="100" :height="80">
+            <span id="decl-content" />
+          </VddFloatingWidget>
+        </VddPanelOverlay>`,
+    })
+  }
+  const open = () => api.open('box', { title: 'Box', component: Counter, anchor: 'top-left', width: 260, height: 180 })
+  const win = () => document.querySelector('[data-vdd-widget="box"]') as HTMLElement
+  const body = () => win().querySelector('.vdd-panel-float__body') as HTMLElement
+  const count = () => document.querySelector('#po-count') as HTMLElement
+
+  beforeEach(() => { lifecycle.mounted = 0; lifecycle.unmounted = 0 })
+
+  it('PO36: the content sits in div.vdd-panel-float__content, the body\'s only child', async () => {
+    render(host())
+    open()
+    await nextTick()
+    expect(body().children).toHaveLength(1)
+    const el = body().firstElementChild as HTMLElement
+    expect(el.className).toBe('vdd-panel-float__content')
+    expect(el.querySelector('#po-count')).not.toBeNull()
+    // Teleport keeps the logical parent: injections from above the overlay, and the overlay's
+    // own, still resolve inside the content.
+    expect(count().getAttribute('data-host')).toBe('the-panel')
+    expect(count().getAttribute('data-has-overlay')).toBe('true')
+    // A template widget is unchanged: its children are the body's own.
+    const declBody = document.querySelector('[data-vdd-widget="decl"] .vdd-panel-float__body')!
+    expect(declBody.firstElementChild!.id).toBe('decl-content')
+  })
+
+  it('PO38: closing unmounts the content and drops its element; a re-open starts fresh', async () => {
+    render(host())
+    open()
+    await nextTick()
+    const el = body().firstElementChild as HTMLElement
+    count().click()
+    await nextTick()
+    expect(count().textContent).toBe('1')
+
+    api.close('box')
+    await nextTick()
+    expect(lifecycle.unmounted).toBe(1)
+    expect(el.isConnected).toBe(false)
+    expect(document.querySelector('.vdd-panel-float__content')).toBeNull()
+
+    open()
+    await nextTick()
+    expect(body().firstElementChild).not.toBe(el)
+    expect(count().textContent).toBe('0')
+    const second = body().firstElementChild
+
+    api.closeAll()
+    await nextTick()
+    expect(lifecycle.unmounted).toBe(2)
+    expect(document.querySelector('.vdd-panel-float__content')).toBeNull()
+    open()
+    await nextTick()
+    expect(body().firstElementChild).not.toBe(second)
+  })
+
+  it('PO39: a pointerdown in the content brings the widget to the front', async () => {
+    render(host())
+    open()
+    await nextTick()
+    const decl = document.querySelector('[data-vdd-widget="decl"]') as HTMLElement
+    decl.dispatchEvent(pointer('pointerdown'))
+    await nextTick()
+    expect(win().classList.contains('vdd-panel-float--active')).toBe(false)
+    // A native event, so it bubbles from the content through the real DOM it now sits in.
+    count().dispatchEvent(pointer('pointerdown'))
+    await nextTick()
+    expect(win().classList.contains('vdd-panel-float--active')).toBe(true)
+  })
+
+  it('PO39: content that stops the pointerdown (a map canvas) still brings it to the front', async () => {
+    render(host())
+    open()
+    await nextTick()
+    const decl = document.querySelector('[data-vdd-widget="decl"]') as HTMLElement
+    decl.dispatchEvent(pointer('pointerdown'))
+    await nextTick()
+    expect(win().classList.contains('vdd-panel-float--active')).toBe(false)
+    count().addEventListener('pointerdown', e => e.stopPropagation())
+    count().dispatchEvent(pointer('pointerdown'))
+    await nextTick()
+    expect(win().classList.contains('vdd-panel-float--active')).toBe(true)
+  })
+})
+
+describe('PO37: a managed placement and its content survive the frame unmounting', () => {
+  it('keeps free mode, position, size, the content element and its state', async () => {
+    const restore = stubGeometry({ overlay: domRect(0, 0, 800, 600), widget: domRect(8, 0, 260, 180) })
+    try {
+      let mounts = 0
+      const Counter = defineComponent({
+        name: 'Counter',
+        setup() {
+          const n = ref(0)
+          onMounted(() => { mounts++ })
+          return () => h('button', { id: 'po37-count', onClick: () => { n.value++ } }, String(n.value))
+        },
+      })
+      const show = ref(false)
+      let store!: PanelOverlayStore
+      // The overlay's own structure, with a frame this test can unmount: the content teleported
+      // into the cache's element, the frame bound to the store's record and echoing into it.
+      const Inner = defineComponent({
+        name: 'Inner',
+        components: { VddFloatingWidget, Counter },
+        setup() {
+          store = usePanelOverlay()
+          store.managedPlacements.m = {
+            anchor: 'top-left', stretch: null, mode: 'docked', freePos: null, size: { w: 260, h: 180 },
+          }
+          const el = store.content.elementFor('m')
+          return { store, el, show }
+        },
+        template: `
+          <Teleport :to="el"><Counter /></Teleport>
+          <VddFloatingWidget
+            v-if="show" widget-id="m" title="M" :content-el="el" :width="260" :height="180"
+            :placement="store.managedPlacements.m"
+            @update:placement="(next) => store.setManagedPlacement('m', next)"
+          />`,
+      })
+      render(defineComponent({
+        components: { VddPanelOverlay, Inner },
+        template: '<VddPanelOverlay><Inner /></VddPanelOverlay>',
+      }))
+      await nextTick()
+      const el = store.content.get('m')!
+      const win = () => document.querySelector('[data-vdd-widget="m"]') as HTMLElement
+      // No frame yet: the element waits in the hidden store, in the document, content mounted.
+      expect(el.parentElement?.className).toBe('vdd-widget-store')
+      expect(el.isConnected).toBe(true)
+      expect(mounts).toBe(1)
+      show.value = true
+      await nextTick()
+      expect(el.parentElement).toBe(win().querySelector('.vdd-panel-float__body'))
+      const counter = () => document.querySelector('#po37-count') as HTMLElement
+      counter().click()
+      await nextTick()
+
+      // Drag it free: from (8,0) by (+150,+100), away from every drop zone.
+      await pressHeader(win(), { x: 200, y: 150 }, 'up')
+      // Then widen it by 40 from its east edge.
+      await dragHandle(win(), 'e', { x: 418, y: 150 }, { x: 458, y: 150 })
+      expect(store.managedPlacements.m).toMatchObject({ mode: 'free', freePos: { x: 158, y: 100 }, size: { w: 300, h: 180 } })
+      const placed = () => ({ left: win().style.left, top: win().style.top, width: win().style.width, height: win().style.height })
+      expect(placed()).toEqual({ left: '158px', top: '100px', width: '300px', height: '180px' })
+
+      show.value = false
+      await nextTick()
+      expect(win()).toBeNull()
+      // Back in the hidden store, still in the document, with its content mounted.
+      expect(el.parentElement?.className).toBe('vdd-widget-store')
+      expect(el.isConnected).toBe(true)
+
+      show.value = true
+      await nextTick()
+      expect(placed()).toEqual({ left: '158px', top: '100px', width: '300px', height: '180px' })
+      expect(store.content.get('m')).toBe(el)
+      expect(el.parentElement).toBe(win().querySelector('.vdd-panel-float__body'))
+      expect(counter().textContent).toBe('1')
+      expect(mounts).toBe(1)
     } finally {
       restore()
     }

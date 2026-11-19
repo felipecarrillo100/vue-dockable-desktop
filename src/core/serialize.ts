@@ -6,8 +6,9 @@
  * Anything in this file that changes what is read or written is a compatibility change.
  */
 import type { FloatAnchor, FloatingWindow, LayoutNode, PanelInfo, SerializedLayout } from '../types'
-import { deriveActivePanelId, isVisibleActiveTarget, repairLayoutTree, EMPTY_LEAF } from './layoutTree'
+import { deriveActivePanelId, isVisibleActiveTarget, removePanelFromTree, repairLayoutTree, EMPTY_LEAF } from './layoutTree'
 import type { ActiveTargetScope } from './layoutTree'
+import { HOSTED_COMPONENT } from './panelOptions'
 
 /** A validated payload, with `activePanelId` already resolved. */
 export interface ParsedLayout {
@@ -119,12 +120,42 @@ export function parseLayoutPayload(parsed: unknown, onWarn?: (msg: string) => vo
   }
 }
 
+/**
+ * A parsed layout without hosted panels (rdd 7.11.0). A hosted panel shows a widget its owner panel
+ * mounts; `saveLayout()` never writes one, so a `'vdd:widget'` entry in a layout came from a
+ * hand-made JSON and has no content to show. It is dropped with every reference to it (tree,
+ * floating, minimised), `activePanelId` is re-derived if it named one, and an `owner` on any other
+ * panel is stripped: only a live hosted panel has one.
+ */
+export function withoutHostedPanels(payload: ParsedLayout): ParsedLayout {
+  const hosted = new Set([
+    ...Object.values(payload.panels).filter(p => p.component === HOSTED_COMPONENT).map(p => p.id),
+    ...payload.minimized.filter(m => m.component === HOSTED_COMPONENT).map(m => m.id),
+  ])
+  const owned = Object.values(payload.panels).some(p => 'owner' in p)
+  if (hosted.size === 0 && !owned) return payload
+  const panels: Record<string, PanelInfo> = {}
+  for (const [id, info] of Object.entries(payload.panels)) {
+    if (hosted.has(id)) continue
+    const { owner: _owner, ...rest } = info
+    panels[id] = rest
+  }
+  let gridRoot: LayoutNode = payload.gridRoot
+  for (const id of hosted) gridRoot = removePanelFromTree(gridRoot, id) ?? { ...EMPTY_LEAF, panels: [] }
+  const floating = payload.floating.filter(w => !hosted.has(w.id))
+  const minimized = payload.minimized.filter(m => !hosted.has(m.id))
+  const activePanelId = payload.activePanelId !== null && hosted.has(payload.activePanelId)
+    ? deriveActivePanelId({ gridRoot, floating, panels })
+    : payload.activePanelId
+  return { gridRoot, floating, minimized, panels, activePanelId }
+}
+
 /** Parse a layout string, falling back to an empty workspace. Never throws. */
 export function parseInitialState(json: string | null | undefined, onWarn?: (msg: string) => void): ParsedLayout {
   if (json) {
     try {
       const payload = parseLayoutPayload(JSON.parse(json), onWarn)
-      if (payload) return payload
+      if (payload) return withoutHostedPanels(payload)
     } catch {
       onWarn?.('initialState is not valid JSON; starting from an empty workspace.')
     }

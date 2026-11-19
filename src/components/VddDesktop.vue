@@ -29,6 +29,7 @@ import VddDragGhost from './VddDragGhost.vue'
 import VddTaskbar from './VddTaskbar.vue'
 import type { TaskbarVisibility } from './VddTaskbar.vue'
 import type { TabContentProps } from '../types'
+import { optionsFor } from '../core/panelOptions'
 
 const props = withDefaults(defineProps<{
   /** Built-in skin, or a name you scope your own tokens to. @default 'vscode' */
@@ -190,7 +191,7 @@ watch([viewport, () => ws.state.floating], ([view, windows]) => {
 function onTaskbarMenu(panelId: string, event: PointerEvent | MouseEvent): void {
   const panel = ws.state.panels[panelId]
   if (panel) {
-    const options = ws.registry.get(panel.component)?.defaultOptions ?? {}
+    const options = optionsFor(ws.registry, panel) ?? {}
     const items = buildTaskbarMenu(ws, panelId, options, {
       float: () => ws.floatPanel(panelId),
       minimize: () => ws.minimizePanel(panelId),

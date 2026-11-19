@@ -35,7 +35,8 @@ port; the stylesheets agree on it, prefix aside.
 `maximizePanel` · `focusPanel` · `movePanelOrder` · `closeLeafGroup` · `updateSplitSizes` ·
 `updateFloatingPosition` · `isOpen` · `getOpenPanelIds` · `findPanelId` · `saveLayout` ·
 `loadLayout` · `publish` · `subscribe` · `setPanelDirty` · `updatePanelTitle` ·
-`setPanelIcon` (1.12.0) · `setDirection` · `showContextMenu`
+`setPanelIcon` (1.12.0) · `updatePanelProps` (1.13.0) · `setDirection` · `showContextMenu`.
+`focusPanel(id, { restore })` is a second overload since 1.13.0, as in rdd 7.11.0
 
 ### Panel-side contract
 
@@ -137,6 +138,31 @@ token; its monospaced labels keep `monospace`.
 
 ---
 
+### Widgets out of the panel (1.13.0, from rdd 7.11.0)
+
+Same names as rdd; the shapes differ only where a Vue rule applies (content is a component,
+state is a ref). Traced in §3, *rdd 7.11.0 widgets out of the panel, traced*; divergences in §4.
+
+| rdd 7.11.0 | vdd 1.13.0 | Note |
+|---|---|---|
+| `useFloatingWidgets().move(id, to)` → `MoveResult` | the same | `core/overlayState.ts` (types), `composables/useWidgetHosting.ts` (the moves) |
+| `useFloatingWidgets().location(id)` → `WidgetLocation \| null` | the same | a lookup; the reactive value is `useWidget().location` |
+| `useFloatingWidgets().placement(id)` → `WidgetPlacement \| null` | the same | the same JSON in all three editions (`core/widgetPlacement.ts`, values kept from rdd's tests) |
+| `ManagedWidget.canDock`, `.canFloat` | the same | the hosted panel's options, through `core/panelOptions.ts` `optionsFor` |
+| `ManagedWidget.titleMenu(w)`, `WidgetMenuContext` | the same | |
+| `ManagedWidget.placement` | the same | |
+| `ManagedWidget.preserveEmbeds`, `defaultOptions.preserveEmbeds` | the same | `core/domMove.ts` |
+| `ManagedWidget.content: ReactNode` | `component` + `props` | as for every managed widget since 1.0 |
+| `useWidget()`, `WidgetHandle` | the same | `id`, `ownerPanelId` plain; `panelId`, `location` `ComputedRef`s; `onWillMove` / `onMoved` return the unsubscribe and are also disposed with the scope |
+| `WidgetTarget`, `WidgetLocation`, `MoveResult`, `WidgetPlacement` | the same | |
+| `PanelInfo.owner`, `PanelOwner` | the same | |
+| `'rdd:widget'` (reserved component key) | `'vdd:widget'` | `core/panelOptions.ts` `HOSTED_COMPONENT` |
+| `workspace.focusPanel(id, { restore })` | the same | a second overload on `Workspace` |
+| `workspace.updatePanelProps(id, props \| fn)` | the same | |
+| `.rdd-panel-float__content`, `.rdd-hosted-widget` | `.vdd-panel-float__content`, `.vdd-hosted-widget` | |
+| `.rdd-workspace-tab-icon--menu`, `.rdd-window-title-icon--menu` | `.vdd-workspace-tab-icon--menu`, `.vdd-window-title-icon--menu` | plus `.vdd-panel-float__menu` on the in-panel title button |
+| `HostedPanels` actions (`openHostedPanel`, …) | the same, `@internal` on `Workspace` | not in `api-surface.json` |
+
 ### rdd's source layout (since rdd 7.6.1)
 
 rdd's source now mirrors this port's: `src/types.ts` (vdd `src/types.ts`); `src/core/` with
@@ -213,6 +239,36 @@ quietly dropped from it.
 
 Every "substitute", "rewrite" and "moot" above must be justified in its test file's header
 comment, so a reviewer can see the trade rather than discover a silent gap.
+
+### rdd 7.11.0 widgets out of the panel, traced
+
+rdd 7.11.0 is 7.11.0-next.0 (the feature), 7.11.0-next.1 (feedback fixes) and two fixes; vdd 1.13.0
+ports all three at once.
+
+| rdd 7.11.0 | vdd 1.13.0 |
+|---|---|
+| a managed widget's content rendered once into `div.rdd-panel-float__content` (next.0, Changed) | teleported once into `div.vdd-panel-float__content` (`core/widgetContent.ts`, `VddWidgetContentSlot.vue`); `<Teleport>` keeps the logical parent, so `usePanel()` and every injection are the owner's |
+| the whole placement in the overlay (next.0, Changed) | `ManagedPlacement` in the overlay store: mode, free position and size join anchor and stretch |
+| a pointerdown anywhere in the content brings the widget to the front, even when the content stops propagation | the same: a capture-phase listener on the frame's body (PO39) |
+| hosted panels: `'rdd:widget'`, `PanelInfo.owner`, never saved, never reported as excluded, dropped from a hand-made layout | `'vdd:widget'`, the same rules (`core/workspace.ts`, `serialize.ts` `withoutHostedPanels`) |
+| `move()` / `location()`, the four refusals | the same (`useWidgetHosting.ts`) |
+| `canDock` / `canFloat`, `titleMenu`; hosted tab menu: items, then Minimize and Close, no Float; ⋮ menu: items, then Close | the same (`core/panelMenu.ts` `buildPanelMenu`, `buildMoreActionsMenu`) |
+| `useWidget()`, `onWillMove` / `onMoved` | the same; `VddWidgetScope.vue` provides it and settles `onMoved` |
+| `placement()` / `open({ placement })` | the same JSON (`core/widgetPlacement.ts`); a free position waits for a size through the overlay's `ResizeObserver` |
+| `focusPanel(id, { restore })`, `updatePanelProps`, `preserveEmbeds` | the same; each cache parks in its own hidden store (see §4) |
+| next.1: `useWidget().panelId` | a `ComputedRef` |
+| next.1: the tab / title-bar icon opens the widget's menu | the same, with the differences in §4 |
+| next.1: a widget's panel brings its owner's contribution | the same (`activeContribution` maps the hosted id to its owner) |
+| next.1: a title set with `updatePanelTitle` kept across moves out of the panel | the same |
+| 7.11.0: `onMoved` after floating → floating and tab → tab in the same group | the same (`settled()` when the container key didn't change) |
+| 7.11.0: `move({ to: 'floating' })` without a rect, out of the panel, opens where its panel is | the same (`frameRect`) |
+| `HostedPanels.test.tsx` (HP1–HP7) | `test/store/hostedPanels.test.ts` (19 tests), names kept |
+| `WidgetsOut.test.tsx` (WO1–WO8, WO17–WO19, WO21) | `test/components/widgetsOut.test.ts` (40 tests), names kept |
+| `WidgetsOut.test.tsx` (WO9–WO16, WO20, WO22, WO23) | `test/components/widgetsOutMenus.test.ts` (33 tests), names kept |
+| `WidgetPlacement.test.ts` (WP1–WP6) | `test/core/widgetPlacement.test.ts` (11 tests), names and values kept |
+| `FocusPropsEmbeds.test.tsx` (FE1–FE4) | `test/components/focusPropsEmbeds.test.ts` (17 tests), names kept |
+| `PanelOverlay.test.tsx` PO36–PO39 | `test/components/panelOverlay.test.ts` PO36–PO39 |
+| `tests/browser/widgetsOut.browser.ts` | `scripts/gates/browser/m11.mjs`, the five "7.11" sections (content fill, out and back, menus and callbacks, placement, `preserveEmbeds`) |
 
 ### vdd 1.11.1 tab icon centring, traced
 
@@ -405,6 +461,21 @@ class/rule correspondence sweep, which is what surfaced the gap at all.
 D6 is worth singling out: it contradicts rdd's own headline claim of "zero-unmount state
 preservation". The guarantee holds for component state, WebGL contexts and media, but scroll
 offsets are browser state that detaching discards, and nothing in rdd puts them back.
+
+### Widgets out of the panel (1.13.0)
+
+Where vdd 1.13.0 differs from rdd 7.11.0. None changes what an app can do.
+
+| rdd 7.11.0 | vdd 1.13.0 |
+|---|---|
+| a widget's content is a `ReactNode` (`content`) | `component` + `props`, as every managed widget since 1.0 |
+| `useWidget()` re-renders its component on a change of `location` | `location` and `panelId` are `ComputedRef`s (the `usePanel()` rule, [0006](decisions/0006-refs-over-subscriptions.md)); `onWillMove` / `onMoved` return the unsubscribe and, called during `setup`, are also disposed with the component |
+| `location` read in `onWillMove` is where the widget was | the same for the app's own `move()`; during a user's move (a drag, the taskbar) it already shows the new location: the callback runs in a sync watcher on the workspace's state, which has changed, before the DOM has |
+| a re-open that adds a `titleMenu` to a floating widget's panel shows its ⋮ menu on the next re-render | at once: the menu items are reactive |
+| a widget's tab icon opens its menu; rdd's tabs always have an icon (the default grid icon at worst) | the same, but vdd's tabs have no fallback icon, so a widget's tab with none shows the menu glyph. The floating title bar's icon opens the menu only with a `titleMenu`, as in rdd; with no icon it shows the glyph then, and nothing without a `titleMenu` |
+| `placement()` of a minimised widget | read from what the workspace recorded as it minimised the panel (`previousState`, `lastFloatingRect`, `lastLeafId`) |
+| one hidden store for parked elements | each cache (`PanelDomCache`, `WidgetContentCache`) parks in its own hidden store, on its own document |
+| an overlay outside a `DockableDesktopProvider`: `move()` refuses with `no-workspace` | no such case: `<VddFloatingWidget>` needs the installed workspace; `no-workspace` is a modal, a side panel or an overlay outside any panel |
 
 ### Port regressions found after 1.0.0
 

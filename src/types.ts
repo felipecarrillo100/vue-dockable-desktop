@@ -197,7 +197,28 @@ export interface PanelInfo {
    *  of the registration's `defaultOptions.icon`. Never saved by `saveLayout()`; `loadLayout()`
    *  keeps it for a panel that is still open (1.12.0). */
   icon?: Component
+  /**
+   * Set on a panel that shows a managed widget moved out of its owner panel, whose `component` is
+   * the reserved `'vdd:widget'`. Runtime only: such a panel is never written by `saveLayout()`, and
+   * the owner panel saves its widgets itself.
+   */
+  owner?: PanelOwner
 }
+
+/** Who a hosted panel belongs to: see {@link PanelInfo.owner}. */
+export interface PanelOwner {
+  /** The panel whose overlay opened the widget. */
+  panelId: string
+  /** The widget's id in that overlay. */
+  widgetId: string
+  /** @internal The widget's own capabilities, applied by `optionsFor`. */
+  options?: { canFloat?: boolean; canDock?: boolean }
+}
+
+/** @internal Where a hosted panel opens: docked beside a docked panel, or floating exactly at `rect`. */
+export type HostedPanelPlacement =
+  | { kind: 'dock'; dockTo: { panel: string; position: DropPosition; size?: number } }
+  | { kind: 'float'; rect: { x: number; y: number; width: number; height: number } }
 
 /** The on-disk shape of a saved workspace. Compatible with react-dockable-desktop at `version: 2`. */
 export interface SerializedLayout {

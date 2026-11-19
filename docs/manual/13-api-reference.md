@@ -1,7 +1,7 @@
 # 13. API reference
 
-Every public export, with the chapter that explains it. The package has **48 runtime exports**
-and **82 exported types**; `api-surface.json` is the machine-readable list, and a standing gate
+Every public export, with the chapter that explains it. The package has **52 runtime exports**
+and **98 exported types**; `api-surface.json` is the machine-readable list, and a standing gate
 fails if the two disagree.
 
 This chapter is a map, not a substitute for the chapters — it says what each export *is* and
@@ -19,6 +19,10 @@ where to read about it. Full signatures live in the `.d.ts`, which your editor a
 `createWorkspace` returns a `Workspace`: the imperative API *and* the plugin. It works before
 any component mounts, which is why none of the composables below need a provider.
 [Ch. 2](02-concepts.md)
+
+1.13.0 adds two workspace actions: `focusPanel(id, { restore: true })`, which restores a minimised
+panel before focusing it ([Ch. 4](04-layout.md#programmatic-equivalents)), and
+`updatePanelProps(id, props | (prev) => next)` ([Ch. 3](03-panels.md#changing-them-later-updatepanelprops-1130)).
 
 ### `WorkspaceConfig`
 
@@ -67,7 +71,8 @@ the tree does not matter.
 | `usePanelContextMenu(getter)` | Contribute items to *this panel's* own menu. [Ch. 3](03-panels.md) |
 | `useSidebar()`, `useSidebarTab()` | Control the sidebar, or the tab you are inside. [Ch. 6](06-sidebar-toolbar.md) |
 | `useToolbar()` | Toolbar radio/toggle state for uncontrolled items. [Ch. 6](06-sidebar-toolbar.md) |
-| `useFloatingWidgets()` | Open widgets by id, from data. [Ch. 7](07-panel-overlay.md) |
+| `useFloatingWidgets()` | Open widgets by id, from data. `move()`, `location()` and `placement()` take one out of its panel and back, and save where it is (1.13.0). [Ch. 7](07-panel-overlay.md), [Ch. 14](14-widgets-out-of-the-panel.md) |
+| `useWidget()` | Inside a managed widget's content: `{ id, ownerPanelId, panelId, location, onWillMove, onMoved }`, or `null` elsewhere. Returns `WidgetHandle` (1.13.0). [Ch. 14](14-widgets-out-of-the-panel.md#the-widgets-own-side-usewidget) |
 | `usePanelContribution(getter)` | Publish this panel's toolbar items and sidebar sections. [Ch. 9](09-contributions.md) |
 | `useActiveContribution()` | What the active panel published. [Ch. 9](09-contributions.md) |
 | `useMergedToolbarItems(items)`, `useMergedSidebarTabs(tabs, icon?)` | Static lists plus the active panel's. [Ch. 9](09-contributions.md) |
@@ -99,7 +104,7 @@ Grouped by what they describe. All are type-only exports.
 **Layout and panels** — `LayoutNode`, `LayoutGridNode`, `LayoutLeafNode`, `SplitOrientation`,
 `SplitDirection`, `DropPosition`, `DropTarget`, `PanelDrop`, `PanelDropTarget`, `FloatAnchor`, `FloatingWindow`, `PanelInfo`,
 `PanelState`, `ContainerType`, `PanelDefinition`, `PanelDefaultOptions`, `PanelRegistryEntry`,
-`OpenPanelOptions`, `SerializedLayout`, `TabContentProps`.
+`OpenPanelOptions`, `SerializedLayout`, `TabContentProps`, `PanelOwner` (1.13.0: `PanelInfo.owner`, set on a managed widget's own panel).
 
 **The workspace** — `Workspace`, `TypedWorkspace`, `PanelMap`, `PanelPropsOf`, `WorkspaceConfig`, `WorkspaceState`, `HostClasses`,
 `BuiltInEvents`, `UsePanelReturn`, `DirtyStateOptions`, `AlertType`.
@@ -123,7 +128,9 @@ Grouped by what they describe. All are type-only exports.
 `ToastPosition`, `ToastAdapter`, `ToastRecord`, `ToastPromiseMessages`.
 
 **Panel overlay** — `ToolbarPosition`, `ToolbarVariant`, `ButtonVariant`, `ToolbarInsets`,
-`ManagedWidget`, `Stretch`, `PanelFloatPlacement`, `SearchResult`.
+`ManagedWidget`, `Stretch`, `PanelFloatPlacement`, `SearchResult`; and, for widgets out of the panel
+(1.13.0, [Ch. 14](14-widgets-out-of-the-panel.md)), `WidgetTarget`, `WidgetLocation`, `MoveResult`,
+`WidgetMenuContext`, `WidgetPlacement`, `WidgetHandle`.
 
 **Contributions** — `PanelContribution`, `PanelSidebarSection`, `Contributions`.
 

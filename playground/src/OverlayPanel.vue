@@ -12,6 +12,7 @@ import {
   VddToolbarSeparator, VddToolbarSpacer, VddToolbarItem, VddToolbarCenter,
   VddToolbarSearch, VddFloatingWidget,
 } from 'vue-dockable-desktop'
+import WidgetsProbe from './WidgetsProbe.vue'
 import type { PanelFloatPlacement } from 'vue-dockable-desktop'
 
 const state = reactive({
@@ -36,6 +37,7 @@ const search = (query: string) => query
 
 <template>
   <VddPanelOverlay>
+    <WidgetsProbe />
     <VddPanelToolbar
       v-if="toolbars.top"
       position="top"

@@ -4,6 +4,7 @@ import '../../src/index.css'
 import App from './App.vue'
 import HostilePanel from './HostilePanel.vue'
 import OverlayPanel from './OverlayPanel.vue'
+import EmbedFrame from './EmbedFrame.vue'
 
 // Set before mount, as an application would (the M15 branding gate): `?cs=light` puts
 // `data-color-scheme="light"` on <html> (dark is the attribute's absence); `?ba=HEX` / `?bon=HEX`
@@ -19,6 +20,10 @@ if (params.get('rs')) document.documentElement.style.setProperty('--vdd-radius-s
 
 const workspace = createWorkspace({
   panels: {
+    // M11 gate (7.11): an iframe in a panel type with preserveEmbeds, and one without.
+    // The iframe's name comes from the panel's props.
+    embedKept: { component: EmbedFrame, defaultOptions: { title: 'Kept', preserveEmbeds: true } },
+    embedBare: { component: EmbedFrame, defaultOptions: { title: 'Bare' } },
     hostile: { component: HostilePanel, defaultOptions: { title: 'Hostile' } },
     overlay: { component: OverlayPanel, defaultOptions: { title: 'Overlay' } },
     // A panel with an icon: the tab's and the window titlebar's icon slots each have their

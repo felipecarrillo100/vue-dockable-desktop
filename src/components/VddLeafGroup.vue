@@ -13,6 +13,7 @@ import { useWorkspace } from '../composables/useWorkspace'
 import { useDragDock } from '../composables/useDragDock'
 import { buildPanelMenu } from '../core/panelMenu'
 import { tabSide } from '../core/dragResize'
+import { optionsFor } from '../core/panelOptions'
 import VddPanelSlot from './VddPanelSlot.vue'
 import VddDropZones from './VddDropZones.vue'
 
@@ -30,7 +31,7 @@ const drag = useDragDock()
 function openMenu(panelId: string, event: MouseEvent | PointerEvent): void {
   const panel = ws.state.panels[panelId]
   if (!panel) return
-  const options = ws.registry.get(panel.component)?.defaultOptions ?? {}
+  const options = optionsFor(ws.registry, panel) ?? {}
   const items = buildPanelMenu(ws, panelId, options, {
     float: () => ws.floatPanel(panelId),
     minimize: () => ws.minimizePanel(panelId),
@@ -52,7 +53,7 @@ function onTabPointerMove(leafId: string, panelId: string, index: number, event:
 const tabs = computed(() => props.leaf.panels.flatMap((id) => {
   const panel = ws.state.panels[id]
   if (!panel) return []
-  const options = ws.registry.get(panel.component)?.defaultOptions ?? {}
+  const options = optionsFor(ws.registry, panel) ?? {}
   // A runtime icon (setPanelIcon, usePanel().setIcon — 1.12.0) wins over the registered one.
   return [{ id, panel, options, icon: panel.icon ?? options.icon }]
 }))
@@ -155,7 +156,25 @@ const tabClass = (id: string) => {
             <!-- The app's content replaces the icon, title and marker; the tab stays ours (1.11.0). -->
             <slot v-if="$slots['tab-content']" name="tab-content" v-bind="tabContent(tab.id, tab.panel, tab.icon)" />
             <template v-else>
-              <span v-if="tab.icon" class="vdd-workspace-tab-icon">
+              <!-- A widget's panel opens its menu from the icon, as in its owner panel (7.11), with a
+                   menu glyph when it has no icon, so it always has one: the
+                   same menu as a right-click on the tab. Not a separate control, like the ×: the
+                   menu key on the tab is the keyboard's way. pointerdown is stopped so it
+                   doesn't start a tab drag; click so the menu's window-click dismissal doesn't
+                   close it again. -->
+              <span
+                v-if="tab.panel.owner"
+                class="vdd-workspace-tab-icon vdd-workspace-tab-icon--menu"
+                @pointerdown.stop
+                @click.stop="openMenu(tab.id, $event)"
+              >
+                <component :is="tab.icon" v-if="tab.icon" />
+                <!-- No icon of its own: the menu glyph the widget's title button shows in its panel. -->
+                <svg v-else width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" />
+                </svg>
+              </span>
+              <span v-else-if="tab.icon" class="vdd-workspace-tab-icon">
                 <component :is="tab.icon" />
               </span>
               <span class="vdd-workspace-tab-label">{{ ws.format(tab.panel.title) }}{{ tab.panel.dirty ? ' *' : '' }}</span>

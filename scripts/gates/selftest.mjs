@@ -416,7 +416,7 @@ check('M14 catches an object literal bound to a placement model', 'src/component
   'node scripts/gates/m14.mjs')
 
 check('M14 catches the overlay binding placement with no write-back', 'src/components/VddPanelOverlay.vue',
-  s => s.replace('      @update:placement="(next: PanelFloatPlacement) => store.setManagedPlacement(id, next)"\n', ''),
+  s => s.replace('        @update:placement="(next: PanelFloatPlacement) => store.setManagedPlacement(id, next)"\n', ''),
   'node scripts/gates/m14.mjs')
 
 check('M14 catches setManagedPlacement re-rendering the widget list', 'src/core/overlayState.ts',
