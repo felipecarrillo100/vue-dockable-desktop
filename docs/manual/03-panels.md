@@ -43,6 +43,7 @@ panels: {
       className: 'app-notes',         // on each panel's own content element (1.9.0)
       tabClassName: 'app-notes-tab',  // on its tab (1.9.0)
       keepAlive: true,                // false: unmount while hidden, see below (1.9.0)
+      preserveEmbeds: false,          // true: an iframe inside doesn't reload when it moves (1.13.0)
     },
   },
 }
@@ -50,6 +51,15 @@ panels: {
 
 `className` goes on the panel's own content element (`.vdd-panel-content`), which moves with
 the panel, so it applies docked, floating and in the taskbar preview.
+
+`preserveEmbeds: true` keeps an `<iframe>` (or another embedded document or media) in the panel
+from reloading when the panel moves: docked, floated, minimised, restored, or the grid changing
+around it. The library then moves the panel's element with `moveBefore()`, in Chrome and Edge 133+
+and Firefox 144+; in Safari an iframe reloads as before (1.13.0, rdd 7.11.0).
+
+The keys of `panels` are what `openPanel` and saved layouts name, so keep them stable. Keys
+starting with `vdd:` are the library's: `'vdd:widget'` is the kind of a managed widget's own panel
+([Chapter 14](14-widgets-out-of-the-panel.md)), which `saveLayout()` never saves.
 
 ### Freeing a hidden panel (`keepAlive: false`)
 
@@ -82,6 +92,19 @@ useful when several call sites cannot agree on the same literal id.
 
 > Whether `props` survive `saveLayout()` depends on whether they are JSON-serialisable. See
 > [chapter 5](05-persistence.md); it is a runtime fact, not a type-level guarantee.
+
+### Changing them later: `updatePanelProps` (1.13.0)
+
+```ts
+const { updatePanelProps } = useWorkspace()
+updatePanelProps('section-1', { line: newLine })               // replace them
+updatePanelProps('section-1', prev => ({ ...prev, zoom: 2 }))  // or derive them
+```
+
+The panel re-renders with the new props, `serializable` is re-checked against them (so the next
+`saveLayout()` saves or excludes the panel accordingly), and `layout:changed` is published. It does
+nothing for a panel that isn't open, or for a managed widget's own panel, which has no props of its
+own ([Chapter 14](14-widgets-out-of-the-panel.md)).
 
 ### A typed registry: `definePanels`
 
@@ -269,3 +292,7 @@ usePanelContextMenu(() => [
 
 Your items are appended to the standard Float / Minimize / Close menu. Pass a getter and the
 list is re-read each time the menu opens, so `disabled` and friends track state.
+
+**A managed widget's own panel** (1.13.0) is the exception: its `titleMenu` items come first, and
+there is no built-in Float, because those items are what move it. Its tab icon and its floating
+title-bar icon open the same menu. See [Chapter 14](14-widgets-out-of-the-panel.md#things-to-know).

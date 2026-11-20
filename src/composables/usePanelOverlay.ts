@@ -1,7 +1,9 @@
 import { computed, inject } from 'vue'
 import type { ComputedRef } from 'vue'
 import { PANEL_OVERLAY_KEY } from '../core/overlayState'
-import type { ManagedWidget, PanelOverlayStore } from '../core/overlayState'
+import type {
+  ManagedWidget, MoveResult, PanelOverlayStore, WidgetLocation, WidgetPlacement, WidgetTarget,
+} from '../core/overlayState'
 
 /**
  * The overlay a widget or toolbar is inside.
@@ -48,6 +50,20 @@ export function useFloatingWidgets(): {
   close: (id: string) => void
   closeAll: () => void
   isOpen: (id: string) => boolean
+  /**
+   * Move a widget out of its panel, between places out of it, or back (7.11): docked beside the
+   * owner panel, a tab in its group, a floating window, or `{ to: 'panel' }`. Never throws; a
+   * refusal changes nothing. Its content never remounts.
+   */
+  move: (id: string, to: WidgetTarget) => MoveResult
+  /** Where a widget is now, or `null` when it isn't open. */
+  location: (id: string) => WidgetLocation | null
+  /**
+   * Where a widget is, as plain JSON to save (7.11): in the panel (its corner, stretch, size or
+   * free position) or out of it (docked, tabbed or floating, with where it goes back to). Give it
+   * back as `open(id, { …, placement })` to open it there. `null` when it isn't open.
+   */
+  placement: (id: string) => WidgetPlacement | null
 } {
   const store = usePanelOverlay()
   return {
@@ -59,5 +75,11 @@ export function useFloatingWidgets(): {
       void store.managedVersion.value
       return store.managed.has(id)
     },
+    move: (id, to) => {
+      if (store.hosting) return store.hosting.move(id, to)
+      return store.managed.has(id) ? { ok: false, reason: 'no-workspace' } : { ok: false, reason: 'not-open' }
+    },
+    location: (id) => store.hosting?.location(id) ?? (store.managed.has(id) ? 'panel' : null),
+    placement: (id) => store.placementOf(id),
   }
 }

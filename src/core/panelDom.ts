@@ -13,6 +13,19 @@
  * workspaces on a page shared panel DOM.
  */
 
+import { shallowReactive } from 'vue'
+import type { WidgetContentCache } from './widgetContent'
+import { moveInto, preservesEmbeds, setPreserveEmbeds } from './domMove'
+
+/**
+ * What a hosted panel shows (7.11): the content element of the managed widget it hosts, and the
+ * widget's own cache, whose hidden store the element goes back to when no slot shows it.
+ */
+export interface HostedContent {
+  el: HTMLElement
+  cache: WidgetContentCache
+}
+
 /** Scroll offsets and focus captured from a panel's subtree. */
 interface Preserved {
   scrolls: { el: Element; top: number; left: number }[]
@@ -55,6 +68,19 @@ export class PanelDomCache {
    */
   private sizes = new Map<string, { width: number; height: number }>()
   private hidden: HTMLElement | null = null
+  /**
+   * Each hosted panel's content, by panel id (7.11), registered by the widget's overlay
+   * **before** it opens the panel and cleared after it removes it. Reactive, so a hosted panel's
+   * slot follows it: a widget closed and re-opened out of its panel in one tick gets a new
+   * element under the same panel id, and the slot shows the new one.
+   */
+  private hosted = shallowReactive(new Map<string, HostedContent>())
+  /**
+   * The content element each hosted panel showed last, kept after its registration is cleared:
+   * a hosted panel is removed (and so cleared) before its element is released, and an element that
+   * keeps its embeds must be taken out of it before then (rdd 7.11.0, `preserveEmbeds`).
+   */
+  private lastHosted = new Map<string, HTMLElement>()
 
   /**
    * The document is looked up on first use, not in a parameter default: constructing the cache
@@ -132,13 +158,45 @@ export class PanelDomCache {
 
     const preserve = options?.preserveScroll !== false
     if (preserve) this.remember(id, el)
-    target.appendChild(el)
+    // With moveBefore() for an element that keeps its embeds (see ./domMove.ts).
+    moveInto(target, el)
     if (preserve) this.apply(id, el, options?.refocus === true)
+  }
+
+  /**
+   * Marks a panel's element as keeping its embeds alive when it moves (rdd 7.11.0): a panel type
+   * with `preserveEmbeds` (its slot marks it), and a widget with it, its owner panel's element and
+   * its hosted panel's. Only switches on.
+   */
+  preserveEmbeds(id: string): void {
+    setPreserveEmbeds(this.elementFor(id), true)
+  }
+
+  /** A hosted panel's content, or `undefined` (an ordinary panel, or none registered). */
+  hostedContent(id: string): HostedContent | undefined {
+    return this.hosted.get(id)
+  }
+
+  /** Register (or, with `null`, clear) the content a hosted panel shows. */
+  setHostedContent(id: string, content: HostedContent | null): void {
+    if (content) {
+      this.hosted.set(id, content)
+      this.lastHosted.set(id, content.el)
+    } else {
+      this.hosted.delete(id)
+    }
   }
 
   /** Forget a panel entirely. Called when the panel closes. */
   release(id: string): void {
-    this.elements.get(id)?.remove()
+    const el = this.elements.get(id)
+    // A widget's content that keeps its embeds is still inside its hosted panel's element (the
+    // slot that shows it unmounts after this): parked first, connected, so its next slot can
+    // take it with moveBefore() instead of re-inserting it.
+    const inner = this.lastHosted.get(id)
+    if (el && inner && preservesEmbeds(inner) && el.contains(inner)) moveInto(this.hiddenStore(), inner)
+    this.lastHosted.delete(id)
+    el?.remove()
     this.elements.delete(id)
     this.preserved.delete(id)
     this.sizes.delete(id)
@@ -150,6 +208,8 @@ export class PanelDomCache {
     this.elements.clear()
     this.preserved.clear()
     this.sizes.clear()
+    this.hosted.clear()
+    this.lastHosted.clear()
     this.hidden?.remove()
     this.hidden = null
   }

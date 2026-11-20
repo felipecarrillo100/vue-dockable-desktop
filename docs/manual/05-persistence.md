@@ -37,6 +37,12 @@ The grid tree, floating window rects and z-order and anchors, the minimised list
 metadata (component key, title, state, the leaf/rect it came from, dirty flag, `props`), and
 which panel was active.
 
+A managed widget's own panel (`'<ownerId>/<widgetId>'`, 1.13.0) is never saved, and isn't
+reported as excluded: `loadLayout()` sends such a widget back into its panel. Restore widgets
+from their owner panel with `placement()`; see
+[Chapter 14](14-widgets-out-of-the-panel.md#saving-and-restoring-placement). A layout that names
+one, which only a hand-made JSON can, loads without it.
+
 ## What cannot be saved: non-serialisable props
 
 `openPanel`'s `props` accept anything, but only JSON-serialisable values survive a save. A

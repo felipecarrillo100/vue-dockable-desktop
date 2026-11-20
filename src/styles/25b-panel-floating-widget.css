@@ -68,6 +68,33 @@
   color: var(--vdd-panel-float-title-color-active, rgba(255, 255, 255, 0.9));
 }
 
+/* A managed widget's title icon with a titleMenu is a button (7.11): same size and colour. */
+.vdd-panel-float__menu {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  cursor: pointer;
+  border-radius: calc(3px * var(--vdd-radius-scale, 1));
+}
+.vdd-panel-float__menu:hover {
+  opacity: 1;
+  background-color: var(--vdd-custom-btn-hover-bg, rgba(255, 255, 255, 0.12));
+}
+
+/* The same, out of the panel: a widget's panel opens its menu from its tab or title-bar icon
+   (7.11). */
+.vdd-workspace-tab-icon--menu,
+.vdd-window-title-icon--menu {
+  cursor: pointer;
+  border-radius: calc(3px * var(--vdd-radius-scale, 1));
+}
+.vdd-workspace-tab-icon--menu:hover,
+.vdd-window-title-icon--menu:hover {
+  background-color: var(--vdd-custom-btn-hover-bg, rgba(255, 255, 255, 0.12));
+}
+
 .vdd-panel-float__close {
   display: inline-flex;
   align-items: center;
@@ -96,6 +123,22 @@
   flex: 1;
   overflow: auto;
   min-height: 0;
+}
+
+/* A managed widget's content element (7.11), the body's only child. The body is a block, so the
+   element takes its full size, as .vdd-panel-content does for workspace panels: content with
+   height: 100% fills the body exactly as it did when it was the body's own child. */
+.vdd-panel-float__content {
+  width: 100%;
+  height: 100%;
+}
+
+/* Out of the panel (7.11), a hosted panel's body: it shows the same content element, and scrolls
+   like the frame's body does. */
+.vdd-hosted-widget {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
 }
 
 /* A `.vdd-panel-float__resize` rule lived here in rdd and was dead: nothing rendered that

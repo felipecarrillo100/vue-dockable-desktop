@@ -24,7 +24,7 @@
   "overlays.test.ts": 6,
   "panelLifecycle.test.ts": 25,
   "toast.test.ts": 22,
-  "panelOverlay.test.ts": 69,
+  "panelOverlay.test.ts": 74,
   "diagnostics.test.ts": 14,
   "contributions.test.ts": 21,
   "i18n.test.ts": 25,
@@ -45,5 +45,10 @@
   "releaseA.test.ts": 15,
   "releaseB.test.ts": 12,
   "releaseC.test.ts": 11,
-  "panelIcon.test.ts": 10
+  "panelIcon.test.ts": 10,
+  "focusPropsEmbeds.test.ts": 17,
+  "widgetsOut.test.ts": 40,
+  "widgetsOutMenus.test.ts": 33,
+  "widgetPlacement.test.ts": 11,
+  "hostedPanels.test.ts": 19
 }

@@ -8,8 +8,8 @@
 import { computed, markRaw, reactive, readonly, ref, shallowRef, toRaw } from 'vue'
 import type { AllowedComponentProps, App, Component, ComputedRef, InjectionKey, VNodeProps } from 'vue'
 import type {
-  DirtyStateOptions, DropPosition, FloatAnchor, PanelDrop, FloatingWindow, Label, LayoutNode,
-  MessageDescriptor, MessageFormatter, PanelInfo, SerializedLayout, SplitDirection,
+  DirtyStateOptions, DropPosition, FloatAnchor, PanelDrop, FloatingWindow, HostedPanelPlacement, Label, LayoutNode,
+  MessageDescriptor, MessageFormatter, PanelInfo, PanelOwner, SerializedLayout, SplitDirection,
 } from '../types'
 import {
   addPanelToLeaf, deriveActivePanelId, dockToEdge, emptyRoot, findFirstLeafId, findLeafForPanel,
@@ -17,7 +17,8 @@ import {
   removePanelFromTree, selectPanelInTree, splitLeafInTree, updateSizesAtPath,
 } from './layoutTree'
 import type { ActiveTargetScope } from './layoutTree'
-import { DEFAULT_FLOAT_RECT, LAYOUT_VERSION, parseInitialState, parseLayoutPayload } from './serialize'
+import { DEFAULT_FLOAT_RECT, LAYOUT_VERSION, parseInitialState, parseLayoutPayload, withoutHostedPanels } from './serialize'
+import { HOSTED_COMPONENT, optionsFor } from './panelOptions'
 import type { ParsedLayout } from './serialize'
 import { isSerializable } from './serializable'
 import { PanelRegistry } from './registry'
@@ -172,6 +173,22 @@ export interface Workspace<TEvents extends object = Record<string, unknown>> {
    *  is restored first — rdd's equivalent silently did nothing (divergence D1). */
   maximizePanel(id: string): void
   focusPanel(id: string): void
+  /**
+   * As `focusPanel(id)`; with `restore: true` a minimised panel is restored first (through
+   * `restorePanel`, events included), then focused. Without it a minimised panel stays minimised,
+   * as before. rdd 7.11.0.
+   */
+  focusPanel(id: string, options: { restore?: boolean }): void
+  /**
+   * Replaces an open panel's props, or derives them from the current ones (rdd 7.11.0). The panel
+   * re-renders with them, `serializable` is re-checked (so the next `saveLayout()` saves or
+   * excludes it accordingly), and `layout:changed` is emitted. Nothing for a panel that isn't
+   * open, or for a managed widget's own panel, which has no props of its own.
+   */
+  updatePanelProps(
+    id: string,
+    props: Record<string, unknown> | ((prev: Record<string, unknown> | undefined) => Record<string, unknown>),
+  ): void
   movePanelOrder(panelId: string, targetLeafId: string, targetIndex: number): void
   closeLeafGroup(leafId: string): void
   updateSplitSizes(path: number[], sizes: number[]): void
@@ -188,6 +205,21 @@ export interface Workspace<TEvents extends object = Record<string, unknown>> {
   setDirection(dir: 'ltr' | 'rtl'): void
   /** @internal drives drag visuals */
   setDraggedPanelId(id: string | null): void
+  /**
+   * @internal Opens a hosted panel: one showing a managed widget moved out of its owner panel.
+   * Docked beside `dockTo.panel`, or floating exactly at `rect` (not cascaded). Returns `false`,
+   * changing nothing, when the id is taken or the panel to dock beside isn't docked.
+   */
+  openHostedPanel(id: string, owner: PanelOwner, title: Label, at: HostedPanelPlacement): boolean
+  /** @internal Removes a hosted panel without its close handler: the widget is going back. */
+  removeHostedPanel(id: string): void
+  /** @internal Updates a hosted panel's own capabilities (the widget re-opened). */
+  setHostedOptions(id: string, options: NonNullable<PanelOwner['options']>): void
+  /**
+   * @internal `onClose` is called when a hosted panel is closed (×, menu, `closePanel`): the widget
+   * closes. `onDrop`, just before a `loadLayout` drops it: the widget is about to go home.
+   */
+  registerHostedCloseHandler(id: string, onClose: () => void, onDrop?: () => void): () => void
 
   isOpen(id: string): boolean
   getOpenPanelIds(): string[]
@@ -344,6 +376,10 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
   const closeGuards = new Map<string, () => boolean | Promise<boolean>>()
   const stateProviders = new Map<string, () => unknown>()
   const panelMenus = new Map<string, () => ContextMenuItem[]>()
+  /** Hosted panels' close handlers, by panel id: the widget's overlay registers them. */
+  const hostedCloseHandlers = new Map<string, () => void>()
+  /** ...and what to call just before a layout load drops one (a load never keeps a hosted panel). */
+  const hostedDropHandlers = new Map<string, () => void>()
   /**
    * Bumped whenever a panel registers or withdraws menu items.
    *
@@ -368,7 +404,7 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
       // A runtime icon is a component, so a layout can't hold one: whatever a hand-made JSON put
       // there is dropped rather than rendered.
       const { icon: _icon, ...info } = loaded
-      panels[id] = info.title ? info : { ...info, title: registry.get(info.component)?.defaultOptions?.title || id }
+      panels[id] = info.title ? info : { ...info, title: optionsFor(registry, info)?.title || id }
     }
     const minimized = parsed.minimized.map(m => (m.title ? m : { ...m, title: panels[m.id]?.title || m.id }))
     return { ...parsed, panels, minimized }
@@ -436,11 +472,8 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
 
   const layoutChanged = () => bus.emit('layout:changed', {})
 
-  const entryFor = (id: string) => {
-    const panel = state.panels[id]
-    return panel ? registry.get(panel.component) : undefined
-  }
-  const optionsFor = (id: string): PanelDefaultOptions => entryFor(id)?.defaultOptions ?? {}
+  /** An open panel's options (its kind's, or a hosted panel's own), or `{}`. */
+  const optionsOf = (id: string): PanelDefaultOptions => optionsFor(registry, state.panels[id]) ?? {}
 
   /** Free a spot for a new floating window, cascading away from anything at the same place. */
   function cascade(
@@ -609,7 +642,7 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
   function closePanel(id: string): void {
     const panel = state.panels[id]
     if (!panel) return
-    if (optionsFor(id).canClose === false) return
+    if (optionsOf(id).canClose === false) return
 
     closeGuards.delete(id)
     stateProviders.delete(id)
@@ -621,6 +654,66 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
     resolveActive()
     bus.emit('panel:closed', { id })
     layoutChanged()
+    // A hosted panel closed from the page (×, menu, the app's closePanel): its widget closes too.
+    // A hosted panel can always close. The handler belongs to the widget's overlay.
+    if (panel.owner) hostedCloseHandlers.get(id)?.()
+  }
+
+  // ── Hosted panels: a managed widget moved out of its owner panel (rdd 7.11.0) ──
+  // They exist only at runtime: saveLayout skips them and loadLayout never creates one.
+
+  function openHostedPanel(id: string, owner: PanelOwner, title: Label, at: HostedPanelPlacement): boolean {
+    if (id in state.panels) return false
+    const leaf = at.kind === 'dock' ? findLeafForPanel(toRaw(state).gridRoot, at.dockTo.panel) : null
+    if (at.kind === 'dock' && leaf === null) return false
+
+    const info: PanelInfo = {
+      id, title, component: HOSTED_COMPONENT, state: at.kind === 'dock' ? 'docked' : 'floating',
+      serializable: false, owner,
+    }
+    state.panels = { ...state.panels, [id]: info }
+    if (at.kind === 'float') {
+      addFloating(id, { ...at.rect }, null)          // exactly where asked: never cascaded
+    } else {
+      const share = Math.min(0.9, Math.max(0.1, at.dockTo.size ?? state.splitRatio))
+      state.gridRoot = at.dockTo.position === 'center'
+        ? addPanelToLeaf(toRaw(state).gridRoot, leaf!, id)
+        : splitLeafInTree(toRaw(state).gridRoot, leaf!, id, at.dockTo.position, share)
+    }
+
+    resolveActive(id)
+    bus.emit('panel:opened', { id, component: HOSTED_COMPONENT })
+    layoutChanged()
+    return true
+  }
+
+  function removeHostedPanel(id: string): void {
+    if (!state.panels[id]?.owner) return
+    detach(id)
+    const next = { ...state.panels }
+    delete next[id]
+    state.panels = next
+
+    resolveActive()
+    bus.emit('panel:closed', { id })
+    layoutChanged()
+  }
+
+  function setHostedOptions(id: string, options: NonNullable<PanelOwner['options']>): void {
+    const panel = state.panels[id]
+    if (!panel?.owner) return
+    const was = panel.owner.options
+    if (was?.canFloat === options.canFloat && was?.canDock === options.canDock) return
+    state.panels = { ...state.panels, [id]: { ...panel, owner: { ...panel.owner, options } } }
+  }
+
+  function registerHostedCloseHandler(id: string, onClose: () => void, onDrop?: () => void): () => void {
+    hostedCloseHandlers.set(id, onClose)
+    if (onDrop) hostedDropHandlers.set(id, onDrop)
+    return () => {
+      if (hostedCloseHandlers.get(id) === onClose) hostedCloseHandlers.delete(id)
+      if (onDrop && hostedDropHandlers.get(id) === onDrop) hostedDropHandlers.delete(id)
+    }
   }
 
   async function requestClosePanel(
@@ -649,7 +742,7 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
   function minimizePanel(id: string): void {
     const panel = state.panels[id]
     if (!panel || panel.state === 'minimized') return
-    if (optionsFor(id).canMinimize === false) return
+    if (optionsOf(id).canMinimize === false) return
 
     let lastFloatingRect: PanelInfo['lastFloatingRect']
     let lastLeafId: string | undefined
@@ -686,8 +779,7 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
 
     state.minimized = state.minimized.filter(m => m.id !== id)
     const previous = panel.previousState ?? 'docked'
-    const entry = registry.get(panel.component)
-    const favourite = panel.lastFloatingRect ?? entry?.defaultOptions?.favoritePosition ?? DEFAULT_RECT
+    const favourite = panel.lastFloatingRect ?? optionsOf(id).favoritePosition ?? DEFAULT_RECT
 
     const toFloating = () => {
       state.panels = { ...state.panels, [id]: { ...panel, state: 'floating' } }
@@ -702,7 +794,7 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
       toFloating()
     } else if (panel.lastLeafId && leafExists(toRaw(state).gridRoot, panel.lastLeafId)) {
       toLeaf(panel.lastLeafId)
-    } else if (optionsFor(id).canDrag !== false) {
+    } else if (optionsOf(id).canDrag !== false) {
       toFloating()                              // its leaf is gone; float it if it may float
     } else {
       toLeaf(findFirstLeafId(toRaw(state).gridRoot) ?? emptyRoot().id)
@@ -720,9 +812,9 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
   ): void {
     const panel = state.panels[id]
     if (!panel) return
-    if (optionsFor(id).canDrag === false) return
+    if (optionsOf(id).canDrag === false) return
 
-    const favourite = rect ?? registry.get(panel.component)?.defaultOptions?.favoritePosition ?? DEFAULT_RECT
+    const favourite = rect ?? optionsOf(id).favoritePosition ?? DEFAULT_RECT
     detach(id)
     state.panels = { ...state.panels, [id]: { ...panel, state: 'floating' } }
     addFloating(id, cascade(favourite), anchor ?? null)
@@ -808,7 +900,12 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
     layoutChanged()
   }
 
-  function focusPanel(id: string): void {
+  function focusPanel(id: string, options?: { restore?: boolean }): void {
+    // Restoring brings it back and focuses it, with restorePanel's events (rdd 7.11.0).
+    if (options?.restore && state.panels[id]?.state === 'minimized') {
+      restorePanel(id)
+      return
+    }
     const panel = state.panels[id]
     if (!panel) return
 
@@ -873,6 +970,20 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
     }
   }
 
+  function updatePanelProps(
+    id: string,
+    props: Record<string, unknown> | ((prev: Record<string, unknown> | undefined) => Record<string, unknown>),
+  ): void {
+    const panel = state.panels[id]
+    if (!panel || panel.owner) return   // a hosted panel has no props of its own
+    const next = typeof props === 'function' ? props(panel.props) : props
+    state.panels = {
+      ...state.panels,
+      [id]: { ...panel, props: markRaw(next), serializable: isSerializable(toRaw(next)) },
+    }
+    layoutChanged()
+  }
+
   function setPanelIcon(id: string, icon: Component | null): void {
     const panel = state.panels[id]
     if (!panel) return
@@ -893,11 +1004,15 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
   function saveLayout(): string {
     const raw = toRaw(state)
     const excluded: string[] = []
+    // Hosted panels are never saved and never reported as excluded: the owner panel saves its
+    // widgets itself.
+    const hosted: string[] = []
     const included: Record<string, PanelInfo> = {}
 
     // A registered provider is pulled fresh on every save: a panel's serialisability can
     // change over its lifetime, so it is never cached from open time for provider-backed panels.
     for (const [id, info] of Object.entries(raw.panels)) {
+      if (info.owner || info.component === HOSTED_COMPONENT) { hosted.push(id); continue }
       const provider = stateProviders.get(id)
       const dynamic = provider?.()
       const hasDynamic = provider !== undefined && dynamic !== undefined
@@ -917,7 +1032,7 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
     let gridRoot: LayoutNode = raw.gridRoot
     let floating = raw.floating
     let minimized = raw.minimized
-    for (const id of excluded) {
+    for (const id of [...excluded, ...hosted]) {
       gridRoot = removePanelFromTree(gridRoot, id) ?? emptyRoot()
       floating = floating.filter(w => w.id !== id)
       minimized = minimized.filter(m => m.id !== id)
@@ -958,7 +1073,7 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
     // Straight to the validator: `parseInitialState` falls back to an *empty* workspace, which
     // is right for a first start and wrong here — applying it would close every panel.
     const valid = parseLayoutPayload(payload, warn)
-    const parsed = valid && withTitles(valid)
+    const parsed = valid && withTitles(withoutHostedPanels(valid))
     if (!parsed) {
       warn('loadLayout received something that is not a layout (it needs gridRoot, floating, ' +
         'minimized and panels); the current layout is unchanged.')
@@ -970,6 +1085,11 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
     for (const [id, info] of Object.entries(parsed.panels)) {
       const was = state.panels[id]
       panels[id] = was?.icon && was.component === info.component ? { ...info, icon: was.icon } : info
+    }
+    // The live hosted panels are about to go: tell their owners first, while their content is
+    // still in place.
+    for (const [id, panel] of Object.entries(state.panels)) {
+      if (panel.owner) hostedDropHandlers.get(id)?.()
     }
     state.gridRoot = parsed.gridRoot
     state.floating = parsed.floating
@@ -1031,8 +1151,9 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
     openPanel, closePanel, requestClosePanel, minimizePanel, restorePanel, floatPanel,
     dockPanel, dockPanelToGroup, dockPanelToWorkspaceEdge, maximizePanel, focusPanel,
     movePanelOrder, closeLeafGroup, updateSplitSizes, updateFloatingPosition,
-    setPanelDirty, updatePanelTitle, setPanelIcon, setDirection,
+    setPanelDirty, updatePanelTitle, updatePanelProps, setPanelIcon, setDirection,
     setDraggedPanelId: (id) => { state.draggedPanelId = id },
+    openHostedPanel, removeHostedPanel, setHostedOptions, registerHostedCloseHandler,
 
     isOpen: (id) => id in state.panels,
     getOpenPanelIds: () => Object.keys(state.panels),
@@ -1045,7 +1166,10 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
     toolbar: createToolbarState(),
     overlays,
     contributions,
-    activeContribution: activeContributionRef(contributions, () => state.activePanelId),
+    // A widget's panel (7.11) brings its owner's contribution: its content can't publish one of
+    // its own (its panel injection is the owner's), and the owner's tools stay while the user
+    // works in the widget.
+    activeContribution: activeContributionRef(contributions, () => state.activePanelId, id => state.panels[id]?.owner?.panelId),
     registerCloseGuard, registerStateProvider, registerPanelMenu,
     panelMenuItems: (id) => {
       void panelMenuVersion.value        // tracked, so a computed sees registrations
@@ -1079,6 +1203,8 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
       closeGuards.clear()
       stateProviders.clear()
       panelMenus.clear()
+      hostedCloseHandlers.clear()
+      hostedDropHandlers.clear()
       menu.value = null
     },
   }

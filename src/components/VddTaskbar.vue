@@ -15,6 +15,7 @@ import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
 import type { PanelDomCache } from '../core/panelDom'
 import { useWorkspace } from '../composables/useWorkspace'
 import { CANCEL_MOVE_PX, LONG_PRESS_MS } from '../composables/useDragDock'
+import { optionsFor } from '../core/panelOptions'
 import VddTaskbarPreview from './VddTaskbarPreview.vue'
 
 export type TaskbarVisibility = 'always' | 'compact' | 'autohide'
@@ -45,7 +46,7 @@ let collapseTimer: ReturnType<typeof setTimeout> | undefined
 let dismissTimer: ReturnType<typeof setTimeout> | undefined
 
 const items = computed(() => ws.state.minimized.map((entry) => {
-  const options = ws.registry.get(entry.component)?.defaultOptions ?? {}
+  const options = optionsFor(ws.registry, ws.state.panels[entry.id], entry.component) ?? {}
   // A runtime icon (1.12.0) wins over the registered one; the taskbar's default comes last.
   return { ...entry, options, icon: ws.state.panels[entry.id]?.icon ?? options.icon }
 }))

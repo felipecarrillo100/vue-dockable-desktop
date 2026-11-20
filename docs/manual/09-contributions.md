@@ -85,6 +85,10 @@ const items = computed(() => [
 `mergeToolbarItems(items, contribution)` and `mergeSidebarTabs(tabs, contribution, icon)` are
 the plain functions the composables wrap, if you want the same shape at a different position.
 
+When the active panel shows a managed widget moved out of its owner panel (1.13.0), the result is
+the **owner's** contribution: a docked results table keeps its map's tools on screen. See
+[Chapter 14](14-widgets-out-of-the-panel.md#things-to-know).
+
 ## Why "only while active" is trustworthy
 
 A contribution is read from the workspace's `activePanelId`. The thing that makes the feature

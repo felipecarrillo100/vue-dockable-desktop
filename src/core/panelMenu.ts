@@ -49,13 +49,36 @@ export function buildPanelMenu(
   actions: PanelMenuActions,
 ): ContextMenuItem[] {
   const items: ContextMenuItem[] = []
-  if (options.canDrag !== false && isDropAllowed(host, panelId, { kind: 'float', anchor: null })) {
+  // A hosted panel (a widget out of its panel, 7.11) has no built-in Float: the widget's own
+  // titleMenu items, which lead its menu below, are what move it.
+  const hosted = !!host.state.panels[panelId]?.owner
+  if (!hosted && options.canDrag !== false && isDropAllowed(host, panelId, { kind: 'float', anchor: null })) {
     items.push({ label: host.messages.floatWindow!, action: actions.float })
   }
   if (options.canMinimize !== false) items.push({ label: host.messages.minimizePanel!, action: actions.minimize })
   if (items.length > 0 && options.canClose !== false) items.push({ separator: true })
   if (options.canClose !== false) items.push({ label: host.messages.closeTab!, action: actions.close })
+  if (hosted) {
+    const contributed = host.panelMenuItems(panelId)
+    return contributed.length === 0 ? items : [...contributed, { separator: true }, ...items]
+  }
   return withPanelContributions(host, panelId, items)
+}
+
+/**
+ * A floating window's ⋮ menu: what the panel contributed. For a hosted panel (7.11) that is its
+ * widget's titleMenu items, then the built-in Close (no Minimize: the title bar has its own).
+ */
+export function buildMoreActionsMenu(
+  host: MenuHost,
+  panelId: string,
+  options: PanelDefaultOptions,
+  close: () => void,
+): ContextMenuItem[] {
+  const contributed = host.panelMenuItems(panelId)
+  if (contributed.length === 0) return []
+  if (!host.state.panels[panelId]?.owner || options.canClose === false) return contributed
+  return [...contributed, { separator: true }, { label: host.messages.closePanel!, action: close }]
 }
 
 /**

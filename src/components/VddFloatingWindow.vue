@@ -14,9 +14,10 @@ import type { CSSProperties } from 'vue'
 import type { FloatingWindow } from '../types'
 import { useWorkspace } from '../composables/useWorkspace'
 import { useDragDock } from '../composables/useDragDock'
-import { buildPanelMenu } from '../core/panelMenu'
+import { buildMoreActionsMenu, buildPanelMenu } from '../core/panelMenu'
 import { computeResizedRect, startPointerDrag } from '../core/dragResize'
 import type { ResizeDir } from '../core/dragResize'
+import { optionsFor } from '../core/panelOptions'
 import VddPanelSlot from './VddPanelSlot.vue'
 
 const props = defineProps<{
@@ -34,7 +35,7 @@ const CORNER_GAP = 8
 const HANDLES: ResizeDir[] = ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw']
 
 const panel = computed(() => ws.state.panels[props.window.id])
-const options = computed(() => (panel.value ? ws.registry.get(panel.value.component)?.defaultOptions ?? {} : {}))
+const options = computed(() => (panel.value ? optionsFor(ws.registry, panel.value) ?? {} : {}))
 /** A runtime icon (1.12.0) wins over the registered one. */
 const icon = computed(() => panel.value?.icon ?? options.value.icon)
 const isFocused = computed(() => ws.state.activePanelId === props.window.id)
@@ -83,9 +84,15 @@ const style = computed<CSSProperties>(() => {
 
 const contributed = computed(() => ws.panelMenuItems(props.window.id))
 
+/**
+ * A widget's panel (7.11) opens its ⋮ menu from the title icon too, as in its owner panel; with no
+ * icon of its own, the menu glyph stands in for it.
+ */
+const iconOpensMenu = computed(() => !!panel.value?.owner && contributed.value.length > 0)
+
 function openMenu(event: MouseEvent | PointerEvent, onlyContributed = false): void {
   const items = onlyContributed
-    ? contributed.value
+    ? buildMoreActionsMenu(ws, props.window.id, options.value, () => ws.requestClosePanel(props.window.id))
     : buildPanelMenu(ws, props.window.id, options.value, {
         float: () => ws.floatPanel(props.window.id),
         minimize: () => ws.minimizePanel(props.window.id),
@@ -197,7 +204,18 @@ function onHandlePointerDown(dir: ResizeDir, event: PointerEvent): void {
       @dblclick="ws.maximizePanel(window.id)"
     >
       <span class="vdd-floating-window-title">
-        <span v-if="icon" class="vdd-window-title-icon"><component :is="icon" /></span>
+        <!-- Stopped: pointerdown would start a window drag, dblclick maximise it, and a click
+             reach the menu's window-click dismissal in the click that opened it. -->
+        <span
+          v-if="icon || iconOpensMenu"
+          class="vdd-window-title-icon"
+          :class="{ 'vdd-window-title-icon--menu': iconOpensMenu }"
+          @pointerdown="iconOpensMenu && $event.stopPropagation()"
+          @dblclick="iconOpensMenu && $event.stopPropagation()"
+          @click="iconOpensMenu && ($event.stopPropagation(), openMenu($event, true))"
+        ><component :is="icon" v-if="icon" /><svg v-else width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" />
+        </svg></span>
         <span>{{ ws.format(panel.title) }}{{ panel.dirty ? ' *' : '' }}</span>
       </span>
       <div class="vdd-titlebar-actions" @pointerdown.stop>
@@ -207,7 +225,7 @@ function onHandlePointerDown(dir: ResizeDir, event: PointerEvent): void {
           class="vdd-custom-tab-btn vdd-btn-more-actions"
           :data-vdd-more="window.id"
           :title="ws.format(ws.messages.moreActions)"
-          @click="openMenu($event, true)"
+          @click.stop="openMenu($event, true)"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display: block">
             <circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" />

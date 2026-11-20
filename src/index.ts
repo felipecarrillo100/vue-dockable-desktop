@@ -6,7 +6,7 @@
  */
 
 /** The library version, mirroring `package.json`. */
-export const version = '1.12.0'
+export const version = '1.13.0'
 
 // ─── The workspace ───────────────────────────────────────────────────────────
 // `createWorkspace()` returns both the imperative API and a Vue plugin, the shape
@@ -49,6 +49,7 @@ export type { UsePanelReturn } from './composables/usePanel'
 export { useModals, useSidePanels } from './composables/useOverlays'
 export type { ConfirmOptions, AlertOptions } from './composables/useOverlays'
 export { useFloatingWidgets } from './composables/usePanelOverlay'
+export { useWidget } from './composables/useWidget'
 export {
   usePanelContribution,
   useActiveContribution,
@@ -136,7 +137,10 @@ export type {
 // ─── Inner-widget placement ──────────────────────────────────────────────────
 export type { Stretch, PanelFloatPlacement } from './core/stretch'
 export type { ToolbarPosition, ToolbarVariant, ButtonVariant, ToolbarInsets } from './core/panelOverlay'
-export type { ManagedWidget } from './core/overlayState'
+export type {
+  ManagedWidget, MoveResult, WidgetLocation, WidgetMenuContext, WidgetPlacement, WidgetTarget,
+} from './core/overlayState'
+export type { WidgetHandle } from './composables/useWidget'
 
 // ─── Panel contributions ─────────────────────────────────────────────────────
 export { sectionToTab, mergeToolbarItems, mergeSidebarTabs } from './core/contributions'
@@ -163,6 +167,7 @@ export type {
   MessageDescriptor,
   MessageFormatter,
   PanelInfo,
+  PanelOwner,
   PanelState,
   SerializedLayout,
   SplitDirection,

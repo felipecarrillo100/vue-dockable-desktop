@@ -41,7 +41,16 @@ dockPanelToWorkspaceEdge('map-1', 'bottom')            // full-width row
 minimizePanel('map-1')
 restorePanel('map-1')                              // focuses it
 restorePanel('map-1', { focus: false })            // restores without stealing focus
+focusPanel('map-1')                                // bring to front / select its tab; a minimised one stays minimised
+focusPanel('map-1', { restore: true })             // ...and restore a minimised one first (1.13.0)
 ```
+
+`focusPanel(id, { restore: true })` restores a minimised panel through `restorePanel`, with its
+events, then focuses it. Without the option a minimised panel becomes the active one but stays in
+the taskbar, as before.
+
+`getOpenPanelIds()` lists every open panel. While a managed widget is out of its panel, its own
+panel is listed too: `'map-1/results'` ([Chapter 14](14-widgets-out-of-the-panel.md)).
 
 ### Opening beside another panel
 
@@ -171,8 +180,14 @@ subscribe('panel:restored',  ({ id }) => {})
 
 Subscriptions made inside `setup` are disposed with the component.
 
+`panel:opened` also fires when a managed widget moves out of its panel, with
+`component: 'vdd:widget'`, and `panel:closed` when it goes back or closes (1.13.0). A `move()`
+from one place out of the panel to another is a `panel:closed` then a `panel:opened` for the same
+id. A `loadLayout()` that sends a widget home publishes no `panel:closed` for its panel.
+
 `layout:changed` is the coalesced signal for autosave: it covers open, close, minimise,
-restore, dedupe redirects and every placement change. It does **not** fire when an
+restore, dedupe redirects, every placement change, `updatePanelProps()`, and a managed widget
+moving out of its panel or back (1.13.0). It does **not** fire when an
 `onSaveState` provider's return value changes on its own — that is a pull, and nothing can
 observe it changing. If your panel's state matters for autosave, save on your own trigger
 too.

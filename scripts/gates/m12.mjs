@@ -29,7 +29,9 @@ const widget = src('src/components/VddFloatingWidget.vue')
 // Read from `activePanelId` and nothing else. Not the first key of `panels` (which is
 // insertion order, and is exactly how rdd surfaced a hidden panel's contribution after a
 // restore), not a leaf's own selection, not the last-focused id.
-must(/activeContributionRef\(contributions, \(\) => state\.activePanelId\)/.test(workspace),
+// A widget's own panel (rdd 7.11) resolves to its owner through the optional third argument; the
+// source is still activePanelId.
+must(/activeContributionRef\(contributions, \(\) => state\.activePanelId[,)]/.test(workspace),
   'the active contribution must be read from activePanelId, the single resolution point')
 must(!/Object\.keys\(state\.panels\)\[0\]/.test(workspace),
   'nothing may seed or read an active panel from insertion order (that is divergence D2)')

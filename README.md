@@ -35,7 +35,7 @@ npm install vue-dockable-desktop
 Requires Vue 3.4+, and a browser with CSS `color-mix()` (Chrome / Edge 111, Safari 16.2,
 Firefox 113 or later). No other runtime dependencies. The published package is
 [`vue-dockable-desktop`](https://www.npmjs.com/package/vue-dockable-desktop); the public API
-is pinned by `api-surface.json` and covered by 851 tests.
+is pinned by `api-surface.json` and covered by 1,077 tests.
 
 ## Quick start
 
@@ -102,6 +102,9 @@ localStorage.setItem('layout', ws.saveLayout())
 - **Sidebar and toolbar** — primary and secondary sidebars, a declarative toolbar, and
   per-panel contributions that follow the active panel
 - **Panel overlay** — anchored toolbars and floating widgets inside a single panel
+- **Widgets out of the panel** — a managed widget can dock beside its panel, become a tab or float
+  as a window of its own, and come back, without remounting; its placement saves and restores
+  (see [Widgets out of the panel](docs/manual/14-widgets-out-of-the-panel.md))
 - **Overlays** — side panels, a modal stack, dirty-close confirmation, and toasts
 - **Layout serialisation** — save and restore the whole workspace as a JSON string
 - **Theming** — built-in skins, each with its own font, light/dark colour schemes, all
@@ -136,7 +139,7 @@ localStorage.setItem('layout', ws.saveLayout())
 | | |
 |---|---|
 | [Live demo](https://felipecarrillo100.github.io/vue-dockable-desktop/demo/) | Every capability in one application — published from `demo/` by GitHub Pages on each push to `main` |
-| [`docs/manual/`](docs/manual/) | Users manual — 13 chapters, start with [Getting started](docs/manual/01-getting-started.md) |
+| [`docs/manual/`](docs/manual/) | Users manual — 14 chapters, start with [Getting started](docs/manual/01-getting-started.md) |
 | [`docs/decisions/`](docs/decisions/) | ADRs — why the Vue design diverges from the React one |
 | [`docs/PARITY.md`](docs/PARITY.md) | Feature-by-feature parity with `react-dockable-desktop`, and the 16 deliberate divergences |
 | [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) | The milestone plan and its gates |

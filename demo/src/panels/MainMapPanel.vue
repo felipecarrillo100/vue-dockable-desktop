@@ -22,6 +22,7 @@ import {
 } from 'vue-dockable-desktop'
 import type { PanelFloatPlacement } from 'vue-dockable-desktop'
 import CameraWidgets from './CameraWidgets.vue'
+import CamerasTableToggle from './CamerasTableToggle.vue'
 
 const CAMERAS = [
   { id: 'cam-north', name: 'North Gate', colour: '#38bdf8', at: [51.515, -0.09] as [number, number] },
@@ -114,6 +115,8 @@ onBeforeUnmount(() => { map?.remove(); map = null })
 
 const zoom = (by: number) => map?.setZoom((map.getZoom() ?? 13) + by)
 const recentre = () => map?.setView([51.505, -0.09], 13)
+/** The cameras table's rows pan this map, wherever the table is shown (1.13.0). */
+const panTo = (at: [number, number]) => map?.setView(at, 15)
 </script>
 
 <template>
@@ -126,6 +129,8 @@ const recentre = () => map?.setView([51.505, -0.09], 13)
       <VddToolbarSeparator />
       <VddToolbarButton title="Recentre" @click="recentre"><span>◎</span></VddToolbarButton>
       <VddToolbarToggle v-model:active="grid" title="Graticule"><span>#</span></VddToolbarToggle>
+      <!-- A managed widget that can leave the map: docked below it, a tab, or floating (1.13.0). -->
+      <CamerasTableToggle :cameras="CAMERAS" :on-pick="panTo" />
       <VddToolbarSpacer />
       <span style="font: 0.68rem ui-monospace, monospace; opacity: 0.7; padding-inline-end: 0.4rem">
         {{ readout }}

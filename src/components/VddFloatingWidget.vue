@@ -18,7 +18,7 @@
  * that is never valid.
  */
 import { computed, onBeforeUnmount, ref, useTemplateRef, watch } from 'vue'
-import type { Component } from 'vue'
+import type { Component, Ref, WritableComputedRef } from 'vue'
 import { useWorkspace } from '../composables/useWorkspace'
 import { usePanelOverlayOptional } from '../composables/usePanelOverlay'
 import { computeResizedRect, startPointerDrag } from '../core/dragResize'
@@ -30,6 +30,8 @@ import {
 import { addAxis, bucketsFor, releaseAxis, stretchesBlock, stretchesInline } from '../core/stretch'
 import type { PanelFloatPlacement, Stretch } from '../core/stretch'
 import type { FloatAnchor, Label } from '../types'
+import type { ManagedPlacement } from '../core/overlayState'
+import VddWidgetContentSlot from './VddWidgetContentSlot.vue'
 
 const props = withDefaults(defineProps<{
   /** Unique within this panel's overlay. Drives z-order and stack membership. */
@@ -43,7 +45,19 @@ const props = withDefaults(defineProps<{
   height?: number
   /** `false` disables resize-to-stretch snapping, for content that needs a bounded size. @default true */
   stretchable?: boolean
-}>(), { width: 320, height: 240, stretchable: true, icon: undefined })
+  /**
+   * @internal Set only by `<VddPanelOverlay>`, for a widget opened through
+   * `useFloatingWidgets()`: the content element the overlay renders the widget into, which the
+   * body shows instead of the default slot. It also makes the widget *managed*: its whole
+   * placement is then the overlay's record (see `managed` below).
+   */
+  contentEl?: HTMLElement
+  /**
+   * @internal Set only by `<VddPanelOverlay>`, for a managed widget with a `titleMenu` (7.11):
+   * the title icon becomes a button that calls this.
+   */
+  titleMenu?: (event: MouseEvent) => void
+}>(), { width: 320, height: 240, stretchable: true, icon: undefined, contentEl: undefined, titleMenu: undefined })
 
 /** Whether the widget is mounted. `v-model:open` replaces rdd's `usePanelFloatingWindow()`. */
 const open = defineModel<boolean>('open', { default: true })
@@ -69,12 +83,40 @@ const store = usePanelOverlayOptional()
 const el = useTemplateRef<HTMLDivElement>('el')
 
 const isRtl = computed(() => ws.state.isRtl)
-const anchor = computed(() => placement.value.anchor)
-const stretch = computed(() => placement.value.stretch)
+
+/**
+ * A managed widget's placement record, owned by the overlay (7.11), or `null` for a widget
+ * placed in a template.
+ *
+ * Read from the store itself, not from the bound `placement` prop: the prop only catches up on
+ * the overlay's next render, and one gesture writes several fields in a row (a drag that leaves
+ * a stretched corner writes stretch, then mode, then position), each of which must see the
+ * last. Writes still go through the model — `placement.value = …`, which the overlay echoes into
+ * this record synchronously (PARITY R1) — so there is one write path for both kinds of widget.
+ */
+const managed = computed<ManagedPlacement | null>(() =>
+  props.contentEl && store ? store.managedPlacements[props.widgetId] ?? null : null)
+
+const anchor = computed(() => (managed.value ?? placement.value).anchor)
+const stretch = computed(() => (managed.value ?? placement.value).stretch)
+
+/**
+ * One of the fields only a managed widget's record carries: this frame's own ref otherwise.
+ * Written like a ref either way, so the gesture code below does not know the difference.
+ */
+function field<K extends 'mode' | 'freePos' | 'size'>(key: K, own: Ref<ManagedPlacement[K]>): WritableComputedRef<ManagedPlacement[K]> {
+  return computed({
+    get: () => (managed.value ? managed.value[key] : own.value),
+    set: (value) => {
+      if (managed.value) placement.value = { ...managed.value, [key]: value }
+      else own.value = value
+    },
+  })
+}
 
 /** `docked` tracks a corner; `free` positions from an explicit box. */
-const mode = ref<'docked' | 'free'>('docked')
-const freePos = ref<{ x: number; y: number } | null>(null)
+const mode = field('mode', ref<'docked' | 'free'>('docked'))
+const freePos = field('freePos', ref<{ x: number; y: number } | null>(null))
 
 /**
  * The widget's own size.
@@ -83,14 +125,16 @@ const freePos = ref<{ x: number; y: number } | null>(null)
  * maximised workspace window keeps its rect. Releasing the axis therefore restores the
  * previous size with no snapshot and no bookkeeping.
  */
-const size = ref({ w: props.width, h: props.height })
+const size = field('size', ref({ w: props.width, h: props.height }))
 
 /** Which axes would snap to stretched if the drag ended now. Drives the visual cue. */
 const snapArmed = ref({ inline: false, block: false })
 
 /** The single write path for placement, so a listener never sees a half-applied transition. */
 function applyPlacement(nextAnchor: FloatAnchor, nextStretch: Stretch | null): void {
-  placement.value = { anchor: nextAnchor, stretch: nextStretch }
+  placement.value = managed.value
+    ? { ...managed.value, anchor: nextAnchor, stretch: nextStretch }
+    : { anchor: nextAnchor, stretch: nextStretch }
 }
 
 // ── stack membership ───────────────────────────────────────────────────────
@@ -454,7 +498,28 @@ function onResizeDown(dir: ResizeDir, event: PointerEvent): void {
     @pointercancel="onPointerCancel"
   >
     <div class="vdd-panel-float__header" data-vdd-widget-header @pointerdown="onHeaderDown">
-      <span v-if="icon" class="vdd-panel-float__icon"><component :is="icon" /></span>
+      <!--
+        With a titleMenu the icon is a button (7.11). Both handlers stop the event: pointerdown,
+        or the header starts a drag (its pointer capture eats the click); click, or the context
+        menu, which dismisses on a window click, closes again in the click that opened it.
+      -->
+      <button
+        v-if="titleMenu"
+        type="button"
+        class="vdd-panel-float__icon vdd-panel-float__menu"
+        :title="ws.format(ws.messages.moreActions)"
+        :aria-label="ws.format(ws.messages.moreActions)"
+        aria-haspopup="menu"
+        data-vdd-widget-menu
+        @pointerdown.stop
+        @click.stop="titleMenu($event)"
+      >
+        <component :is="icon" v-if="icon" />
+        <svg v-else width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" />
+        </svg>
+      </button>
+      <span v-else-if="icon" class="vdd-panel-float__icon"><component :is="icon" /></span>
       <span class="vdd-panel-float__title">{{ ws.format(title) }}</span>
       <button
         type="button"
@@ -472,7 +537,20 @@ function onResizeDown(dir: ResizeDir, event: PointerEvent): void {
       </button>
     </div>
 
-    <div class="vdd-panel-float__body"><slot /></div>
+    <!-- Capture: content that stops its own pointerdown (a map canvas) still raises the widget. -->
+    <VddWidgetContentSlot
+      v-if="contentEl && store"
+      class="vdd-panel-float__body"
+      :el="contentEl"
+      :cache="store.content"
+      @pointerdown.capture="store.focus(widgetId)"
+    />
+    <div
+      v-else
+      class="vdd-panel-float__body"
+    >
+      <slot />
+    </div>
 
     <div
       v-for="dir in dirs"

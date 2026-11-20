@@ -467,6 +467,10 @@ Your content keeps a plain inline block instead: to centre an icon on it the sam
 element with `display: flex; align-items: center`, and give the text `min-width: 0; overflow: hidden;
 text-overflow: ellipsis; white-space: nowrap` to keep the "…".
 
+A managed widget's own tab (1.13.0) arrives with `component: 'vdd:widget'`. Its built-in icon opens
+the widget's menu; with your content in its place, a right-click on the tab and the menu key still
+do.
+
 The tab itself stays the library's: dragging, keyboard navigation, `role="tab"`, its context menu,
 its state attributes and classes, and the close button all keep working. Keep the content
 non-interactive (no buttons or links): it sits inside the tab, which is the control. Floating-window
@@ -492,6 +496,14 @@ that kind and to its tab ([Chapter 3](03-panels.md#registration-options)).
 [data-vdd-tab][data-vdd-dirty] { box-shadow: inset 0 -2px 0 #f59e0b; }
 [data-vdd-window][data-vdd-focused] { outline: 2px solid var(--vdd-brand-accent); }
 ```
+
+**A managed widget's own panel** (1.13.0, see [Chapter 14](14-widgets-out-of-the-panel.md)) has no
+panel type, so `className` and `tabClassName` don't reach it. Target it by id,
+`[data-vdd-tab="<ownerId>/<widgetId>"]` or `[data-vdd-window="<ownerId>/<widgetId>"]`, or its body,
+`.vdd-hosted-widget`. Inside, the widget's content sits in `.vdd-panel-float__content`, wherever it
+is. Its tab icon, and its title-bar icon when it has a `titleMenu`, open its menu and carry
+`.vdd-workspace-tab-icon--menu` / `.vdd-window-title-icon--menu`; in the panel, the widget's title
+icon is a button, `.vdd-panel-float__menu`.
 
 ## Using it with Vuetify, PrimeVue, Bootstrap or Tailwind
 

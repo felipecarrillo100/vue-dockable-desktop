@@ -15,6 +15,8 @@
 import { onBeforeUnmount } from 'vue'
 import { usePanelDom } from '../composables/usePanelDom'
 import { useWorkspace } from '../composables/useWorkspace'
+import { optionsFor } from '../core/panelOptions'
+import { moveIntoWhenConnected } from '../core/domMove'
 
 const props = defineProps<{
   /** The panel to show here. */
@@ -26,21 +28,35 @@ const props = defineProps<{
 const dom = usePanelDom()
 const ws = useWorkspace()
 let host: HTMLElement | null = null
+/** A move waiting for this slot to be in the document (`preserveEmbeds`); cancelled on unmount. */
+let pending: (() => void) | null = null
 
 function setHost(el: unknown): void {
   const element = (el as HTMLElement | null) ?? null
   host = element
   if (!dom || !element) return
-  dom.moveTo(props.panelId, element, {
-    refocus: ws.state.activePanelId === props.panelId,
-    preserveScroll: ws.registry.get(ws.state.panels[props.panelId]?.component ?? '')
-      ?.defaultOptions?.preserveScroll !== false,
+  const options = optionsFor(ws.registry, ws.state.panels[props.panelId])
+  if (options?.preserveEmbeds === true) dom.preserveEmbeds(props.panelId)
+  pending?.()
+  // A function ref runs during the patch, before a new group's or window's subtree is inserted:
+  // an element that keeps its embeds waits for this slot to be connected (rdd 7.11.0), so it can
+  // move with moveBefore(). Any other moves at once, as before.
+  pending = moveIntoWhenConnected(element, dom.elementFor(props.panelId), () => {
+    pending = null
+    dom.moveTo(props.panelId, element, {
+      refocus: ws.state.activePanelId === props.panelId,
+      preserveScroll: options?.preserveScroll !== false,
+    })
   })
 }
 
 onBeforeUnmount(() => {
+  pending?.()
+  pending = null
   // Park the panel off-screen — unless another slot has already claimed it, which is what
-  // happens when a panel moves from one leaf to another.
+  // happens when a panel moves from one leaf to another. `onBeforeUnmount` runs before Vue
+  // removes this slot from the document, so a panel that keeps its embeds is still connected
+  // and parks with moveBefore() (rdd parks in a layout cleanup for the same reason).
   if (dom && dom.hostOf(props.panelId) === host) dom.moveTo(props.panelId, null)
 })
 </script>

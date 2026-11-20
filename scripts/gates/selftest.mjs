@@ -256,8 +256,8 @@ check('M11 catches the manual documenting a model that does not exist', 'docs/ma
 // M12's claims. The first is rdd's D2 in the place it was most visible — the app's own
 // toolbar showing a hidden panel's controls.
 check('M12 catches a contribution read from insertion order instead of activePanelId (D2)', 'src/core/workspace.ts',
-  s => s.replace('activeContributionRef(contributions, () => state.activePanelId)',
-                 'activeContributionRef(contributions, () => Object.keys(state.panels)[0] ?? null)'),
+  s => s.replace('activeContributionRef(contributions, () => state.activePanelId,',
+                 'activeContributionRef(contributions, () => Object.keys(state.panels)[0] ?? null,'),
   'node scripts/gates/m12.mjs')
 
 check('M12 catches an unguarded withdrawal clearing a newer contribution', 'src/core/contributions.ts',
@@ -416,7 +416,7 @@ check('M14 catches an object literal bound to a placement model', 'src/component
   'node scripts/gates/m14.mjs')
 
 check('M14 catches the overlay binding placement with no write-back', 'src/components/VddPanelOverlay.vue',
-  s => s.replace('      @update:placement="(next: PanelFloatPlacement) => store.setManagedPlacement(id, next)"\n', ''),
+  s => s.replace('        @update:placement="(next: PanelFloatPlacement) => store.setManagedPlacement(id, next)"\n', ''),
   'node scripts/gates/m14.mjs')
 
 check('M14 catches setManagedPlacement re-rendering the widget list', 'src/core/overlayState.ts',

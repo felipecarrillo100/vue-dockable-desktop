@@ -19,6 +19,7 @@
 import { computed, onBeforeUnmount, watch } from 'vue'
 import type { PanelDomCache } from '../core/panelDom'
 import { useWorkspace } from '../composables/useWorkspace'
+import { optionsFor } from '../core/panelOptions'
 
 const props = defineProps<{
   panelId: string
@@ -42,7 +43,7 @@ const MAX_W = 220
 const MAX_H = 140
 
 const panel = computed(() => ws.state.panels[props.panelId])
-const options = computed(() => (panel.value ? ws.registry.get(panel.value.component)?.defaultOptions ?? {} : {}))
+const options = computed(() => (panel.value ? optionsFor(ws.registry, panel.value) ?? {} : {}))
 // A panel that unmounts while hidden (keepAlive: false) has nothing to show while minimised.
 const live = computed(() => options.value.disableLivePreview !== true && options.value.keepAlive !== false)
 
