@@ -1169,10 +1169,7 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
     // A widget's panel (7.11) brings its owner's contribution: its content can't publish one of
     // its own (its panel injection is the owner's), and the owner's tools stay while the user
     // works in the widget.
-    activeContribution: activeContributionRef(contributions, () => {
-      const id = state.activePanelId
-      return (id && state.panels[id]?.owner?.panelId) || id
-    }),
+    activeContribution: activeContributionRef(contributions, () => state.activePanelId, id => state.panels[id]?.owner?.panelId),
     registerCloseGuard, registerStateProvider, registerPanelMenu,
     panelMenuItems: (id) => {
       void panelMenuVersion.value        // tracked, so a computed sees registrations

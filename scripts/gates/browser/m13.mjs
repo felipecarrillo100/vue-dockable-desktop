@@ -435,6 +435,29 @@ await step('grid drag: drop targets, edge zones and a hovered corner', async () 
   }
 })
 
+// rdd 7.11, widgets out of the panel: the content element and its hidden store, the title-menu
+// button, and a widget's own panel docked and floating, whose icons open its menu.
+await step('managed widget with a title menu', async () => {
+  await drive(() => {
+    window.__vdd.focusPanel('ov')
+    const w = window.__overlay.widgets
+    w.api.open('m13w', { title: 'Widget', component: w.content, anchor: 'top-left', width: 200, height: 140,
+      titleMenu: () => [{ label: 'Back' }] })
+  })
+  await page.waitForSelector('[data-vdd-widget="m13w"] .vdd-panel-float__menu')
+})
+await step('managed widget docked out of its panel', async () => {
+  await drive(() => window.__overlay.widgets.api.move('m13w', { to: 'docked', position: 'bottom' }))
+  await page.waitForSelector('.vdd-hosted-widget .vdd-panel-float__content')
+})
+await step('managed widget floating out of its panel', async () => {
+  await drive(() => window.__overlay.widgets.api.move('m13w', { to: 'floating', rect: { x: 60, y: 60, width: 260, height: 180 } }))
+  await page.waitForSelector('.vdd-window-title-icon--menu')
+})
+await step('managed widget closed', async () => {
+  await drive(() => window.__overlay.widgets.api.close('m13w'))
+})
+
 await step('empty group', async () => {
   await drive(() => {
     for (const id of window.__vdd.getOpenPanelIds()) window.__vdd.closePanel(id)

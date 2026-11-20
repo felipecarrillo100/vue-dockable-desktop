@@ -135,14 +135,19 @@ export function mergeSidebarTabs(
   return [...staticTabs, ...sections.map(s => sectionToTab(s, fallbackIcon))]
 }
 
-/** @internal — used by the workspace to expose the active contribution as a ref. */
+/**
+ * @internal — used by the workspace to expose the active contribution as a ref. `ownerOf` names the
+ * owner of a panel that shows a managed widget out of its panel (rdd 7.11): that panel brings its
+ * owner's contribution.
+ */
 export function activeContributionRef(
   contributions: Contributions,
   activePanelId: () => string | null,
+  ownerOf: (id: string) => string | undefined = () => undefined,
 ): ComputedRef<PanelContribution | null> {
   return computed(() => {
     const id = activePanelId()
-    return id ? contributions.get(id) : null
+    return id ? contributions.get(ownerOf(id) ?? id) : null
   })
 }
 
