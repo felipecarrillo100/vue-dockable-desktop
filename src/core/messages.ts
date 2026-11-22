@@ -41,6 +41,14 @@ export const defaultMessages = {
   search: { id: 'vdd.search', defaultMessage: 'Search' },
   notifications: { id: 'vdd.notifications', defaultMessage: 'Notifications' },
   closeNotification: { id: 'vdd.closeNotification', defaultMessage: 'Close notification' },
+  // Pop-out windows (1.14.0).
+  popOutWindow: { id: 'vdd.popOutWindow', defaultMessage: 'Open in new window' },
+  returnToDesktop: { id: 'vdd.returnToDesktop', defaultMessage: 'Return to desktop' },
+  // The taskbar's marker on a panel in its own window (1.14.0).
+  inOwnWindow: { id: 'vdd.inOwnWindow', defaultMessage: 'in its own window' },
+  // A managed widget in its own window (1.14.0): its frame's button back into its panel.
+  backIntoPanel: { id: 'vdd.backIntoPanel', defaultMessage: 'Back into the panel' },
+  popOutBlocked: { id: 'vdd.popOutBlocked', defaultMessage: 'The browser blocked the new window. Allow pop-ups for this site and try again.' },
 } as const satisfies Record<string, MessageDescriptor>
 
 /**

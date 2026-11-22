@@ -14,6 +14,8 @@ import VddFloatingWidget from './VddFloatingWidget.vue'
 import VddWidgetScope from './VddWidgetScope.vue'
 import { useWidgetHosting } from '../composables/useWidgetHosting'
 import { WORKSPACE_KEY } from '../core/workspace'
+import { isHTMLElement, resizeObserverFor } from '../core/domContext'
+import { menuEventBelow } from '../core/contextMenu'
 
 const ws = inject(WORKSPACE_KEY, null)
 const store = createPanelOverlayStore({ rtl: () => ws?.state.isRtl ?? false })
@@ -33,8 +35,9 @@ watchEffect((onCleanup) => {
   const el = root.value
   if (!el || store.pendingCount.value === 0) return
   store.applyPending()
-  if (typeof ResizeObserver === 'undefined') return
-  const ro = new ResizeObserver(() => store.applyPending())
+  // From the root's own window (1.14.0): a main-window observer on a pop-out's node is unreliable.
+  const ro = resizeObserverFor(el, () => store.applyPending())
+  if (!ro) return
   ro.observe(el)
   onCleanup(() => ro.disconnect())
 })
@@ -60,9 +63,10 @@ onUnmounted(() => store.content.dispose())
 function openTitleMenu(id: string, event: MouseEvent): void {
   const items = hosting.menuItems(id)
   if (!ws || items.length === 0) return
-  if (event.detail === 0 && event.currentTarget instanceof HTMLElement) {
-    const r = event.currentTarget.getBoundingClientRect()
-    ws.showContextMenu({ x: r.left, y: r.bottom, items, initialFocus: 'first-item' })
+  // Through a stand-in event of the button's window, so the menu shows in the button's document:
+  // a pop-out's when the owner panel is in its own window (1.14.0).
+  if (event.detail === 0 && isHTMLElement(event.currentTarget)) {
+    ws.showContextMenu({ event: menuEventBelow(event.currentTarget), items, initialFocus: 'first-item' })
   } else {
     ws.showContextMenu({ event, items })
   }

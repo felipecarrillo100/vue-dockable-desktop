@@ -87,7 +87,9 @@ must(!/watchEffect/.test(widget),
   'the widget must use watch with explicit sources — a watchEffect here recurses on its own writes')
 
 // ── 6. The toolbar re-measures ─────────────────────────────────────────────
-must(/new ResizeObserver\(measure\)/.test(toolbar),
+// Since 1.14.0 from the toolbar's own window, through `resizeObserverFor` (ADR 0023).
+must(/new ResizeObserver\(measure\)/.test(toolbar)
+  || /observer = resizeObserverFor\(node, measure\)\s*\n\s*observer\?\.observe\(node\)/.test(toolbar),
   'the toolbar must re-measure, or a layout restore bakes in a wrong inset permanently')
 must(/onCleanup\(\(\) => \{[\s\S]{0,200}unregisterToolbar/.test(toolbar),
   'a toolbar must release its inset when it goes away')
@@ -120,7 +122,10 @@ must(/position:\s*absolute/.test(declarationsFor(css, '.vdd-panel-float')),
 const dropdown = declarationsFor(css, '.vdd-panel-toolbar-search__dropdown')
 must(/var\(--vdd-z-base/.test(dropdown),
   'the search dropdown must stack against --vdd-z-base so zIndexBase moves it')
-must(/<Teleport v-if="dropdown && results\.length" to="body">/.test(search),
+// To a body: the page's, or since 1.14.0 the field's own document's, kept with its placement
+// (ADR 0023).
+must(/<Teleport v-if="dropdown && results\.length" (?:to="body"|:to="dropdown\.body")>/.test(search)
+  && (!/:to="dropdown\.body"/.test(search) || /body: docOf\(node\)\.body/.test(search)),
   'the dropdown must teleport out, or the toolbar\'s bounds clip it')
 must(/own\.signal\.aborted/.test(search),
   'a superseded search result must be discarded — an abort cannot retract a resolved promise')

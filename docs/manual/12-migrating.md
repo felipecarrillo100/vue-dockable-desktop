@@ -23,6 +23,7 @@ people arranged.
 | `[data-workspace-skin="…"]` in your skin CSS | `[data-vdd-skin="…"]` — every selector the library owns is `vdd-` prefixed ([ch. 10](10-theming.md#defining-your-own)) |
 | `--rdd-brand-accent`, `--rdd-brand-on-accent`, `--rdd-skin-font-family` (rdd 7.2.0) | `--vdd-brand-accent`, `--vdd-brand-on-accent`, `--vdd-skin-font-family` (1.3.0), with the same meaning ([ch. 10](10-theming.md#brand-your-app)) |
 | `useFloatingWidgets().move()` / `.location()` / `.placement()`, `useWidget()` (rdd 7.11.0) | the same names (1.13.0); a widget's content is `component` + `props`, and `useWidget()`'s `location` and `panelId` are refs ([ch. 14](14-widgets-out-of-the-panel.md#coming-from-react-dockable-desktop)) |
+| `createWorkspace({ popOut })`, `canPopOut`, `popOutPanel` / `returnPanel` / `focusPanelWindow`, `usePanelWindow()` (rdd 7.12.0, 7.12.1) | the same names (1.14.0); `<DockableDesktopProvider popoutUrl popoutWrapper>` is `<VddDesktop popout-url :popout-wrapper>`, the wrapper renders a default slot, and `usePanelWindow()`'s fields are live getters ([ch. 15](15-popout-windows.md#coming-from-react-dockable-desktop)) |
 
 Full table in [PARITY.md](../PARITY.md#1-api-map). Every action name (`openPanel`,
 `floatPanel`, `saveLayout`, …) and every type name (`LayoutNode`, `PanelInfo`,
@@ -97,6 +98,24 @@ const info = usePanelFloatingWindow()
 <!-- vdd -->
 <VddFloatingWidget widget-id="info" v-model:open="showInfo" … />
 ```
+
+## New message keys in 1.14.0
+
+Pop-out windows (1.14.0, rdd 7.12.0) add five strings to the message table. An app that types its
+own table as `Record<MessageKey, string>` stops compiling until it has them, which is the point of
+typing it that way ([chapter 11](11-i18n.md)):
+
+| Key | English default | Where |
+|---|---|---|
+| `popOutWindow` | Open in new window | the menu item of a panel that can pop out |
+| `returnToDesktop` | Return to desktop | the window's header button: tooltip and accessible name |
+| `backIntoPanel` | Back into the panel | the same button, in a managed widget's window |
+| `popOutBlocked` | The browser blocked the new window. Allow pop-ups for this site and try again. | the toast the menu item shows on `'blocked'` |
+| `inOwnWindow` | in its own window | the taskbar's marker; joined to the title, "Map: in its own window" |
+
+Their ids are `vdd.popOutWindow`, `vdd.returnToDesktop`, `vdd.backIntoPanel`, `vdd.popOutBlocked`
+and `vdd.inOwnWindow`; rdd's keys are the same (its ids are `dockable-desktop-popOutWindow` and so on). See
+[chapter 15](15-popout-windows.md#things-to-know).
 
 ## Things that no longer exist
 

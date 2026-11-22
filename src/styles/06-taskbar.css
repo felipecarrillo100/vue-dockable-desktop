@@ -105,6 +105,20 @@
   box-shadow: 0 6px 16px color-mix(in srgb, var(--vdd-accent-color) 15%, transparent);
 }
 
+/* A panel in its own window (1.14.0, rdd 7.12.0): the same item, with a small marker in its corner.
+   A <button> (the minimised items are divs here), so its own padding and font go, and the marker
+   is placed against it. */
+.vdd-taskbar-item--popout { overflow: visible; position: relative; padding: 0; font: inherit; }
+.vdd-taskbar-item-popout-marker {
+  position: absolute;
+  top: 2px;
+  inset-inline-end: 2px;
+  display: inline-flex;
+  color: var(--vdd-accent-color);
+  pointer-events: none;
+}
+.vdd-taskbar-item-popout-marker .vdd-svg-icon { width: 10px; height: 10px; }
+
 /* Minimalist Taskbar Icon-Only & Premium Tooltip Rules */
 .vdd-taskbar-item-icon {
   font-size: 22px !important;

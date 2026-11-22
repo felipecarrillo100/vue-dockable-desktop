@@ -11,6 +11,140 @@ correspondence lives, alongside the feature-by-feature map in [docs/PARITY.md](d
 
 ## [Unreleased]
 
+## [1.14.0] — 2026-11-22
+
+**Parity: react-dockable-desktop 7.12.1.** Pop-out windows: a panel can move into its own browser
+window, for a second monitor, and come back, without its component remounting: its state, scroll
+offsets and a canvas's WebGL context go with it, and the page's styles follow it there. A managed
+widget out of its panel can go into a window too, and a click inside a pop-out can open another
+one. rdd 7.12.0 is the feature and 7.12.1 the click-from-a-pop-out fix; this release ports the final
+7.12.1 behaviour at once. Same names as rdd, with `vdd` where rdd says `rdd`. Guide:
+[Pop-out windows](docs/manual/15-popout-windows.md). Off by default: an app that doesn't pass
+`popOut: true` sees no change.
+
+### Added
+
+- **`createWorkspace({ popOut: true })` and `defaultOptions.canPopOut`: a panel can open in its own
+  browser window.** The workspace allows it once, at creation (not kept on `workspace.config`), and
+  each panel type opts in. Those panels get **"Open in new window"** in their tab and title-bar
+  menus (after Float) and at the top of the floating window's ⋮ menu. The window opens over the
+  panel at its size (at least 320 × 240; 640 × 480 for a panel with no box on screen), unclamped, so
+  a monitor left of or above the main one works. Outside production builds, `canPopOut` on a
+  workspace without `popOut` warns.
+- **`workspace.popOutPanel(id)` → `PopOutResult`, `returnPanel(id)` and `focusPanelWindow(id)` →
+  `{ ok }`.** `popOutPanel` is synchronous and must run inside the user's click or key press; a
+  click in any of the app's windows counts, a pop-out's included, and the window clicked is the one
+  that opens the new window (rdd 7.12.1). It never throws and never shows anything on a refusal:
+  `'disabled'`, `'no-window'` (no `<VddDesktop>` mounted), `'not-open'`, `'not-allowed'`,
+  `'no-gesture'`, `'blocked'`, `'no-window'` (the window closed first), `'not-allowed'` (a widget that
+  couldn't leave its panel after all), in that order. A panel already
+  out comes forward. The built-in menu item shows a toast on `'blocked'`. New type: `PopOutResult`.
+- **Where it comes back to:** a floating panel at its rect; a docked one into its tab-mates' group,
+  else its own kept-empty group, else beside the panels it was next to at the same side and size,
+  else into an empty grid, else floating (or into the first group, for a type that can't float). Several panels out at once come back, in any order, to the
+  layout they left. Closing the window, its **"Return to desktop"** button, `returnPanel`, the main
+  page unloading and the desktop unmounting all bring it back; `minimizePanel` and the dock actions
+  bring it back first, then apply. `floatPanel` and `maximizePanel` are ignored while it is out.
+- **`saveLayout()` writes a popped-out panel at the place it would come back to**, without the flag,
+  so the saved layout is the one from before it left, in the same format. `PanelInfo.poppedOut` is
+  runtime only.
+- **`<VddDesktop popout-url>`:** a same-origin page of the app for the window, resolved against the
+  main page's URL (some embeds, a YouTube player for one, refuse to play in a blank window). A page
+  that can't be read or doesn't load within 10 s sends the panel back.
+- **The page's styles in the window:** every `<link rel="stylesheet">` and `<style>` of the head, in
+  order, `adoptedStyleSheets` as text, and `<html>`'s and `<body>`'s attributes, classes and inline
+  CSS variables, kept in step as they change. The frame is also `.vdd-workspace`, with the
+  workspace's colour scheme, skin and animation switch, and stays hidden until the copied sheets
+  have loaded (3 s at most). Vue single-file component styles need nothing.
+- **`<VddDesktop :popout-wrapper>`:** a component around every panel's content (and, in a pop-out,
+  around its frame, a menu and the toasts shown there), given the `window` and `document` it is in
+  (`PopoutWrapperProps`) and rendering its default slot, for a CSS-in-JS library that inserts its
+  rules with `insertRule`: one cache per document. In the tree for the panel's whole life while
+  `popOut` is on, so nothing remounts. New type: `PopoutWrapperProps`.
+- **`usePanelWindow()` → `PanelWindow`:** the `window` and `document` the panel is shown in, as live
+  getters, for listeners, `requestAnimationFrame`, `devicePixelRatio` and `matchMedia`.
+  **`usePanel().isPoppedOut`**, a `ComputedRef<boolean>`. New type: `PanelWindow`.
+- **Widgets in their own window:** `useFloatingWidgets().popOut(id)` → `PopOutResult`,
+  `ManagedWidget.canPopOut`, `useWidget().isPoppedOut`, and `WidgetMenuContext.canPopOut`,
+  `.isPoppedOut` and `.popOut()` for the app's own "Open in new window" item (there is no built-in
+  one). From the panel it leaves and goes into the window as one move (one `onWillMove` /
+  `onMoved` pair). In the window its frame's title icon opens its `titleMenu`
+  (`.vdd-popout-frame__icon--menu`), and **"Back into the panel"** or closing the window puts it
+  back. It can pop out from its owner's window when that panel is out itself (rdd 7.12.1). While out,
+  `location` stays `'floating'`.
+- **Focus across windows:** a click or focus inside a pop-out makes its panel the active one (the
+  frame carries `data-vdd-focused`); `focusPanel(id)` on a popped-out panel brings its window
+  forward; Escape closes the topmost menu or flyout of the window it was pressed in. The taskbar
+  lists panels in their own window with a marker (`.vdd-taskbar-item--popout`,
+  `data-vdd-taskbar-popout`, `.vdd-taskbar-item-popout-marker`); a click brings the window forward.
+- **Toasts show in the window the user is in,** stay there, and go when it closes; `maxVisible`
+  counts every window's.
+- **Events** `panel:popping-out` and `panel:returning` (`{ id }`), just before each move, and
+  `panel:popped-out` (`{ id, window }`) and `panel:returned` (`{ id }`), once the panel is laid out in
+  its new place. In `BuiltInEvents`.
+- **Messages** `popOutWindow`, `returnToDesktop`, `backIntoPanel`, `popOutBlocked` and
+  `inOwnWindow`. An app that types its table as `Record<MessageKey, string>` must add them.
+- **CSS hooks:** `.vdd-popout-frame` (`data-vdd-popout`, `data-vdd-popout-kind="panel" | "widget"`)
+  with `__header`, `__icon`, `__icon--menu`, `__title`, `__return` (also `.vdd-custom-tab-btn`) and
+  `__body`, in `src/styles/26a-popout.css`.
+
+### Changed
+
+- **The library's context menu, toolbar flyout and toolbar search dropdown open in the window they
+  were opened from,** and place and clamp themselves in it. In the page nothing changes.
+- **Escape listeners and click-to-activate go through a registry of the app's documents** (the page
+  and its open pop-outs), each acting only in its own document. In the page they behave as before.
+- `layout:changed` is also published when a panel pops out, and when it comes back into the grid.
+
+### Tests
+
+- Ported from rdd 7.12.1, every id behind an `X` (`PO` and `PF` were already vdd ids):
+  `test/components/documentAware.test.ts` (XDA1–XDA20, 36 tests), `test/store/popOutStore.test.ts`
+  (rdd's store cases, the full 1,332-case return matrix XPO37, and XPO44; 113),
+  `test/components/popOutWindows.test.ts` (rdd's window cases; 45),
+  `test/components/popOutStyles.test.ts` (XPS1–XPS9; 14), `test/components/popoutWrapper.test.ts`
+  (XPW1–XPW6; 17), `test/components/popOutChrome.test.ts` (XPC1–XPC5; 18),
+  `test/components/popOutWidgets.test.ts` (XWG1–XWG14; 36), `test/components/popOutFocus.test.ts`
+  (XPF1–XPF6; 19) and `test/components/popOutFromPopOut.test.ts` (XFP1–XFP7, XFP6b; 8). 1,384 tests
+  in all. Every new test was mutation-checked against the line it covers.
+- **The M18 browser gate,** 15 cases in real Chrome with real child windows: out and back, closed by
+  the user, `popoutUrl`, two neighbours in both orders, blocked, a pop-out from a pop-out (after a
+  5.5 s wait, its `opener` checked), the four events, the styles under a skin in both schemes, the
+  wrapper with a runtime CSS-in-JS stand-in, the return button, a widget out and back, its menu, a
+  widget from its owner's window, focus across windows, and `focusPanelWindow` with the `hasFocus`
+  recipe.
+- **M18 rules** (`scripts/gates/m18.mjs`): the release files, ADR 0022, chapter 15 and the API
+  reference, PARITY's 7.12.x trace and the new test files; with self-test mutations. M18 joins
+  `gate:release`.
+- The M13 tour pops out a panel and a widget, so the frame's and the taskbar marker's rules are
+  checked against what renders.
+- **Five milestone rule gates brought up to the port** ([0023](docs/decisions/0023-popout-port-stale-rules.md)):
+  M3, M8, M9, M10 and M11 failed on code shapes the port had moved. Where the old shape cost
+  nothing, the code took it back: a return from a pop-out now resolves the active panel through
+  `resolveActive`, and the context menu's and toolbar flyout's Escape and window-click listeners
+  are written as the rules expect. The other rules also accept the per-document helpers (`docOf`
+  bodies as Teleport targets, `isNode`, `resizeObserverFor`), and M3 checks `activatePanel` too.
+  Each still fails on the defect it is for, with new seeded violations in the selftest.
+
+### Documentation
+
+- A new chapter, **[15. Pop-out windows](docs/manual/15-popout-windows.md)**: turning it on and the
+  warnings; `popOutPanel` / `returnPanel` and every reason in order; the gesture rule; `popoutUrl`
+  and its page; where a panel comes back to; saving; styles, Vue SFC styles and the CSS-in-JS
+  `popoutWrapper` recipe; `usePanelWindow()`; what reloads and the canvas pattern; widgets; focus
+  and the taskbar; toasts; the events; testing with Playwright (the `hasFocus` stub, the 5 s
+  activation trap); the limits; the message keys; and the differences from rdd. Updated: panels (3),
+  layout (4), persistence (5), the overlay (7), overlays and toasts (8), theming (10), i18n (11),
+  migration (12: the five message keys), API reference (13) and widgets out of the panel (14).
+- `PARITY.md`: the rdd 7.12.x API map, the trace and test map (each rdd case not ported, with its
+  reason), and where vdd differs. [ADR 0022](docs/decisions/0022-popout-windows.md) records the
+  decisions: the registry owned by the desktop, the Teleport into the child body with the preserved
+  slot, the wrapper looked up by document, Escape claims per document, `activatePanel`, the
+  stand-in menu event, `returning`, and `popOut` in the config type.
+- The demo: `popOut: true`, the Leaflet map can open in a new window (it zooms there but doesn't
+  drag-pan, a Leaflet limit), the Cameras table's menu has "Open in new window", and
+  `demo/public/popout.html` is the window's page.
+
 ## [1.13.0] — 2026-11-20
 
 **Parity: react-dockable-desktop 7.11.0.** Widgets that can leave their panel: a managed floating

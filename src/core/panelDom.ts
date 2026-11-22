@@ -16,6 +16,7 @@
 import { shallowReactive } from 'vue'
 import type { WidgetContentCache } from './widgetContent'
 import { moveInto, preservesEmbeds, setPreserveEmbeds } from './domMove'
+import { docOf, rafOf } from './domContext'
 
 /**
  * What a hosted panel shows (7.11): the content element of the managed widget it hosts, and the
@@ -138,6 +139,15 @@ export class PanelDomCache {
     return this.sizes.get(id) ?? { width: 800, height: 500 }
   }
 
+  /**
+   * Whether this panel's element is in the hidden store (1.14.0, rdd's `isParked`): not shown in
+   * any slot. False for a panel that has no element yet.
+   */
+  isParked(id: string): boolean {
+    const el = this.elements.get(id)
+    return !!el && !!this.hidden && el.parentElement === this.hidden
+  }
+
   /** The host this panel's element is currently inside. */
   hostOf(id: string): HTMLElement | null {
     return this.elements.get(id)?.parentElement ?? null
@@ -220,7 +230,8 @@ export class PanelDomCache {
     if (!isLaidOut(el)) return               // nothing meaningful to read; keep what we have
     const scrolls = scrollables(el).map(s => ({ el: s, top: s.scrollTop, left: s.scrollLeft }))
     let focus: Preserved['focus'] = null
-    const active = this.doc.activeElement as HTMLElement | null
+    // The element's own document (1.14.0): a panel shown in a pop-out keeps its focus there.
+    const active = docOf(el).activeElement as HTMLElement | null
     if (active && el.contains(active)) {
       const field = active as HTMLInputElement
       const hasSelection = 'selectionStart' in field && field.selectionStart !== null
@@ -250,6 +261,7 @@ export class PanelDomCache {
     if (isLaidOut(el)) run()
     // Again next frame: on the way out of the hidden store the subtree has not been laid out
     // yet, so the synchronous attempt cannot stick.
-    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => { if (isLaidOut(el)) run() })
+    // On the element's window's frame (1.14.0).
+    rafOf(el)?.(() => { if (isLaidOut(el)) run() })
   }
 }

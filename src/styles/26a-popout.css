@@ -1,0 +1,48 @@
+/* ==========================================================================
+   POP-OUT WINDOWS (1.14.0, rdd 7.12.0)
+   A panel in its own browser window: the library's frame fills the child window's <body>, with a
+   header (icon, title, a "Return to desktop" button) over the panel's slot. The frame is also
+   .vdd-workspace, so what is scoped to the workspace applies there. Its minimum layout is inline as
+   well, so content stays usable without this sheet in the window.
+   ========================================================================== */
+.vdd-popout-frame {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+.vdd-popout-frame__header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  background-color: var(--vdd-window-header-bg);
+  border-bottom: 1px solid var(--vdd-window-border);
+}
+.vdd-popout-frame__icon { display: inline-flex; }
+/* A managed widget's window: the icon opens the widget's titleMenu. */
+.vdd-popout-frame__icon--menu {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+.vdd-popout-frame__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* The way back: a title-bar button in the skin (.vdd-custom-tab-btn), as a floating window's; its
+   label is the tooltip and the accessible name. The styling hook is this class. */
+.vdd-popout-frame__return { flex: 0 0 auto; }
+.vdd-popout-frame__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  position: relative;
+}
+.vdd-popout-frame__body > .vdd-panel-slot { position: absolute; inset: 0; }

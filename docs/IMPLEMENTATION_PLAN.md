@@ -63,7 +63,7 @@ repeating itself:
 | Command | When | What |
 |---|---|---|
 | `npm run verify` | while working | types, lint and the test suite — about a minute. Not a gate. |
-| `npm run gate:release` | before a release | `gate:sweep`, then every milestone gate M1–M17 in one `npm run gate` call |
+| `npm run gate:release` | before a release | `gate:sweep`, then every milestone gate M1–M18 in one `npm run gate` call |
 | `npm run gate -- M<n>` | one milestone | exactly as before |
 
 Several milestones in one `npm run gate` call share one standing gate; each milestone's own gate
@@ -395,11 +395,29 @@ child of every frosted container lands on the viewport and nothing visible chang
 stops the library's motion only; the sidebar and toasts follow `setDirection`. M15 and M16 still
 pass.
 
+### M18 — Pop-out windows (1.14.0) · L
+
+react-dockable-desktop 7.12.0 and 7.12.1's pop-out windows, ported in its final form
+([0022](decisions/0022-popout-windows.md)): a panel, or a managed widget out of its panel, moves
+into its own browser window and back without remounting; the page's styles follow it; the app's
+`popoutWrapper` gives a CSS-in-JS library a cache per document; focus, Escape, menus and toasts
+follow the window the user is in. Built in seven stages (P1–P7) on `feat/popout-windows`; the
+record is [docs/plans/popout-port-report.md](plans/popout-port-report.md).
+
+**Gate** — standing gate; M18 rules (the 1.14.0 entry, ADR 0022, manual chapter 15 and the API
+reference, PARITY's 7.12.x trace, the nine pop-out test files floored in the counts); **browser:**
+15 cases in real Chrome with real child windows: out and back with the same node, state, scroll and
+WebGL context; closed by the user; `popoutUrl`; two neighbours in both orders; blocked; a pop-out
+from a pop-out (5.5 s untouched, its `opener`); the four events and their timing; the styles under a
+skin in both schemes; the wrapper with a runtime CSS-in-JS stand-in; the return button; a widget
+out and back, its menu, and from its owner's window; focus across windows; `focusPanelWindow` with
+the `hasFocus` recipe. The M13 tour pops out a panel and a widget, so the new rules are not dead.
+
 ---
 
 ## 4. Totals
 
-15 milestones for 1.0.0 (M15 added for 1.3.0, M16 for 1.4.0, M17 for 1.5.0). **468 assertions** to reach, of which ~31 are pure-logic (M2) and 133 land in
+15 milestones for 1.0.0 (M15 added for 1.3.0, M16 for 1.4.0, M17 for 1.5.0, M18 for 1.14.0). **468 assertions** to reach, of which ~31 are pure-logic (M2) and 133 land in
 a single milestone (M9). Two milestones are stop-or-go on architecture (M0) or format
 compatibility (M13).
 

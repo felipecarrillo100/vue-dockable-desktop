@@ -484,7 +484,7 @@ Each attribute is present while its state is true and absent otherwise:
 | Attribute | On | Present while |
 |-----------|----|---------------|
 | `data-vdd-selected` | tab | it is the tab shown in its group |
-| `data-vdd-focused` | tab, floating window | it is the workspace's active panel |
+| `data-vdd-focused` | tab, floating window, pop-out frame | it is the workspace's active panel |
 | `data-vdd-dirty` | tab | the panel has unsaved changes |
 | `data-vdd-maximized` | floating window | it is maximised |
 
@@ -504,6 +504,17 @@ panel type, so `className` and `tabClassName` don't reach it. Target it by id,
 is. Its tab icon, and its title-bar icon when it has a `titleMenu`, open its menu and carry
 `.vdd-workspace-tab-icon--menu` / `.vdd-window-title-icon--menu`; in the panel, the widget's title
 icon is a button, `.vdd-panel-float__menu`.
+
+**A panel in its own browser window** (1.14.0, see [Chapter 15](15-popout-windows.md#styles-in-the-window))
+looks like the page with nothing to set: the page's stylesheets are copied into the window, and
+the window's frame is `.vdd-workspace.vdd-popout-frame`, with the workspace's colour scheme, skin
+and animation switch, so your workspace-scoped rules apply there too. The frame carries
+`data-vdd-popout="<panel id>"` and `data-vdd-popout-kind="panel"` or `"widget"`; its parts are
+`__header`, `__icon` (`__icon--menu` for a widget's menu), `__title`, `__return` (also
+`.vdd-custom-tab-btn`, the skin's title-bar button look) and `__body`. In the taskbar, such a panel
+is `.vdd-taskbar-item--popout` with its marker `.vdd-taskbar-item-popout-marker`. Rules a CSS-in-JS
+library inserts with `insertRule` are not copied: give it a cache per document with
+`<VddDesktop :popout-wrapper>`.
 
 ## Using it with Vuetify, PrimeVue, Bootstrap or Tailwind
 

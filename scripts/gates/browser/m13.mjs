@@ -474,6 +474,52 @@ await step('light colour scheme', async () => {
   await drive(() => document.documentElement.setAttribute('data-color-scheme', 'light'))
 })
 
+/**
+ * rdd 7.12, pop-out windows (1.14.0): the frame and its parts render in a real child window, which
+ * this page's recorder can't see, and the taskbar's entry for a panel in its own window needs a
+ * workspace created with `popOut`. So a second page on the playground's `?po=1&wo=1` pops out the
+ * panel `pp` (the frame, its header, icon, title, return button and body; in the page, the
+ * taskbar's pop-out entry and its marker) and then the managed widget `wo`, whose frame icon opens
+ * its titleMenu (`__icon--menu`), each from a real click. Every `vdd-` class of both windows joins
+ * the running set, so the pop-out rules are checked like any other.
+ */
+{
+  const name = 'pop-out windows: a panel and a managed widget in their own window'
+  const classesOf = p => p.evaluate(() => {
+    const found = new Set()
+    for (const el of document.querySelectorAll('*')) for (const cls of el.classList) if (cls.startsWith('vdd-')) found.add(cls)
+    return [...found]
+  })
+  const context = await browser.newContext({ viewport: { width: 1400, height: 900 } })
+  try {
+    const po = await context.newPage()
+    po.on('pageerror', e => fail(name, e.message))
+    context.on('page', p => p.on('pageerror', e => fail(name, `pop-out: ${e.message}`)))
+    await po.goto(`${APP}?po=1&wo=1`, { waitUntil: 'load' })
+    await po.waitForFunction(() => !!window.__vdd && !!document.querySelector('[data-vdd-panel="pp"]'), null, { timeout: 15000 })
+    await po.waitForSelector('[data-vdd-widget="wo"]', { timeout: 15000 })
+    const shot = []
+    // The panel: its window's frame, and the page's taskbar entry while it is out.
+    const [panelWindow] = await Promise.all([po.waitForEvent('popup'), po.click('#po-btn')])
+    await panelWindow.waitForSelector('.vdd-popout-frame__return', { timeout: 15000 })
+    await po.waitForSelector('.vdd-taskbar-item-popout-marker', { timeout: 5000 })
+    shot.push(...await classesOf(panelWindow), ...await classesOf(po))
+    await Promise.all([panelWindow.waitForEvent('close'), panelWindow.click('.vdd-popout-frame__return')])
+    // The widget: its frame's title icon is the menu button.
+    const [widgetWindow] = await Promise.all([po.waitForEvent('popup'), po.click('#wo-po-btn')])
+    await widgetWindow.waitForSelector('.vdd-popout-frame__icon--menu', { timeout: 15000 })
+    shot.push(...await classesOf(widgetWindow))
+    await Promise.all([widgetWindow.waitForEvent('close'), widgetWindow.click('.vdd-popout-frame__return')])
+    const added = new Set(shot.filter(c => !seen.has(c)))
+    for (const c of shot) seen.add(c)
+    tour.push({ step: name, total: seen.size, added: added.size })
+  } catch (e) {
+    fail(name, e.message)
+  } finally {
+    await context.close()
+  }
+}
+
 // ── the comparison ─────────────────────────────────────────────────────────
 const styled = classNames(readFileSync('dist/styles.css', 'utf8'))
 const openEnded = (cls) => OPEN_ENDED_PREFIXES.some(p => cls.startsWith(p))

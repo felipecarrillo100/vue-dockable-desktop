@@ -107,14 +107,19 @@ must(/props\.item\.activeItemId !== undefined/.test(group),
   'a group is controlled when `activeItemId` is present at all, including null')
 
 // ── 6. The flyout escapes the strip and is dismissible ──────────────────────
-must(/<Teleport v-if="open" to="body">/.test(group),
+// To a body: the page's, or since 1.14.0 the button's own document's, so a flyout opened in a
+// pop-out window shows there (ADR 0023).
+must(/<Teleport v-if="open" (?:to="body"|:to="target \?\? 'body'")>/.test(group)
+  && (!/:to="target/.test(group) || /target\.value = docOf\(button\.value\)\.body/.test(group)),
   'the flyout must teleport out, or the strip\'s overflow: hidden clips it')
 must(/addEventListener\('pointerdown', onOutside, \{ capture: true \}\)/.test(group),
   'the flyout needs a capture-phase pointerdown to dismiss')
 must(/key === 'Escape'/.test(group), 'Escape must dismiss the flyout')
 must(/onBeforeUnmount\(close\)/.test(group),
   'unmounting with the flyout open must remove its document listeners')
-must(/target instanceof Node/.test(group),
+// `isNode` (1.14.0, ADR 0023) is the same guard for a node of any window: `instanceof Node`
+// is false for a pop-out's nodes.
+must(/target instanceof Node|!isNode\(target\)\) \{ close\(\); return \}/.test(group),
   'the dismiss handler must guard non-Node targets — contains() throws on them')
 
 // ── 7. Collapsed size only, never the open size ─────────────────────────────

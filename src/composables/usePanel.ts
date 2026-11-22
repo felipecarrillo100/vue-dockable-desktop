@@ -68,6 +68,11 @@ export interface UsePanelReturn {
    * Must be synchronous and JSON-serialisable. Disposed with the component.
    */
   onSaveState: (provider: () => unknown) => void
+  /**
+   * A workspace panel shown in its own browser window (`workspace.popOutPanel`, 1.14.0). Its
+   * window and document are `usePanelWindow()`'s.
+   */
+  isPoppedOut: ComputedRef<boolean>
 }
 
 const NO_PANEL = 'standalone'
@@ -167,5 +172,7 @@ export function usePanel(): UsePanelReturn {
       const off = workspace.registerStateProvider(id, provider)
       if (getCurrentScope()) onScopeDispose(off)
     },
+    // A workspace panel only: never a modal's or a side panel's.
+    isPoppedOut: computed(() => !ctx?.overlay && info.value?.poppedOut === true),
   }
 }

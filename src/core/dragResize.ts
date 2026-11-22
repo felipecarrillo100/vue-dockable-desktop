@@ -11,6 +11,8 @@
  * the same behaviour as the library's own.
  */
 
+import { docOf, winOf } from './domContext';
+
 // ── Pointer-capture drag mechanics ──────────────────────────────────────────
 
 export interface PointerDragConfig<TStart> {
@@ -46,6 +48,8 @@ export function startPointerDrag<TStart>(config: PointerDragConfig<TStart>): voi
   element.setPointerCapture(pointerId);
   activeClasses?.forEach(({ el, classes }) => el.classList.add(...classes));
   const start = captureStart();
+  const doc = docOf(element);
+  const view = winOf(element);
 
   const handleMove = (e: PointerEvent) => {
     onMove(e.clientX - startClientX, e.clientY - startClientY, start);
@@ -56,8 +60,8 @@ export function startPointerDrag<TStart>(config: PointerDragConfig<TStart>): voi
     element.removeEventListener('pointermove', handleMove);
     element.removeEventListener('pointerup', handleEnd);
     element.removeEventListener('pointercancel', handleCancel);
-    window.removeEventListener('blur', handleCancel);
-    document.removeEventListener('lostpointercapture', handleLostCapture, true);
+    view?.removeEventListener('blur', handleCancel);
+    doc.removeEventListener('lostpointercapture', handleLostCapture, true);
   };
   const handleEnd = () => {
     teardown();
@@ -75,9 +79,10 @@ export function startPointerDrag<TStart>(config: PointerDragConfig<TStart>): voi
   element.addEventListener('pointerup', handleEnd);
   element.addEventListener('pointercancel', handleCancel);
   // The window losing focus ends the drag, as a pointercancel does (1.5.1): after an alt-tab the
-  // listeners and the active classes would otherwise outlive the gesture.
-  window.addEventListener('blur', handleCancel);
-  document.addEventListener('lostpointercapture', handleLostCapture, true);
+  // listeners and the active classes would otherwise outlive the gesture. The element's own
+  // document and window (1.14.0): a managed widget's handle can be in a pop-out window.
+  view?.addEventListener('blur', handleCancel);
+  doc.addEventListener('lostpointercapture', handleLostCapture, true);
 }
 
 // ── Reading direction ────────────────────────────────────────────────────────
@@ -92,7 +97,11 @@ export function startPointerDrag<TStart>(config: PointerDragConfig<TStart>): voi
  * workspace's `dir`. Read it once, when the gesture starts.
  */
 export function isRtlElement(el: Element | null | undefined): boolean {
-  return !!el && getComputedStyle(el).direction === 'rtl'
+  if (!el) return false
+  // The element's own window computes its style (1.14.0): a node of another window is not ours.
+  const win = winOf(el)
+  if (!win || typeof win.getComputedStyle !== 'function') return false
+  return win.getComputedStyle(el).direction === 'rtl'
 }
 
 /**

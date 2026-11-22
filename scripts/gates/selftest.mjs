@@ -190,8 +190,8 @@ check('M10 catches a minimised panel reporting the wrong container type', 'src/c
   'node scripts/gates/m10.mjs')
 
 check('M10 catches caller props being able to shadow the injected panelId', 'src/components/VddPanelMount.vue',
-  s => s.replace('v-bind="info?.props ?? {}"\n        :panel-id="panelId"',
-                 ':panel-id="panelId"\n        v-bind="info?.props ?? {}"'),
+  s => s.replace('v-bind="info?.props ?? {}"\n          :panel-id="panelId"',
+                 ':panel-id="panelId"\n          v-bind="info?.props ?? {}"'),
   'node scripts/gates/m10.mjs')
 
 check('M10 catches the D14 ordering divergence being dropped from the docs', 'docs/PARITY.md',
@@ -233,7 +233,7 @@ check('M11 catches a self-triggering watchEffect on the stacks', 'src/components
   'node scripts/gates/m11.mjs')
 
 check('M11 catches the toolbar measuring only once', 'src/components/VddPanelToolbar.vue',
-  s => s.replace('observer = new ResizeObserver(measure)', 'observer = null as unknown as ResizeObserver'),
+  s => s.replace('observer = resizeObserverFor(node, measure)', 'observer = null'),
   'node scripts/gates/m11.mjs')
 
 check('M11 catches stacking that uses the anchor instead of the placement buckets', 'src/components/VddFloatingWidget.vue',
@@ -241,7 +241,7 @@ check('M11 catches stacking that uses the anchor instead of the placement bucket
   'node scripts/gates/m11.mjs')
 
 check('M11 catches the search dropdown losing its teleport', 'src/components/VddToolbarSearch.vue',
-  s => s.replace('<Teleport v-if="dropdown && results.length" to="body">', '<div v-if="dropdown && results.length">')
+  s => s.replace('<Teleport v-if="dropdown && results.length" :to="dropdown.body">', '<div v-if="dropdown && results.length">')
         .replace('</Teleport>', '</div>'),
   'node scripts/gates/m11.mjs')
 
@@ -493,6 +493,98 @@ check('M17 catches the frost section removed', 'docs/manual/10-theming.md',
 check('M17 catches the old Label type in the i18n chapter', 'docs/manual/11-i18n.md',
   s => s.replace('string | MessageDescriptor | (() => string)', 'string | MessageDescriptor'),
   'node scripts/gates/m17.mjs')
+
+// The 1.14.0 rules: the pop-out release stays recorded, documented and traced.
+check('M18 catches the 1.14.0 entry naming the wrong rdd release', 'CHANGELOG.md',
+  s => s.replace('**Parity: react-dockable-desktop 7.12.1.**', '**Parity: react-dockable-desktop 7.12.0.**'),
+  'node scripts/gates/m18.mjs')
+
+check('M18 catches the 1.14.0 entry losing a section', 'CHANGELOG.md',
+  s => s.replace('### Documentation\n\n- A new chapter, **[15. Pop-out windows]', '### Docs\n\n- A new chapter, **[15. Pop-out windows]'),
+  'node scripts/gates/m18.mjs')
+
+check('M18 catches ADR 0022 dropped from the index', 'docs/decisions/README.md',
+  s => s.replace('(0022-popout-windows.md)', '(0022-popout.md)'),
+  'node scripts/gates/m18.mjs')
+
+check('M18 catches chapter 15 dropped from the manual index', 'docs/manual/README.md',
+  s => s.replace('(15-popout-windows.md)', '(15-popouts.md)'),
+  'node scripts/gates/m18.mjs')
+
+check('M18 catches chapter 15 losing the Playwright section', 'docs/manual/15-popout-windows.md',
+  s => s.replace('## Testing pop-outs with Playwright\n', '## Testing\n'),
+  'node scripts/gates/m18.mjs')
+
+check('M18 catches the API reference no longer naming usePanelWindow', 'docs/manual/13-api-reference.md',
+  s => s.replaceAll('`usePanelWindow()`', '`usePanelWin()`'),
+  'node scripts/gates/m18.mjs')
+
+check('M18 catches a message key missing from the migration chapter', 'docs/manual/12-migrating.md',
+  s => s.replaceAll('`inOwnWindow`', '`ownWindow`'),
+  'node scripts/gates/m18.mjs')
+
+check('M18 catches PARITY losing its 7.12.x trace', 'docs/PARITY.md',
+  s => s.replace('### rdd 7.12.0 and 7.12.1 pop-out windows, traced\n', '### Pop-out windows, traced\n'),
+  'node scripts/gates/m18.mjs')
+
+check('M18 catches a pop-out test file with no count floor', 'test/baseline-counts.json',
+  s => { const j = JSON.parse(s); delete j['popOutFocus.test.ts']; return JSON.stringify(j, null, 2) },
+  'node scripts/gates/m18.mjs')
+
+// The rules ADR 0023 updated (1.14.0): each still fails on the defect it is for, in today's code.
+check('M3 catches focusPanel no longer routing through activatePanel', 'src/core/workspace.ts',
+  s => s.replace('    activatePanel(id, options)\n    // In its own window', '    // In its own window'),
+  'npm run build >/dev/null 2>&1 && node scripts/gates/m3.mjs')
+
+check('M3 catches activatePanel deciding the active panel for itself', 'src/core/workspace.ts',
+  s => s.replace('      return\n    }\n    resolveActive(id)\n  }\n\n  function closeLeafGroup',
+                 '      return\n    }\n    state.activePanelId = id\n  }\n\n  function closeLeafGroup'),
+  'npm run build >/dev/null 2>&1 && node scripts/gates/m3.mjs')
+
+check('M3 catches a pop-out return writing its own active panel', 'src/core/workspace.ts',
+  s => s.replace('    resolveActive(next.activePanelId)\n  }',
+                 '    state.activePanelId = next.activePanelId\n  }'),
+  'npm run build >/dev/null 2>&1 && node scripts/gates/m3.mjs')
+
+check('M8 catches the bubbled window click dismissal removed', 'src/components/VddContextMenu.vue',
+  s => s.replace("  window.addEventListener('click', onOutside)\n", ''),
+  'node scripts/gates/m8.mjs')
+
+check('M8 catches Escape no longer dismissing the menu', 'src/components/VddContextMenu.vue',
+  s => s.replace("if (event.key === 'Escape' && !isEscapeClaimed(event)", "if (event.key === 'Tab' && !isEscapeClaimed(event)"),
+  'node scripts/gates/m8.mjs')
+
+check('M9 catches the flyout losing its teleport', 'src/components/VddToolbarGroupButton.vue',
+  s => s.replace('<Teleport v-if="open" :to="target ?? \'body\'">', '<div v-if="open">').replace('</Teleport>', '</div>'),
+  'node scripts/gates/m9.mjs')
+
+check('M9 catches the flyout teleporting into something other than a body', 'src/components/VddToolbarGroupButton.vue',
+  s => s.replace('target.value = docOf(button.value).body', 'target.value = button.value?.parentElement ?? null'),
+  'node scripts/gates/m9.mjs')
+
+check('M9 catches Escape no longer dismissing the flyout', 'src/components/VddToolbarGroupButton.vue',
+  s => s.replace("if (event.key === 'Escape' && !isEscapeClaimed(event)", "if (event.key === 'Tab' && !isEscapeClaimed(event)"),
+  'node scripts/gates/m9.mjs')
+
+check('M9 catches the non-Node guard removed from the flyout dismissal', 'src/components/VddToolbarGroupButton.vue',
+  s => s.replace('  if (!isNode(target)) { close(); return }\n', ''),
+  'node scripts/gates/m9.mjs')
+
+check('M10 catches the toast observer watching the card instead of its body', 'src/components/VddToastItem.vue',
+  s => s.replace('observer?.observe(body.value)', 'observer?.observe(card.value!)'),
+  'node scripts/gates/m10.mjs')
+
+check('M10 catches the toast requiring ResizeObserver', 'src/components/VddToastItem.vue',
+  s => s.replace('resizeObserverFor(body.value, applyHeight)', 'new ResizeObserver(applyHeight)'),
+  'node scripts/gates/m10.mjs')
+
+check('M10 catches resizeObserverFor no longer tolerating a missing ResizeObserver', 'src/core/domContext.ts',
+  s => s.replace("typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(callback)", 'new ResizeObserver(callback)'),
+  'node scripts/gates/m10.mjs')
+
+check('M11 catches the search dropdown teleporting into something other than a body', 'src/components/VddToolbarSearch.vue',
+  s => s.replace('body: docOf(node).body', 'body: node.parentElement!'),
+  'node scripts/gates/m11.mjs')
 
 // M1: hide a build artefact the exports map promises
 const hidden = 'dist/styles.css'

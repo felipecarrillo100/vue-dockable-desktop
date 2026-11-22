@@ -1,6 +1,7 @@
 import { computed, inject } from 'vue'
 import type { ComputedRef } from 'vue'
 import { PANEL_OVERLAY_KEY } from '../core/overlayState'
+import type { PopOutResult } from '../types'
 import type {
   ManagedWidget, MoveResult, PanelOverlayStore, WidgetLocation, WidgetPlacement, WidgetTarget,
 } from '../core/overlayState'
@@ -64,6 +65,24 @@ export function useFloatingWidgets(): {
    * back as `open(id, { …, placement })` to open it there. `null` when it isn't open.
    */
   placement: (id: string) => WidgetPlacement | null
+  /**
+   * Moves a widget into its own browser window (1.14.0, rdd 7.12.0), for a second monitor, without
+   * remounting its content. Synchronous: call it inside the user's click, in the page or in a
+   * pop-out window (its owner's, say). From inside its panel it leaves the panel and goes into the
+   * window as one move; from docked, tabbed, floating or minimised, its panel moves. The same result
+   * and reasons as `workspace.popOutPanel` (`'not-allowed'` without {@link ManagedWidget.canPopOut},
+   * or when its owner panel can't hold it out); a refusal changes nothing. While out, `location()`
+   * is `'floating'` and `useWidget().isPoppedOut` is true.
+   *
+   * Back: `move()` to any place returns it first, as one move; closing the window, or its "Back
+   * into the panel" button, puts it back into its panel where it was. `onWillMove` / `onMoved` run
+   * around each, and the `panel:popped-out` / `panel:returned` events are sent for its panel.
+   *
+   * ```vue
+   * <button @click="widgets.popOut('table')">Open in new window</button>
+   * ```
+   */
+  popOut: (id: string) => PopOutResult
 } {
   const store = usePanelOverlay()
   return {
@@ -81,5 +100,9 @@ export function useFloatingWidgets(): {
     },
     location: (id) => store.hosting?.location(id) ?? (store.managed.has(id) ? 'panel' : null),
     placement: (id) => store.placementOf(id),
+    popOut: (id) => {
+      if (store.hosting) return store.hosting.popOut(id)
+      return store.managed.has(id) ? { ok: false, reason: 'disabled' } : { ok: false, reason: 'not-open' }
+    },
   }
 }

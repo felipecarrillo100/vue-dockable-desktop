@@ -8,6 +8,7 @@
  */
 import { computed, onBeforeUnmount, useTemplateRef, watchEffect } from 'vue'
 import { usePanelOverlay } from '../composables/usePanelOverlay'
+import { resizeObserverFor } from '../core/domContext'
 import type { ButtonVariant, ToolbarPosition, ToolbarVariant } from '../core/panelOverlay'
 
 const props = withDefaults(defineProps<{
@@ -44,10 +45,9 @@ watchEffect((onCleanup) => {
   }
   measure()
 
-  if (typeof ResizeObserver !== 'undefined') {
-    observer = new ResizeObserver(measure)
-    observer.observe(node)
-  }
+  // From the toolbar's own window (1.14.0): it may be shown in a pop-out.
+  observer = resizeObserverFor(node, measure)
+  observer?.observe(node)
   onCleanup(() => {
     observer?.disconnect()
     observer = null

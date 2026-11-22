@@ -51,8 +51,18 @@ const items = computed(() => ws.state.minimized.map((entry) => {
   return { ...entry, options, icon: ws.state.panels[entry.id]?.icon ?? options.icon }
 }))
 
-const visible = computed(() => props.visibility === 'always' || items.value.length > 0)
-const scrollable = computed(() => items.value.length > SCROLL_AFTER)
+/**
+ * Panels in their own window (1.14.0, rdd 7.12.0), while `popOut` is on: listed after the minimised
+ * ones with a marker; a click brings the window forward (`focusPanelWindow`).
+ */
+const poppedOut = computed(() => Object.values(ws.state.panels).filter(p => p.poppedOut).map((p) => {
+  // Only a workspace with `popOut` on can flag a panel (`setPoppedOut`), so no check of its own.
+  const options = optionsFor(ws.registry, p) ?? {}
+  return { id: p.id, icon: p.icon ?? options.icon, label: `${ws.format(p.title)}: ${ws.format(ws.messages.inOwnWindow)}` }
+}))
+
+const visible = computed(() => props.visibility === 'always' || items.value.length > 0 || poppedOut.value.length > 0)
+const scrollable = computed(() => items.value.length + poppedOut.value.length > SCROLL_AFTER)
 
 function scrollBy(direction: -1 | 1): void {
   strip.value?.scrollBy({ left: direction * 150, behavior: 'smooth' })
@@ -203,6 +213,31 @@ onBeforeUnmount(() => { clearTimeout(collapseTimer); clearTimeout(dismissTimer) 
           </svg>
         </span>
       </div>
+      <button
+        v-for="item in poppedOut"
+        :key="`popout:${item.id}`"
+        type="button"
+        class="vdd-taskbar-glassmorphic-item vdd-taskbar-item--popout"
+        :data-vdd-taskbar-popout="item.id"
+        :aria-label="item.label"
+        :title="item.label"
+        @click="ws.focusPanelWindow(item.id)"
+      >
+        <span class="vdd-taskbar-item-icon" aria-hidden="true">
+          <component :is="item.icon ?? defaultIcon" v-if="item.icon ?? defaultIcon" />
+          <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="9" rx="1" />
+            <rect x="14" y="3" width="7" height="5" rx="1" />
+            <rect x="14" y="12" width="7" height="9" rx="1" />
+            <rect x="3" y="16" width="7" height="5" rx="1" />
+          </svg>
+        </span>
+        <span class="vdd-taskbar-item-popout-marker" aria-hidden="true">
+          <svg class="vdd-svg-icon" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 3h7v7M21 3l-9 9" />
+          </svg>
+        </span>
+      </button>
     </div>
 
     <button

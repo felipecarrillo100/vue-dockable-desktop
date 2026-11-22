@@ -1,7 +1,7 @@
 # 13. API reference
 
-Every public export, with the chapter that explains it. The package has **52 runtime exports**
-and **98 exported types**; `api-surface.json` is the machine-readable list, and a standing gate
+Every public export, with the chapter that explains it. The package has **53 runtime exports**
+and **101 exported types**; `api-surface.json` is the machine-readable list, and a standing gate
 fails if the two disagree.
 
 This chapter is a map, not a substitute for the chapters — it says what each export *is* and
@@ -24,6 +24,10 @@ any component mounts, which is why none of the composables below need a provider
 panel before focusing it ([Ch. 4](04-layout.md#programmatic-equivalents)), and
 `updatePanelProps(id, props | (prev) => next)` ([Ch. 3](03-panels.md#changing-them-later-updatepanelprops-1130)).
 
+1.14.0 adds pop-out windows ([Ch. 15](15-popout-windows.md)): `popOutPanel(id)` → `PopOutResult`,
+inside a user's click; `returnPanel(id)` and `focusPanelWindow(id)` → `{ ok: boolean }`.
+`focusPanel(id)` on a panel in its own window brings that window forward too.
+
 ### `WorkspaceConfig`
 
 | Field | |
@@ -37,12 +41,13 @@ panel before focusing it ([Ch. 4](04-layout.md#programmatic-equivalents)), and
 | `zIndexBase` | Base stacking level, mirrored as `--vdd-z-base`. [Ch. 10](10-theming.md) |
 | `canDrop` | `(drop: PanelDrop) => boolean`: veto where users can move panels; a forbidden target isn't offered (1.10.0). [Ch. 4](04-layout.md#controlling-where-users-can-move-panels) |
 | `classes` | Your own classes for the library's chrome (`HostClasses`). [Ch. 11](11-i18n.md) |
+| `popOut` | `true` lets panels move into their own browser window (1.14.0); set once, not kept on `workspace.config`. Each type opts in with `canPopOut` in its `defaultOptions`. [Ch. 15](15-popout-windows.md) |
 
 ## Components
 
 | Component | |
 |---|---|
-| `VddDesktop` | The workspace: grid, floating windows, taskbar. Mount one. Slot `#empty-workspace`: your view while no panel is docked ([Ch. 10](10-theming.md#your-own-empty-workspace-view)). Slot `#tab-content="tab"`: your own tab content, given a `TabContentProps` ([Ch. 10](10-theming.md#your-own-tab-content)). [Ch. 1](01-getting-started.md) |
+| `VddDesktop` | The workspace: grid, floating windows, taskbar. Mount one. Slot `#empty-workspace`: your view while no panel is docked ([Ch. 10](10-theming.md#your-own-empty-workspace-view)). Slot `#tab-content="tab"`: your own tab content, given a `TabContentProps` ([Ch. 10](10-theming.md#your-own-tab-content)). Props `popout-url` and `popout-wrapper`: the page a pop-out window opens, and a component around panel content given `PopoutWrapperProps` (1.14.0, [Ch. 15](15-popout-windows.md)). [Ch. 1](01-getting-started.md) |
 | `VddContextMenu` | Renders whatever menu is pending. Mount one. [Ch. 8](08-overlays.md) |
 | `VddSidebar`, `VddSecondarySidebar` | Activity bar and drawer, on either edge. [Ch. 6](06-sidebar-toolbar.md) |
 | `VddToolbar` | A strip of tool buttons on any edge. [Ch. 6](06-sidebar-toolbar.md) |
@@ -65,14 +70,15 @@ the tree does not matter.
 | Composable | |
 |---|---|
 | `useWorkspace()` | The workspace, anywhere inside the app. Destructuring keeps reactivity. [Ch. 2](02-concepts.md) |
-| `usePanel()` | A panel's view of itself: `isActive`, `isMinimized`, `size`, `close`, `setDirty`, `onBeforeClose`, `onSaveState`. Returns `UsePanelReturn`. [Ch. 3](03-panels.md) |
+| `usePanel()` | A panel's view of itself: `isActive`, `isMinimized`, `size`, `close`, `setDirty`, `onBeforeClose`, `onSaveState`, and `isPoppedOut` (1.14.0). Returns `UsePanelReturn`. [Ch. 3](03-panels.md) |
+| `usePanelWindow()` | The `window` and `document` the panel is shown in: a pop-out's while it is in its own window, else the main ones. Returns `PanelWindow`, whose fields are live getters (1.14.0). [Ch. 15](15-popout-windows.md#code-in-a-pop-out-window) |
 | `useModals()`, `useSidePanels()` | Open and close overlays; `useModals().confirm()` / `.alert()` return promises. [Ch. 8](08-overlays.md) |
 | `useContextMenu()` | Open a menu from anywhere. [Ch. 8](08-overlays.md) |
 | `usePanelContextMenu(getter)` | Contribute items to *this panel's* own menu. [Ch. 3](03-panels.md) |
 | `useSidebar()`, `useSidebarTab()` | Control the sidebar, or the tab you are inside. [Ch. 6](06-sidebar-toolbar.md) |
 | `useToolbar()` | Toolbar radio/toggle state for uncontrolled items. [Ch. 6](06-sidebar-toolbar.md) |
-| `useFloatingWidgets()` | Open widgets by id, from data. `move()`, `location()` and `placement()` take one out of its panel and back, and save where it is (1.13.0). [Ch. 7](07-panel-overlay.md), [Ch. 14](14-widgets-out-of-the-panel.md) |
-| `useWidget()` | Inside a managed widget's content: `{ id, ownerPanelId, panelId, location, onWillMove, onMoved }`, or `null` elsewhere. Returns `WidgetHandle` (1.13.0). [Ch. 14](14-widgets-out-of-the-panel.md#the-widgets-own-side-usewidget) |
+| `useFloatingWidgets()` | Open widgets by id, from data. `move()`, `location()` and `placement()` take one out of its panel and back, and save where it is (1.13.0); `popOut()` moves one into its own browser window (1.14.0). [Ch. 7](07-panel-overlay.md), [Ch. 14](14-widgets-out-of-the-panel.md), [Ch. 15](15-popout-windows.md#widgets-in-their-own-window) |
+| `useWidget()` | Inside a managed widget's content: `{ id, ownerPanelId, panelId, location, isPoppedOut, onWillMove, onMoved }`, or `null` elsewhere. Returns `WidgetHandle` (1.13.0; `isPoppedOut` 1.14.0). [Ch. 14](14-widgets-out-of-the-panel.md#the-widgets-own-side-usewidget) |
 | `usePanelContribution(getter)` | Publish this panel's toolbar items and sidebar sections. [Ch. 9](09-contributions.md) |
 | `useActiveContribution()` | What the active panel published. [Ch. 9](09-contributions.md) |
 | `useMergedToolbarItems(items)`, `useMergedSidebarTabs(tabs, icon?)` | Static lists plus the active panel's. [Ch. 9](09-contributions.md) |
@@ -81,7 +87,8 @@ the tree does not matter.
 Every one of these throws with a message naming what is missing if used without a workspace.
 `usePanel()` is the exception: outside a container it reports a `'standalone'` panel and its
 actions warn instead of throwing, so a panel component renders on its own in a test or a
-storybook.
+storybook. `usePanelWindow()` doesn't throw either: outside a workspace panel it gives the main
+window.
 
 ## Functions
 
@@ -105,6 +112,15 @@ Grouped by what they describe. All are type-only exports.
 `SplitDirection`, `DropPosition`, `DropTarget`, `PanelDrop`, `PanelDropTarget`, `FloatAnchor`, `FloatingWindow`, `PanelInfo`,
 `PanelState`, `ContainerType`, `PanelDefinition`, `PanelDefaultOptions`, `PanelRegistryEntry`,
 `OpenPanelOptions`, `SerializedLayout`, `TabContentProps`, `PanelOwner` (1.13.0: `PanelInfo.owner`, set on a managed widget's own panel).
+
+**Pop-out windows** (1.14.0, [Ch. 15](15-popout-windows.md)) — `PopOutResult` (what `popOutPanel`
+and `useFloatingWidgets().popOut` did), `PanelWindow` (`usePanelWindow()`'s value),
+`PopoutWrapperProps` (the props of `<VddDesktop :popout-wrapper>`'s component). Members added to
+existing types: `WorkspaceConfig.popOut`, `PanelDefaultOptions.canPopOut`, `PanelInfo.poppedOut`,
+`UsePanelReturn.isPoppedOut`, `ManagedWidget.canPopOut`, `WidgetHandle.isPoppedOut`,
+`WidgetMenuContext.canPopOut` / `.isPoppedOut` / `.popOut()`; four `BuiltInEvents`
+(`panel:popping-out`, `panel:popped-out`, `panel:returning`, `panel:returned`); five `MessageKey`s
+(`popOutWindow`, `returnToDesktop`, `backIntoPanel`, `popOutBlocked`, `inOwnWindow`).
 
 **The workspace** — `Workspace`, `TypedWorkspace`, `PanelMap`, `PanelPropsOf`, `WorkspaceConfig`, `WorkspaceState`, `HostClasses`,
 `BuiltInEvents`, `UsePanelReturn`, `DirtyStateOptions`, `AlertType`.

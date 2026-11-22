@@ -15,6 +15,7 @@
  * singleton.
  */
 import { moveInto } from './domMove'
+import { isElement, rafOf } from './domContext'
 
 export class WidgetContentCache {
   private elements = new Map<string, HTMLDivElement>()
@@ -55,7 +56,7 @@ export class WidgetContentCache {
       el.addEventListener('scroll', (e) => {
         const target = e.target
         // An element being hidden or detached can report its reset to 0 as a scroll: ignored.
-        if (!(target instanceof Element) || target.getClientRects().length === 0) return
+        if (!isElement(target) || target.getClientRects().length === 0) return
         record.set(target, { top: target.scrollTop, left: target.scrollLeft })
       }, { capture: true, passive: true })
       this.hiddenStore().appendChild(el)
@@ -84,7 +85,7 @@ export class WidgetContentCache {
     apply()
     // Again next frame: a slot inside an element the workspace has not laid out yet (a hosted
     // panel's, on its first frame) cannot take an offset on the first pass.
-    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(apply)
+    rafOf(host)?.(apply)
   }
 
   /**

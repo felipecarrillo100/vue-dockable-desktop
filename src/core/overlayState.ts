@@ -11,6 +11,7 @@
 import { markRaw, reactive, ref, shallowRef } from 'vue'
 import type { Component, InjectionKey, Ref } from 'vue'
 import type { FloatAnchor, Label } from '../types'
+import type { PopOutResult } from '../types'
 import type { ContextMenuItem } from './contextMenu'
 import type { Stretch, PanelFloatPlacement } from './stretch'
 import { bucketsFor } from './stretch'
@@ -101,6 +102,13 @@ export interface ManagedWidget {
    * for the whole panel; this is for the widget alone. @default false
    */
   preserveEmbeds?: boolean
+  /**
+   * It may move into its own browser window (1.14.0, rdd 7.12.0): `useFloatingWidgets().popOut(id)`,
+   * or an item the app offers in its {@link ManagedWidget.titleMenu} (`w.popOut()`). Needs a
+   * workspace created with `popOut: true`. Changeable while open: call `open()` again; a window
+   * already open stays open. @default false
+   */
+  canPopOut?: boolean
 }
 
 /**
@@ -121,6 +129,12 @@ export interface WidgetMenuContext {
   canDock: boolean
   /** The widget's `canFloat`, `false` when unset. */
   canFloat: boolean
+  /** Its config's `canPopOut`, on a workspace with `popOut` (1.14.0). */
+  canPopOut: boolean
+  /** It is in its own browser window now (`location` is then `'floating'`). (1.14.0) */
+  isPoppedOut: boolean
+  /** `useFloatingWidgets().popOut()` for this widget (1.14.0). */
+  popOut(): PopOutResult
   /** `useFloatingWidgets().move()` for this widget. */
   move(to: WidgetTarget): MoveResult
   /** Closes the widget for real, wherever it is. */
@@ -163,6 +177,12 @@ export interface WidgetHostingPort {
   readonly hostedIds: Readonly<Record<string, string>>
   move(id: string, to: WidgetTarget): MoveResult
   location(id: string): WidgetLocation | null
+  /** Moves a widget into its own browser window (1.14.0): see `useFloatingWidgets().popOut`. */
+  popOut(id: string): PopOutResult
+  /** Whether a widget is in its own browser window now. */
+  isPoppedOut(id: string): boolean
+  /** A widget opened (or re-opened) with this config: the development warning for `canPopOut`. */
+  opened(id: string, widget: ManagedWidget): void
   /** Removes a widget's hosted panel, if it has one, without closing anything: for close(). */
   release(id: string): void
   /** Re-applies a re-opened widget's title, icon and capabilities to its hosted panel. */
@@ -371,6 +391,7 @@ export function createPanelOverlayStore(options: PanelOverlayStoreOptions = {}):
       managed.set(id, { ...widget, component: markRaw(widget.component) })
       // Out of the panel, a re-open carries its new title and icon to the hosted panel.
       if (reopened) store.hosting?.refresh(id, widget)
+      store.hosting?.opened(id, widget)
       // Before the bump below: the overlay's next render teleports the content into it.
       const el = content.elementFor(id)
       // Its element moves with moveBefore(), and so do the containers it moves with (7.11).

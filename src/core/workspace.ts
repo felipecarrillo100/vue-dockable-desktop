@@ -11,12 +11,17 @@ import type {
   DirtyStateOptions, DropPosition, FloatAnchor, PanelDrop, FloatingWindow, HostedPanelPlacement, Label, LayoutNode,
   MessageDescriptor, MessageFormatter, PanelInfo, PanelOwner, SerializedLayout, SplitDirection,
 } from '../types'
+import type { LayoutLeafNode, PopOutResult } from '../types'
 import {
   addPanelToLeaf, deriveActivePanelId, dockToEdge, emptyRoot, findFirstLeafId, findLeafForPanel,
   insertPanelInLeaf, isLoneOccupant, isVisibleActiveTarget, leafExists, removeLeafFromTree,
   removePanelFromTree, selectPanelInTree, splitLeafInTree, updateSizesAtPath,
 } from './layoutTree'
+import {
+  findLeaf, groupOf, insertPanelAmongMates, placesBeside, resolveActivePanelId, returnBeside,
+} from './layoutTree'
 import type { ActiveTargetScope } from './layoutTree'
+import type { PlaceBeside } from './layoutTree'
 import { DEFAULT_FLOAT_RECT, LAYOUT_VERSION, parseInitialState, parseLayoutPayload, withoutHostedPanels } from './serialize'
 import { HOSTED_COMPONENT, optionsFor } from './panelOptions'
 import type { ParsedLayout } from './serialize'
@@ -25,6 +30,7 @@ import { PanelRegistry } from './registry'
 import type { PanelDefaultOptions } from './registry'
 import { EventBus } from './eventBus'
 import { menuInitialFocus, menuPosition } from './contextMenu'
+import { docOf, isNode } from './domContext'
 import type { ContextMenuItem, ContextMenuRequest, ShowContextMenuOptions } from './contextMenu'
 import type { BuiltInEvents } from './eventBus'
 import { defaultMessages, formatLabel } from './messages'
@@ -79,6 +85,36 @@ export interface WorkspaceConfig {
    * pointer moves.
    */
   canDrop?: (drop: PanelDrop) => boolean
+  /**
+   * Lets panels move into their own browser window, for a second monitor (1.14.0, rdd 7.12.0): a
+   * panel type opts in with `defaultOptions.canPopOut`, and the user opens it with "Open in new
+   * window" or the app with `workspace.popOutPanel(id)`. Set once, here; it is not kept on
+   * `workspace.config`. With `false`, nothing of it runs: no menu item, and `popOutPanel` returns
+   * `{ ok: false, reason: 'disabled' }`. @default false
+   *
+   * @example
+   * ```ts
+   * const workspace = createWorkspace({
+   *   popOut: true,
+   *   panels: { chart: { component: ChartPanel, defaultOptions: { canPopOut: true } } },
+   * })
+   * ```
+   */
+  popOut?: boolean
+}
+
+/**
+ * @internal What the pop-out windows registry lends the workspace (1.14.0): the windows
+ * themselves live outside the store, because `window.open` must run inside the user's click.
+ * Bound with {@link Workspace.bindPopOutWindows}.
+ */
+export interface PopOutWindowsBinding {
+  /** `popOutPanel(id)`, once the workspace has checked `popOut` itself. */
+  popOut(id: string): PopOutResult
+  /** `returnPanel(id)`. */
+  returnPanel(id: string): { ok: boolean }
+  /** Brings a panel's window forward, best effort; `false` when it has none. */
+  focusWindow(id: string): boolean
 }
 
 /** Consumer classes added to the library's chrome. Every field is optional. */
@@ -172,6 +208,10 @@ export interface Workspace<TEvents extends object = Record<string, unknown>> {
   /** Toggle a panel between filling the workspace and its previous size. A minimised panel
    *  is restored first — rdd's equivalent silently did nothing (divergence D1). */
   maximizePanel(id: string): void
+  /**
+   * Makes a panel the active one: a floating window comes to the front, a docked tab is selected.
+   * On a panel in its own window (1.14.0, rdd 7.12.0) that window comes forward too, best effort.
+   */
   focusPanel(id: string): void
   /**
    * As `focusPanel(id)`; with `restore: true` a minimised panel is restored first (through
@@ -179,6 +219,62 @@ export interface Workspace<TEvents extends object = Record<string, unknown>> {
    * as before. rdd 7.11.0.
    */
   focusPanel(id: string, options: { restore?: boolean }): void
+  /**
+   * Brings forward the window that holds a panel, and makes it the active panel (1.14.0, rdd
+   * 7.12.0): its pop-out for a panel in its own window (a widget's panel too), the main window for
+   * one in the page. Best effort: a browser may keep another window in front. `ok` is false for an
+   * id that isn't open.
+   * @example
+   * ```ts
+   * // From a widget in its own window: bring its owner panel's window forward.
+   * workspace.focusPanelWindow(useWidget()!.ownerPanelId!)
+   * ```
+   */
+  focusPanelWindow(id: string): { ok: boolean }
+  /**
+   * Moves a panel into its own browser window (1.14.0, rdd 7.12.0), for a second monitor. Nothing
+   * remounts: the panel's state, scroll offsets and a canvas's WebGL context go with it. A docked
+   * panel remembers its group and goes back into it on return.
+   *
+   * Call it inside the user's click or key press: browsers only open a window then. A click in
+   * one of the app's pop-out windows counts too. It is synchronous, and says what happened (see
+   * {@link PopOutResult}); on a refusal the panel stays where it is and nothing is shown to the
+   * user, so the app decides what to say. Calling it for a panel that is already out brings its
+   * window forward.
+   *
+   * Needs `createWorkspace({ popOut: true })` and the panel type's `defaultOptions.canPopOut`.
+   * The window opens `<VddDesktop popoutUrl>`, or a blank window. When that page can't be used
+   * after all (another origin, or it doesn't load within 10 s), the panel comes back and the
+   * window closes, after this has returned `{ ok: true }`.
+   *
+   * On `{ ok: true }`, `panel:popping-out` was sent during the call, with the panel still in the
+   * page; `panel:popped-out` follows once it is laid out in the window, or `panel:returned` when the
+   * window fails first.
+   *
+   * @example
+   * ```ts
+   * function onPopOut() {
+   *   const result = workspace.popOutPanel('chart-1')
+   *   if (!result.ok && result.reason === 'blocked') alert('Allow pop-ups for this site.')
+   * }
+   * ```
+   */
+  popOutPanel(id: string): PopOutResult
+  /**
+   * Brings a panel back from its own window (1.14.0, rdd 7.12.0), where it was. A panel that was
+   * floating floats at its rect. One that was docked goes, in this order:
+   * - into the group of its tab-mates, among their tabs, when one of them is docked;
+   * - into its own group, when that group was kept and waits empty;
+   * - beside the panels it was next to, on the same side at the same size (the nearest part of its
+   *   old layout still docked);
+   * - into the grid, when no panel is docked there;
+   * - otherwise floating, or into the first group for a type that can't float.
+   *
+   * Panels out at the same time come back, in any order, to the layout they left. The window
+   * closes. Closing the window, or its "Return to desktop" button, does the same. `ok` is false
+   * when the panel wasn't in a window.
+   */
+  returnPanel(id: string): { ok: boolean }
   /**
    * Replaces an open panel's props, or derives them from the current ones (rdd 7.11.0). The panel
    * re-renders with them, `serializable` is re-checked (so the next `saveLayout()` saves or
@@ -220,6 +316,39 @@ export interface Workspace<TEvents extends object = Record<string, unknown>> {
    * closes. `onDrop`, just before a `loadLayout` drops it: the widget is about to go home.
    */
   registerHostedCloseHandler(id: string, onClose: () => void, onDrop?: () => void): () => void
+  /**
+   * @internal Marks an open panel as shown in its own window (1.14.0): a docked or minimised panel
+   * becomes floating first, remembering its group. Returns `false`, changing nothing, when the
+   * workspace has no `popOut` or there is no such panel.
+   */
+  setPoppedOut(id: string): boolean
+  /**
+   * @internal Clears a panel's pop-out flag (1.14.0). With `restorePlace`, a panel that was docked
+   * goes back where it was: its tab-mates' group, its own kept empty group, beside the panels it was
+   * next to, the grid when no panel is docked, else floating (or the first group for a type that
+   * can't float). See {@link Workspace.returnPanel}.
+   */
+  clearPoppedOut(id: string, restorePlace: boolean): void
+  /**
+   * @internal `cb(id)` runs, synchronously, each time a panel stops being popped out in the store:
+   * `clearPoppedOut`, an action from code that brings it back first (minimise, dock, a dock to a
+   * group or an edge, a tab move), `closePanel`, `loadLayout`. The windows registry closes that
+   * panel's window. Returns the function that removes it. (1.14.0)
+   */
+  onPopOutEnded(cb: (id: string) => void): () => void
+  /**
+   * @internal The windows registry lends `popOutPanel` / `returnPanel` / `focusPanelWindow` their
+   * windows. Returns the function that takes them back. Until one is bound, `popOutPanel` returns
+   * `'no-window'`. (1.14.0)
+   */
+  bindPopOutWindows(windows: PopOutWindowsBinding): () => void
+  /** @internal Whether the workspace was created with `popOut: true` (1.14.0); not on `config`. */
+  readonly popOutEnabled: boolean
+  /**
+   * @internal `focusPanel` without bringing a pop-out's window forward (1.14.0): click-to-activate
+   * inside that window, which is already in front (rdd's `setActivePanel`).
+   */
+  activatePanel(id: string): void
 
   isOpen(id: string): boolean
   getOpenPanelIds(): string[]
@@ -412,6 +541,18 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
 
   const initial = withTitles(parseInitialState(config.initialState, warn))
 
+  const popOutEnabled = config.popOut === true
+  if (!popOutEnabled && config.panels) {
+    const types = Object.entries(config.panels).filter(([, def]) => def.defaultOptions?.canPopOut).map(([key]) => key)
+    if (types.length > 0) {
+      warn(
+        `Panel type${types.length > 1 ? 's' : ''} ${types.map(t => `"${t}"`).join(', ')} set canPopOut, but ` +
+        `this workspace was created without popOut, so no panel can open in its own window. Pass ` +
+        `createWorkspace({ popOut: true }) to enable it.`,
+      )
+    }
+  }
+
   const state = reactive<WorkspaceState>({
     gridRoot: initial.gridRoot,
     floating: initial.floating,
@@ -490,6 +631,8 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
 
     const overlaps = (px: number, py: number) => state.floating.some(w => {
       if (w.maximized) return false
+      // A panel in its own window (1.14.0) keeps an entry here that nothing draws: not in the way.
+      if (state.panels[w.id]?.poppedOut) return false
       const wx = typeof w.x === 'string' ? Number.parseFloat(w.x) : w.x
       const wy = typeof w.y === 'string' ? Number.parseFloat(w.y) : w.y
       return Math.abs(wx - px) < 20 && Math.abs(wy - py) < 20
@@ -595,10 +738,10 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
       if (existing.state === 'docked' && findLeafForPanel(toRaw(state).gridRoot, resolvedId) === null) {
         warn(`Panel "${resolvedId}" was open but in no group; docking it again.`)
         dockPanel(resolvedId)
-        if (shouldFocus) focusPanel(resolvedId)
+        if (shouldFocus) activatePanel(resolvedId)
         return
       }
-      if (shouldFocus) focusPanel(resolvedId)
+      if (shouldFocus) activatePanel(resolvedId)
       return
     }
 
@@ -654,6 +797,7 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
     resolveActive()
     bus.emit('panel:closed', { id })
     layoutChanged()
+    if (panel.poppedOut) forgetPopOut(id)
     // A hosted panel closed from the page (×, menu, the app's closePanel): its widget closes too.
     // A hosted panel can always close. The handler belongs to the widget's overlay.
     if (panel.owner) hostedCloseHandlers.get(id)?.()
@@ -688,7 +832,8 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
   }
 
   function removeHostedPanel(id: string): void {
-    if (!state.panels[id]?.owner) return
+    const panel = state.panels[id]
+    if (!panel?.owner) return
     detach(id)
     const next = { ...state.panels }
     delete next[id]
@@ -697,6 +842,7 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
     resolveActive()
     bus.emit('panel:closed', { id })
     layoutChanged()
+    if (panel.poppedOut) forgetPopOut(id)
   }
 
   function setHostedOptions(id: string, options: NonNullable<PanelOwner['options']>): void {
@@ -740,6 +886,8 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
   }
 
   function minimizePanel(id: string): void {
+    // Minimised from its window: it remembers its group, not the hidden floating entry.
+    endPopOut(id)
     const panel = state.panels[id]
     if (!panel || panel.state === 'minimized') return
     if (optionsOf(id).canMinimize === false) return
@@ -812,6 +960,8 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
   ): void {
     const panel = state.panels[id]
     if (!panel) return
+    // A panel in its own window (1.14.0) has no window here to place: ignored until it returns.
+    if (panel.poppedOut) return
     if (optionsOf(id).canDrag === false) return
 
     const favourite = rect ?? optionsOf(id).favoritePosition ?? DEFAULT_RECT
@@ -824,6 +974,7 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
   }
 
   function dockPanel(id: string, targetLeafId?: string): void {
+    endPopOut(id)
     const panel = state.panels[id]
     if (!panel) return
     detach(id)
@@ -842,6 +993,7 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
   }
 
   function dockPanelToGroup(id: string, targetLeafId: string, position: DropPosition): void {
+    endPopOut(id)
     const panel = state.panels[id]
     if (!panel) return
     if (placementIsPointless(id, targetLeafId, 'dockPanelToGroup')) return
@@ -857,6 +1009,7 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
   }
 
   function dockPanelToWorkspaceEdge(id: string, position: SplitDirection): void {
+    endPopOut(id)
     const panel = state.panels[id]
     if (!panel) return
     // The only docked panel already fills the workspace, so docking it to an edge asks for the
@@ -875,10 +1028,12 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
     const panel = state.panels[panelId]
     if (!panel) return
     if (placementIsPointless(panelId, targetLeafId, 'movePanelOrder')) return
+    // Out of its window and into the group, as rdd's windows registry ends it: no stop on the way.
+    if (panel.poppedOut) clearPoppedOut(panelId, false)
     const cleaned = removePanelFromTree(toRaw(state).gridRoot, panelId) ?? emptyRoot()
     state.floating = state.floating.filter(w => w.id !== panelId)
     state.minimized = state.minimized.filter(m => m.id !== panelId)
-    state.panels = { ...state.panels, [panelId]: { ...panel, state: 'docked' } }
+    state.panels = { ...state.panels, [panelId]: { ...state.panels[panelId]!, state: 'docked' } }
     state.gridRoot = insertPanelInLeaf(cleaned, targetLeafId, panelId, targetIndex)
     state.draggedPanelId = null
 
@@ -887,6 +1042,8 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
   }
 
   function maximizePanel(id: string): void {
+    // Nor one to maximise (1.14.0).
+    if (state.panels[id]?.poppedOut) return
     // A minimised panel is not in `floating`, so rdd's version silently did nothing here —
     // its taskbar context menu offered a "Maximize" item that never worked (divergence D1).
     if (state.panels[id]?.state === 'minimized') restorePanel(id)
@@ -901,6 +1058,12 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
   }
 
   function focusPanel(id: string, options?: { restore?: boolean }): void {
+    activatePanel(id, options)
+    // In its own window (1.14.0, rdd 7.12.0): that window comes forward too, best effort.
+    if (state.panels[id]?.poppedOut) popOutWindows?.focusWindow(id)
+  }
+
+  function activatePanel(id: string, options?: { restore?: boolean }): void {
     // Restoring brings it back and focuses it, with restorePanel's events (rdd 7.11.0).
     if (options?.restore && state.panels[id]?.state === 'minimized') {
       restorePanel(id)
@@ -999,10 +1162,273 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
     state.isRtl = dir === 'rtl'
   }
 
+  // ── Pop-out windows (1.14.0, rdd 7.12.0): a panel shown in its own browser window ──
+  // A popped-out panel is a floating panel with a flag; the workspace draws no frame for it, and
+  // the window itself belongs to the windows registry bound with `bindPopOutWindows`. Everything
+  // below that works out a place does it on a copy (`Snapshot`), as rdd's reducers do, and the
+  // result is written to the live state in one go.
+
+  /** The layout part of the state, as plain values: what a return place is worked out on. */
+  type Snapshot = Pick<WorkspaceState, 'gridRoot' | 'floating' | 'minimized' | 'panels' | 'activePanelId'>
+  const snapshot = (): Snapshot => {
+    const raw = toRaw(state)
+    return { gridRoot: raw.gridRoot, floating: raw.floating, minimized: raw.minimized, panels: raw.panels, activePanelId: raw.activePanelId }
+  }
+
+  /**
+   * Where a popped-out panel was beside its neighbour in the grid, for a panel alone in its group:
+   * that group goes when the panel leaves, so `lastLeafId` alone can't bring it back. Runtime only.
+   */
+  const popOutOrigins = new Map<string, { places: PlaceBeside[]; mates: string[]; seq: number }>()
+  /** Counts pop-outs, so returns can be replayed last out first. */
+  let popOutSeq = 0
+  /** Numbers the groups a return creates. */
+  let popOutLeafSeq = 0
+  const popOutEndListeners = new Set<(id: string) => void>()
+  let popOutWindows: PopOutWindowsBinding | null = null
+  let warnedPopOutDisabled = false
+
+  /** The panel is no longer popped out in the store: its record goes, and the windows hear of it. */
+  function forgetPopOut(id: string): void {
+    popOutOrigins.delete(id)
+    for (const cb of [...popOutEndListeners]) cb(id)
+  }
+
+  /** `s` with `id` restored from the taskbar, on the copy only (its floating list is not used). */
+  function restoredCopy(s: Snapshot, id: string): Snapshot {
+    const panel = s.panels[id]
+    if (!panel || panel.state !== 'minimized') return s
+    const minimized = s.minimized.filter(m => m.id !== id)
+    const toLeaf = (leafId: string): Snapshot => ({
+      ...s, minimized,
+      gridRoot: addPanelToLeaf(s.gridRoot, leafId, id),
+      panels: { ...s.panels, [id]: { ...panel, state: 'docked' } },
+    })
+    const toFloating = (): Snapshot => ({ ...s, minimized, panels: { ...s.panels, [id]: { ...panel, state: 'floating' } } })
+    if ((panel.previousState ?? 'docked') === 'floating') return toFloating()
+    if (panel.lastLeafId && leafExists(s.gridRoot, panel.lastLeafId)) return toLeaf(panel.lastLeafId)
+    if (optionsFor(registry, panel)?.canDrag !== false) return toFloating()
+    return toLeaf(findFirstLeafId(s.gridRoot) ?? emptyRoot().id)
+  }
+
+  /** `s` with `id` docked into the first group (rdd's `applyDock` with no target). */
+  function dockedCopy(s: Snapshot, id: string, activate: boolean): Snapshot {
+    const panel = s.panels[id]
+    if (!panel) return s
+    const cleanRoot = removePanelFromTree(s.gridRoot, id) ?? emptyRoot()
+    const leafId = findFirstLeafId(cleanRoot) ?? emptyRoot().id
+    const next: Snapshot = {
+      ...s,
+      gridRoot: addPanelToLeaf(cleanRoot, leafId, id),
+      floating: s.floating.filter(w => w.id !== id),
+      panels: { ...s.panels, [id]: { ...panel, state: 'docked' } },
+    }
+    return { ...next, activePanelId: resolveActivePanelId(next, activate ? id : null) }
+  }
+
+  /**
+   * `s` with every popped-out panel at its return place, the last one out first: the layout from
+   * before they left. Pure; the live state is untouched.
+   */
+  function withReturnPlaces(s: Snapshot): Snapshot {
+    const out = Object.values(s.panels).filter(p => p.poppedOut)
+      .sort((x, y) => (popOutOrigins.get(y.id)?.seq ?? 0) - (popOutOrigins.get(x.id)?.seq ?? 0))
+    return out.reduce((acc, p) => returnPlace(acc, p.id, false), s)
+  }
+
+  const hasDockedPanel = (n: LayoutNode): boolean => (n.type === 'leaf' ? n.panels.length > 0 : n.children.some(hasDockedPanel))
+  const leavesOf = (n: LayoutNode): LayoutLeafNode[] => (n.type === 'leaf' ? [n] : n.children.flatMap(leavesOf))
+
+  /**
+   * Where a popped-out panel goes back, as a state: the flag cleared, and a panel that was docked
+   * into its tab-mates' group; else its own group while it waits empty (kept); else beside the
+   * panels it was next to, on the same side at the same share; else into the grid when no panel is
+   * docked; else floating where it is, or into the first group when its type can't float. A panel
+   * that was floating stays at its rect. Pure: the return and `saveLayout()` both use it, so a saved
+   * layout is the one the panel would come back to.
+   */
+  function returnPlace(s: Snapshot, id: string, activate: boolean): Snapshot {
+    const p = s.panels[id]
+    if (!p?.poppedOut) return s
+    const { poppedOut: _flag, ...panel } = p
+    const cleared: Snapshot = { ...s, panels: { ...s.panels, [id]: panel } }
+    if (panel.state !== 'floating' || panel.previousState !== 'docked') return cleared
+    const origin = popOutOrigins.get(id)
+    const docked = (gridRoot: LayoutNode): Snapshot => {
+      const next: Snapshot = {
+        ...cleared,
+        gridRoot,
+        floating: cleared.floating.filter(w => w.id !== id),
+        panels: { ...cleared.panels, [id]: { ...panel, state: 'docked' } },
+      }
+      return { ...next, activePanelId: resolveActivePanelId(next, activate ? id : null) }
+    }
+    const mates = origin?.mates ?? [id]
+    // Its group is where its group-mates are: the group of the nearest one docked, among their tabs.
+    const k = mates.indexOf(id)
+    const byDistance = mates.filter(m => m !== id).sort((x, y) => Math.abs(mates.indexOf(x) - k) - Math.abs(mates.indexOf(y) - k))
+    for (const mate of byDistance) {
+      const group = groupOf(cleared.gridRoot, mate)
+      if (group) return docked(insertPanelAmongMates(cleared.gridRoot, group.id, id, mates, activate))
+    }
+    // With none docked, its old group counts only while it is empty (a kept group): a group with that
+    // id holding other panels is a new one (the empty grid's id is reused).
+    const own = panel.lastLeafId ? findLeaf(cleared.gridRoot, panel.lastLeafId) : null
+    if (own && own.panels.length === 0) return docked(insertPanelAmongMates(cleared.gridRoot, own.id, id, mates, activate))
+    // Beside the nearest part of its old layout still docked (innermost split first).
+    // Unique: several returns can run in one millisecond (a save puts every panel back on a copy).
+    const leafId = `group-popout-${Date.now()}-${++popOutLeafSeq}`
+    // Panels still out don't count against a split's old sizes: they are on their way back. One
+    // whose own group was kept and waits empty is there, in its group's place (it stands in).
+    const outPanels = Object.values(cleared.panels).filter(q => q.poppedOut)
+    const out = new Set(outPanels.map(q => q.id))
+    const standIn = new Map<string, string>()
+    for (const q of outPanels) {
+      const kept = q.previousState === 'docked' && q.lastLeafId ? findLeaf(cleared.gridRoot, q.lastLeafId) : null
+      if (kept && kept.panels.length === 0) standIn.set(q.id, kept.id)
+    }
+    for (const place of origin?.places ?? []) {
+      const gridRoot = returnBeside(cleared.gridRoot, id, place, leafId, out, standIn)
+      if (gridRoot) return docked(gridRoot)
+    }
+    // Nothing of its old layout is docked and no panel is in the grid (they are all out, or it was
+    // the whole grid; kept-empty groups may remain): into its first group that waits for no other
+    // panel. The next one back finds it.
+    const waiting = new Set(standIn.values())
+    const first = leavesOf(cleared.gridRoot).find(l => !waiting.has(l.id))
+    if (origin && first && !hasDockedPanel(cleared.gridRoot)) {
+      return docked(insertPanelAmongMates(cleared.gridRoot, first.id, id, mates, activate))
+    }
+    const options = optionsFor(registry, panel)
+    if (options?.canDrag === false || options?.canFloat === false) return dockedCopy(cleared, id, activate)
+    return cleared
+  }
+
+  /**
+   * Writes a copy worked out above to the live state. The copy's active panel is only a
+   * preference: `resolveActive`, the one resolution point (D2), decides on the live state and
+   * sends `panel:activated` when that changed.
+   */
+  function applySnapshot(next: Snapshot): void {
+    const raw = toRaw(state)
+    if (next.gridRoot !== raw.gridRoot) state.gridRoot = next.gridRoot
+    if (next.floating !== raw.floating) state.floating = next.floating
+    if (next.minimized !== raw.minimized) state.minimized = next.minimized
+    if (next.panels !== raw.panels) state.panels = next.panels
+    resolveActive(next.activePanelId)
+  }
+
+  function setPoppedOut(id: string): boolean {
+    if (!popOutEnabled || !(id in state.panels)) return false
+    const was = state.panels[id]!
+    if (was.poppedOut && was.state === 'floating') return true
+    const prev = snapshot()
+    // Where it is in its layout: worked out on a copy with the panels already out put back. A
+    // minimised panel is restored on that copy only, never into the live grid, whose groups may
+    // be waiting for those panels.
+    const base = withReturnPlaces(prev)
+    const whole = was.state === 'minimized' ? restoredCopy(base, id) : base
+    if (whole.panels[id]?.state === 'docked') {
+      // Remembered as minimising does, so returning puts it back in its group.
+      const lastLeafId = findLeafForPanel(whole.gridRoot, id) ?? undefined
+      // Its group-mates and neighbours, and those of every panel already out, from that copy:
+      // whoever comes back first finds the others where they belong.
+      const record = (q: string, seq: number) => popOutOrigins.set(q, {
+        places: placesBeside(whole.gridRoot, q), mates: [...(groupOf(whole.gridRoot, q)?.panels ?? [q])], seq,
+      })
+      for (const q of Object.values(prev.panels)) {
+        const o = popOutOrigins.get(q.id)
+        if (q.poppedOut && q.previousState === 'docked' && o && findLeafForPanel(whole.gridRoot, q.id)) record(q.id, o.seq)
+      }
+      record(id, ++popOutSeq)
+      const rect = cascade(optionsOf(id).favoritePosition ?? DEFAULT_RECT)
+      detach(id)
+      state.panels = { ...state.panels, [id]: { ...was, state: 'floating', previousState: 'docked', lastLeafId, poppedOut: true } }
+      addFloating(id, rect, null)
+    } else {
+      // A floating one (a minimised floating one comes back first, where it was).
+      if (was.state === 'minimized') {
+        state.minimized = state.minimized.filter(m => m.id !== id)
+        addFloating(id, cascade(was.lastFloatingRect ?? optionsOf(id).favoritePosition ?? DEFAULT_RECT), was.lastFloatingRect?.anchor ?? null)
+      }
+      popOutOrigins.set(id, { places: [], mates: [id], seq: ++popOutSeq })
+      state.panels = {
+        ...state.panels,
+        [id]: { ...was, state: 'floating', previousState: 'floating', lastLeafId: undefined, poppedOut: true },
+      }
+    }
+    resolveActive(id)
+    layoutChanged()
+    return true
+  }
+
+  function clearPoppedOut(id: string, restorePlace: boolean): void {
+    const panel = state.panels[id]
+    if (!panel?.poppedOut) { popOutOrigins.delete(id); return }
+    let moved = false
+    if (restorePlace) {
+      const next = returnPlace(snapshot(), id, true)
+      moved = next.panels[id]?.state !== panel.state
+      applySnapshot(next)
+    } else {
+      const { poppedOut: _flag, ...rest } = panel
+      state.panels = { ...state.panels, [id]: rest }
+    }
+    forgetPopOut(id)
+    if (moved) layoutChanged()
+  }
+
+  /** An action that moves a popped-out panel from code brings it back where it was first. */
+  function endPopOut(id: string): void {
+    if (state.panels[id]?.poppedOut) clearPoppedOut(id, true)
+  }
+
+  function popOutPanel(id: string): PopOutResult {
+    if (!popOutEnabled) {
+      if (!warnedPopOutDisabled) {
+        warnedPopOutDisabled = true
+        warn(`popOutPanel("${id}") was refused: this workspace was created without popOut. Pass ` +
+          `createWorkspace({ popOut: true }) to let panels open in their own window.`)
+      }
+      return { ok: false, reason: 'disabled' }
+    }
+    // No windows registry bound (no <VddDesktop> to show it): nothing would show the panel there.
+    return popOutWindows ? popOutWindows.popOut(id) : { ok: false, reason: 'no-window' }
+  }
+
+  function returnPanel(id: string): { ok: boolean } {
+    if (popOutWindows) return popOutWindows.returnPanel(id)
+    if (!state.panels[id]?.poppedOut) return { ok: false }
+    clearPoppedOut(id, true)
+    return { ok: true }
+  }
+
+  function focusPanelWindow(id: string): { ok: boolean } {
+    const panel = state.panels[id]
+    if (!panel) return { ok: false }
+    activatePanel(id)
+    if (!(panel.poppedOut && popOutWindows?.focusWindow(id)) && typeof window !== 'undefined') {
+      try { window.focus() } catch { /* best effort */ }
+    }
+    return { ok: true }
+  }
+
+  function onPopOutEnded(cb: (id: string) => void): () => void {
+    popOutEndListeners.add(cb)
+    return () => { popOutEndListeners.delete(cb) }
+  }
+
+  function bindPopOutWindows(windows: PopOutWindowsBinding): () => void {
+    popOutWindows = windows
+    return () => { if (popOutWindows === windows) popOutWindows = null }
+  }
+
   // ── Persistence ────────────────────────────────────────────────────────────
 
   function saveLayout(): string {
-    const raw = toRaw(state)
+    // A panel in its own window is saved where it would come back to (1.14.0): the layout is the
+    // one it would have had, had it never left. The live state is not touched.
+    const raw = withReturnPlaces(snapshot())
     const excluded: string[] = []
     // Hosted panels are never saved and never reported as excluded: the owner panel saves its
     // widgets itself.
@@ -1091,6 +1517,8 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
     for (const [id, panel] of Object.entries(state.panels)) {
       if (panel.owner) hostedDropHandlers.get(id)?.()
     }
+    // No panel of a loaded layout is in a window: each one out now loses its window.
+    const wereOut = Object.values(state.panels).filter(p => p.poppedOut).map(p => p.id)
     state.gridRoot = parsed.gridRoot
     state.floating = parsed.floating
     state.minimized = parsed.minimized
@@ -1103,6 +1531,8 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
     if (previous !== parsed.activePanelId) {
       bus.emit('panel:activated', { id: parsed.activePanelId, previous })
     }
+    popOutOrigins.clear()
+    for (const id of wereOut) forgetPopOut(id)
     layoutChanged()
     return true
   }
@@ -1150,10 +1580,13 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
 
     openPanel, closePanel, requestClosePanel, minimizePanel, restorePanel, floatPanel,
     dockPanel, dockPanelToGroup, dockPanelToWorkspaceEdge, maximizePanel, focusPanel,
+    focusPanelWindow, popOutPanel, returnPanel,
     movePanelOrder, closeLeafGroup, updateSplitSizes, updateFloatingPosition,
     setPanelDirty, updatePanelTitle, updatePanelProps, setPanelIcon, setDirection,
     setDraggedPanelId: (id) => { state.draggedPanelId = id },
     openHostedPanel, removeHostedPanel, setHostedOptions, registerHostedCloseHandler,
+    setPoppedOut, clearPoppedOut, onPopOutEnded, bindPopOutWindows,
+    activatePanel: (id) => activatePanel(id),
 
     isOpen: (id) => id in state.panels,
     getOpenPanelIds: () => Object.keys(state.panels),
@@ -1177,7 +1610,12 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
     },
     showContextMenu: (options) => {
       options.event?.preventDefault?.()
-      menu.value = { ...menuPosition(options), items: options.items, initialFocus: menuInitialFocus(options) }
+      // The document the menu is opened from: its event's target's, else the main one (1.14.0).
+      const from = options.event?.target
+      menu.value = {
+        ...menuPosition(options), items: options.items, initialFocus: menuInitialFocus(options),
+        container: isNode(from) ? docOf(from).body : null,
+      }
     },
     closeContextMenu: () => { menu.value = null },
     contextMenu: computed(() => menu.value),
@@ -1192,7 +1630,9 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
     },
     format,
     messages,
-    config: { ...config, zIndexBase },
+    popOutEnabled,
+    // `popOut` is set once, at creation, and not kept here (rdd 7.12.0 S2.1).
+    config: (({ popOut: _popOut, ...rest }) => ({ ...rest, zIndexBase }))(config),
 
     install(app: App) {
       app.provide(WORKSPACE_KEY, workspace as unknown as Workspace<never>)
@@ -1205,6 +1645,9 @@ export function createWorkspace<TEvents extends object = Record<string, unknown>
       panelMenus.clear()
       hostedCloseHandlers.clear()
       hostedDropHandlers.clear()
+      popOutEndListeners.clear()
+      popOutOrigins.clear()
+      popOutWindows = null
       menu.value = null
     },
   }

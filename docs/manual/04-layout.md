@@ -52,6 +52,13 @@ the taskbar, as before.
 `getOpenPanelIds()` lists every open panel. While a managed widget is out of its panel, its own
 panel is listed too: `'map-1/results'` ([Chapter 14](14-widgets-out-of-the-panel.md)).
 
+**Into its own browser window** (1.14.0, rdd 7.12.0): `popOutPanel('map-1')`, called inside the
+user's click, moves a panel of a type with `canPopOut` into a window of its own, on a workspace
+created with `popOut: true`; `returnPanel('map-1')` brings it back where it was, and
+`focusPanelWindow('map-1')` brings its window forward. While it is out, `floatPanel` and
+`maximizePanel` are ignored, `focusPanel` also brings its window forward, and `minimizePanel` and
+the three dock actions bring it back first, then apply. See [Chapter 15](15-popout-windows.md).
+
 ### Opening beside another panel
 
 `dockTo` places a *new* panel next to one that is already docked (1.9.0):
@@ -179,6 +186,12 @@ subscribe('panel:restored',  ({ id }) => {})
 ```
 
 Subscriptions made inside `setup` are disposed with the component.
+
+A panel moving into its own browser window and back (1.14.0) sends `panel:popping-out` and
+`panel:popped-out`, then `panel:returning` and `panel:returned`, each pair around the move and
+the second once the panel is laid out in its new place
+([Chapter 15](15-popout-windows.md#events)). Popping out publishes `layout:changed`, and so does
+coming back into the grid.
 
 `panel:opened` also fires when a managed widget moves out of its panel, with
 `component: 'vdd:widget'`, and `panel:closed` when it goes back or closes (1.13.0). A `move()`

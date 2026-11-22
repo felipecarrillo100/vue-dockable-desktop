@@ -4,6 +4,7 @@ import { useWorkspace } from './useWorkspace'
 import { providePanel } from './usePanel'
 import type { OverlayInstance } from '../core/overlays'
 import { claimEscape, isEscapeClaimed } from '../core/escape'
+import { eventDocument, listenOnDocuments } from '../core/documentRegistry'
 
 /**
  * When each rendered overlay was opened, by instance id — so that with a drawer on each side,
@@ -69,6 +70,9 @@ export function useOverlayHost(
 
   function onKeydown(event: KeyboardEvent): void {
     if (event.key !== 'Escape' || !dismissible.value) return
+    // Overlays are shown in the main document only: an Escape in a pop-out window is that
+    // window's (its menu's), never a modal's or a drawer's in the page (1.14.0).
+    if (eventDocument(event) !== document) return
     // A menu, flyout or search box inside this overlay — or the application's own widget —
     // already answered it.
     if (isEscapeClaimed(event)) return
@@ -91,14 +95,16 @@ export function useOverlayHost(
   }
 
   let sequence = 0
+  let stopKeydown: (() => void) | null = null
   onMounted(() => {
     sequence = ++openSequence
     openedAt.set(current().id, sequence)
-    document.addEventListener('keydown', onKeydown)
+    stopKeydown = listenOnDocuments('keydown', onKeydown)
   })
   onBeforeUnmount(() => {
     if (openedAt.get(current().id) === sequence) openedAt.delete(current().id)
-    document.removeEventListener('keydown', onKeydown)
+    stopKeydown?.()
+    stopKeydown = null
   })
 
   /** Whether `id` is the most recently opened of the drawers still open. */

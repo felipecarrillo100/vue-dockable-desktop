@@ -26,6 +26,7 @@ import { flipZoneHorizontal } from '../core/anchorGeometry'
 import { isDropAllowed } from '../core/dockRules'
 import { findLeaf } from '../core/layoutTree'
 import { tabSide } from '../core/dragResize'
+import { isHTMLElement } from '../core/domContext'
 import type { Workspace } from '../core/workspace'
 
 /** How far a mouse must move before a press becomes a drag. */
@@ -147,7 +148,7 @@ export function provideDragDock(ws: Workspace<never>): DragDock {
     let foundTab = false
 
     for (const el of elements) {
-      if (!(el instanceof HTMLElement)) continue
+      if (!isHTMLElement(el)) continue
 
       if (!foundZone && el.dataset.vddDropZone && el.dataset.vddLeaf) {
         zone.value = { leafId: el.dataset.vddLeaf, position: el.dataset.vddDropZone as DropPosition }

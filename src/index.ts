@@ -6,7 +6,7 @@
  */
 
 /** The library version, mirroring `package.json`. */
-export const version = '1.13.0'
+export const version = '1.14.0'
 
 // ─── The workspace ───────────────────────────────────────────────────────────
 // `createWorkspace()` returns both the imperative API and a Vue plugin, the shape
@@ -46,6 +46,8 @@ export { useSidebar, useSidebarTab } from './composables/useSidebar'
 export { useToolbar } from './composables/useToolbar'
 export { usePanel } from './composables/usePanel'
 export type { UsePanelReturn } from './composables/usePanel'
+export { usePanelWindow } from './composables/usePanelWindow'
+export type { PanelWindow, PopoutWrapperProps } from './core/panelWindow'
 export { useModals, useSidePanels } from './composables/useOverlays'
 export type { ConfirmOptions, AlertOptions } from './composables/useOverlays'
 export { useFloatingWidgets } from './composables/usePanelOverlay'
@@ -169,6 +171,7 @@ export type {
   PanelInfo,
   PanelOwner,
   PanelState,
+  PopOutResult,
   SerializedLayout,
   SplitDirection,
   SplitOrientation,

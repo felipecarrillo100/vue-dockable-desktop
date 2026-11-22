@@ -12,6 +12,7 @@
  * timers through every layout change.
  */
 import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
+import type { Component } from 'vue'
 import { clampFloatingRect } from '../core/anchorGeometry'
 import { PanelDomCache } from '../core/panelDom'
 import { claimDocumentMirror, releaseDocumentMirror } from '../core/documentMirror'
@@ -30,6 +31,12 @@ import VddTaskbar from './VddTaskbar.vue'
 import type { TaskbarVisibility } from './VddTaskbar.vue'
 import type { TabContentProps } from '../types'
 import { optionsFor } from '../core/panelOptions'
+import { isElement } from '../core/domContext'
+import { eventDocument, listenOnDocuments } from '../core/documentRegistry'
+import { createPopOutWindows } from '../core/popOutWindows'
+import { providePopOutWindows } from '../composables/usePopOutWindows'
+import { providePopoutWrapper } from '../composables/usePanelWindow'
+import VddPopOutWindows from './VddPopOutWindows.vue'
 
 const props = withDefaults(defineProps<{
   /** Built-in skin, or a name you scope your own tokens to. @default 'vscode' */
@@ -46,7 +53,37 @@ const props = withDefaults(defineProps<{
   taskbar?: TaskbarVisibility
   /** Fallback icon for panels that register none. */
   defaultPanelIcon?: unknown
-}>(), { skin: 'vscode', animations: true, taskbar: 'always', defaultPanelIcon: undefined })
+  /**
+   * The page a pop-out window opens (1.14.0), for `createWorkspace({ popOut: true })`: a page of
+   * this origin, resolved against the main page's URL. Without it a pop-out is a blank window.
+   * The page must be of this origin; one that can't be read, or doesn't load in 10 s, sends the
+   * panel back.
+   */
+  popoutUrl?: string
+  /**
+   * A component around every panel's content, given the window and document the panel is in
+   * (1.14.0, `PopoutWrapperProps`): the main ones, then the pop-out's while it is in its own
+   * window. It renders its default slot. For CSS-in-JS: a cache per document, so the panel's styles
+   * are inserted where it is shown (a pop-out doesn't get rules inserted with `insertRule` from the
+   * page). Rendered for every panel, for its whole life, while the workspace has `popOut: true`
+   * (none otherwise), so nothing remounts when a panel moves. Pass a stable component (imported or
+   * defined once), not one made in a render. In a pop-out it is also rendered around the window's
+   * frame (the icon and title you give the panel), a context menu and the toasts shown there, with
+   * that window: keep one cache per document, not per wrapper.
+   *
+   * @example
+   * ```ts
+   * // PopoutWrapper.vue, a `<script setup lang="ts">` whose template is `<slot />`:
+   * import { computed, provide } from 'vue'
+   * // `PopoutWrapperProps`: the window and document of what it is around.
+   * const props = defineProps<{ window: Window; document: Document }>()
+   * // Your CSS-in-JS library's per-document cache, for the document the content is shown in.
+   * provide(STYLE_DOCUMENT, computed(() => props.document))
+   * ```
+   * Then `<VddDesktop :popout-wrapper="PopoutWrapper" />`.
+   */
+  popoutWrapper?: Component
+}>(), { skin: 'vscode', animations: true, taskbar: 'always', defaultPanelIcon: undefined, popoutUrl: undefined, popoutWrapper: undefined })
 
 defineSlots<{
   /** Your view while no panel is docked (1.9.0). */
@@ -86,6 +123,33 @@ providePanelDom(dom)
 const drag = provideDragDock(ws as unknown as Workspace<never>)
 
 /**
+ * This desktop's pop-out windows (1.14.0): created here, bound to the workspace on mount (its
+ * `popOutPanel` / `returnPanel` / `focusPanelWindow` then reach them), and lent the panel cache.
+ * Unmounting brings every panel back first, while the cache can still take its element.
+ */
+const popOuts = createPopOutWindows(ws)
+providePopOutWindows(popOuts)
+// A managed widget's content wears it too (P5): it is rendered by its overlay, not a panel mount.
+providePopoutWrapper(() => (popOuts.enabled ? props.popoutWrapper ?? null : null))
+watch(() => props.popoutUrl, url => popOuts.setUrl(url), { immediate: true })
+let stopPopOuts: (() => void) | null = null
+onMounted(() => {
+  const unbind = popOuts.bind()
+  const unbindHost = popOuts.bindHost({
+    // Synchronous, so a child's `pagehide` handler has the element back before its document goes.
+    park(id) { if (dom.has(id)) dom.moveTo(id, null) },
+    rectOf(id) {
+      if (!dom.has(id)) return null
+      const r = dom.elementFor(id).getBoundingClientRect()
+      return r.width > 0 && r.height > 0 ? r : null
+    },
+    element: id => (dom.has(id) ? dom.elementFor(id) : null),
+    isParked: id => dom.isParked(id),
+  })
+  stopPopOuts = () => { unbindHost(); unbind() }
+})
+
+/**
  * Every panel that exists, so the port can render each exactly once.
  *
  * Empty while server-rendering: a panel lives in a real element that the port teleports into,
@@ -94,6 +158,8 @@ const drag = provideDragDock(ws as unknown as Workspace<never>)
  */
 const serverRendering = typeof document === 'undefined'
 const mounted = computed(() => (serverRendering ? [] : Object.keys(ws.state.panels)))
+/** The floating windows drawn here: a panel in its own browser window (1.14.0) keeps its entry, undrawn. */
+const shownWindows = computed(() => ws.state.floating.filter(w => !ws.state.panels[w.id]?.poppedOut))
 
 // A closed panel's element is dropped, or the cache would grow for the session's lifetime.
 watch(mounted, (now, before) => {
@@ -130,6 +196,8 @@ onMounted(() => {
 })
 
 const viewportEl = useTemplateRef<HTMLDivElement>('viewport')
+/** The workspace element: each pop-out's frame repeats its scope (scheme, skin, no-animations). */
+const rootEl = useTemplateRef<HTMLDivElement>('root')
 const viewport = ref({ width: 1024, height: 768 })
 let observer: ResizeObserver | null = null
 let warnedZeroHeight = false
@@ -180,6 +248,8 @@ watch(viewportEl, (el) => {
  */
 watch([viewport, () => ws.state.floating], ([view, windows]) => {
   for (const w of windows) {
+    // A panel in its own window (1.14.0) isn't on this page: nothing to keep on screen.
+    if (ws.state.panels[w.id]?.poppedOut) continue
     const num = (v: number | string) => (typeof v === 'number' ? v : Number.parseFloat(String(v)))
     const current = { x: num(w.x), y: num(w.y), width: num(w.width), height: num(w.height) }
     const next = clampFloatingRect(current, view, w.anchor != null)
@@ -228,7 +298,54 @@ const syncDocument = () => {
 watch(() => [props.skin, props.animations, ws.config.zIndexBase], syncDocument)
 onMounted(syncDocument)
 
+/**
+ * Click-to-activate in the other documents that hold panel content (1.14.0): a pop-out window's,
+ * once it registers. Through the document registry, `pointerdown` on each document.
+ *
+ * In the main document the elements answer for themselves — the group's and the floating
+ * window's own `@pointerdown` — exactly as before, so this listener leaves that document alone.
+ * Elsewhere the press makes the panel it lands in the active one: a floating window's, or the
+ * selected tab of the group it is in.
+ */
+function onPointerDownElsewhere(event: PointerEvent): void {
+  if (event.button !== 0) return
+  if (eventDocument(event) === document) return
+  const target = event.target
+  if (!isElement(target)) return
+  // Inside a pop-out window's frame (rdd 7.12.0): that panel becomes the active one. Its window is
+  // already in front, so it isn't focused again.
+  const popOutId = popOutPanelOf(target)
+  if (popOutId) { activate(popOutId); return }
+  const id = target.closest('[data-vdd-window]')?.getAttribute('data-vdd-window')
+    || target.closest('.vdd-workspace-panel')?.getAttribute('data-active-panel-id')
+  if (id && ws.state.panels[id]) ws.focusPanel(id)
+}
+/** The panel whose pop-out frame holds `target`, or null (1.14.0). */
+function popOutPanelOf(target: unknown): string | null {
+  return isElement(target) ? target.closest('[data-vdd-popout]')?.getAttribute('data-vdd-popout') ?? null : null
+}
+function activate(id: string): void {
+  if (ws.state.panels[id]) ws.activatePanel(id)
+}
+/**
+ * Focus moving into a pop-out (a Tab, a click on a field, the window coming forward on its element)
+ * activates its panel too (rdd 7.12.0). Only there: in the page, focus alone never activates.
+ */
+function onFocusInElsewhere(event: FocusEvent): void {
+  const id = popOutPanelOf(event.target)
+  if (id) activate(id)
+}
+let stopActivate: (() => void) | null = null
+onMounted(() => {
+  const offPointer = listenOnDocuments('pointerdown', onPointerDownElsewhere)
+  const offFocus = listenOnDocuments('focusin', onFocusInElsewhere)
+  stopActivate = () => { offPointer(); offFocus() }
+})
+
 onBeforeUnmount(() => {
+  stopPopOuts?.()
+  stopPopOuts = null
+  stopActivate?.()
   observer?.disconnect()
   releaseDocumentMirror(dom)
   dom.dispose()
@@ -237,6 +354,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div
+    ref="root"
     class="vdd-workspace"
     :class="{ 'vdd-no-animations': animations === false }"
     :data-vdd-skin="skin"
@@ -254,7 +372,7 @@ onBeforeUnmount(() => {
       </VddWorkspaceGrid>
 
       <VddFloatingWindow
-        v-for="w in ws.state.floating"
+        v-for="w in shownWindows"
         :key="w.id"
         :window="w"
         :viewport="viewport"
@@ -270,13 +388,16 @@ onBeforeUnmount(() => {
 
     <VddDragGhost />
 
+    <!-- Pop-out windows (1.14.0): each one's frame, teleported into its own document. -->
+    <VddPopOutWindows :windows="popOuts" :default-icon="defaultPanelIcon" :scope="rootEl" :wrapper="popoutWrapper ?? null" />
+
     <!--
       The persistence port. Every open panel is rendered here once, for as long as it is
       open, and teleported into its own cache element. Never conditional, never keyed on
       placement — that is the whole mechanism.
     -->
     <div class="vdd-panel-port" aria-hidden="true">
-      <VddPanelMount v-for="id in mounted" :key="id" :panel-id="id" :cache="dom" />
+      <VddPanelMount v-for="id in mounted" :key="id" :panel-id="id" :cache="dom" :wrapper="popOuts.enabled ? popoutWrapper ?? null : null" />
     </div>
   </div>
 </template>

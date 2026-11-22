@@ -14,6 +14,10 @@ import type { ContextMenuItem, ContextMenuSimpleItem, ContextMenuSubMenu } from 
 import { clampToViewport, isSeparator, isSubMenu } from '../core/contextMenu'
 import { useWorkspace } from '../composables/useWorkspace'
 import { claimEscape, isEscapeClaimed } from '../core/escape'
+import { docOf, isHTMLElement, isNode, winOf } from '../core/domContext'
+import { eventDocument, listenOnDocuments } from '../core/documentRegistry'
+import { popoutWrapperFor } from '../core/panelWindow'
+import VddPopoutWrap from './popoutWrap'
 
 withDefaults(defineProps<{
   /** Visual theme hook, mirrored onto the menu's class. @default 'dark' */
@@ -47,6 +51,23 @@ const submenuRoot = useTemplateRef<HTMLDivElement>('submenuRoot')
 const customRoot = useTemplateRef<HTMLDivElement>('customRoot')
 
 const request = computed(() => ws.contextMenu.value)
+/**
+ * Where the menu renders (1.14.0): the body of the document it was opened from, chosen per open
+ * and kept in the request, so a menu opened in a pop-out window shows in that window.
+ */
+const container = computed(() => request.value?.container ?? null)
+/** The document the menu is shown in. */
+const menuDoc = (): Document => docOf(container.value)
+/**
+ * The app's `popoutWrapper` (1.14.0), around a menu shown in a pop-out, with that window: its
+ * items' icons get the app's CSS-in-JS rules there too. Not in the main window, where nothing
+ * changes. Found by the menu's document: this menu is mounted beside the desktop, not inside it.
+ */
+const wrapDoc = computed(() => {
+  const doc = container.value?.ownerDocument ?? null
+  return doc && doc !== document ? doc : null
+})
+const wrapper = computed(() => popoutWrapperFor(wrapDoc.value))
 const position = ref({ x: 0, y: 0 })
 const openSubmenu = ref<number | null>(null)
 const submenuPosition = ref({ x: 0, y: 0 })
@@ -74,7 +95,9 @@ function close(restoreFocus = false): void {
 /** Position the menu, then pull it back inside the viewport once it has a size. */
 watch(request, async (next) => {
   if (!next) { openSubmenu.value = null; return }
-  opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
+  // The opener's document is the menu's: focus elsewhere in another window does not count.
+  const focused = docOf(next.container).activeElement
+  opener = isHTMLElement(focused) ? focused : null
   position.value = { x: next.x, y: next.y }
   itemEls.clear()
   openSubmenu.value = null
@@ -82,10 +105,12 @@ watch(request, async (next) => {
   const el = root.value
   if (!el) return
   const box = el.getBoundingClientRect()
+  // The window the menu is shown in (a pop-out's, for a menu opened there).
+  const win = winOf(el)!
   position.value = clampToViewport(
     { x: next.x, y: next.y },
     { width: box.width, height: box.height },
-    { width: window.innerWidth, height: window.innerHeight },
+    { width: win.innerWidth, height: win.innerHeight },
   )
   // Focus moves into the menu: onto the menu itself, nothing highlighted, unless it was opened from
   // the keyboard. Focusing an item made the browser's focus ring come and go with the user's
@@ -109,7 +134,7 @@ function onMenuKey(event: KeyboardEvent): void {
   event.preventDefault()
   const list = enabledItems(event.currentTarget as Element)
   if (list.length === 0) return
-  const at = list.indexOf(document.activeElement as HTMLButtonElement)
+  const at = list.indexOf(docOf(event.currentTarget as Node).activeElement as HTMLButtonElement)
   const last = list.length - 1
   const next = event.key === 'Home' ? 0
     : event.key === 'End' ? last
@@ -125,17 +150,36 @@ function onMenuKey(event: KeyboardEvent): void {
  * any canvas or map gesture handler can swallow it; a bubbled `click` on `window` survives a
  * `stopPropagation` on pointerdown, which WebGL canvases commonly do. rdd learned this the
  * hard way against real mapping libraries.
+ *
+ * On the main document, and on the menu's own when it is opened in another (a pop-out window,
+ * 1.14.0): a press in either is outside the menu. Escape listens through the document registry
+ * and answers only in the menu's own document (`onKey`).
  */
-watch(request, (next) => {
-  if (next) {
-    document.addEventListener('pointerdown', onOutside, { capture: true })
-    window.addEventListener('click', onOutside)
-    document.addEventListener('keydown', onKey, { capture: true })
-  } else {
-    document.removeEventListener('pointerdown', onOutside, { capture: true })
+let stopListening: (() => void) | null = null
+function listen(): void {
+  unlisten()
+  const docs = [document]
+  const own = menuDoc()
+  if (own && own !== document) docs.push(own)
+  const ownWin = own && own !== document ? own.defaultView : null
+  docs.forEach(d => d.addEventListener('pointerdown', onOutside, { capture: true }))
+  window.addEventListener('click', onOutside)
+  ownWin?.addEventListener('click', onOutside)
+  const offKey = listenOnDocuments('keydown', onKey, { capture: true })
+  stopListening = () => {
+    docs.forEach(d => d.removeEventListener('pointerdown', onOutside, { capture: true }))
     window.removeEventListener('click', onOutside)
-    document.removeEventListener('keydown', onKey, { capture: true })
+    ownWin?.removeEventListener('click', onOutside)
+    offKey()
   }
+}
+function unlisten(): void {
+  stopListening?.()
+  stopListening = null
+}
+watch(request, (next) => {
+  if (next) listen()
+  else unlisten()
 })
 
 function onOutside(event: Event): void {
@@ -143,7 +187,7 @@ function onOutside(event: Event): void {
   // `Node.contains()` throws for anything that is not a Node, and an event target need not
   // be one — a click dispatched on `window` is the common case. If we cannot tell whether it
   // was inside, it was not the menu, so dismiss: closing is the safe default.
-  if (!(target instanceof Node)) { close(); return }
+  if (!isNode(target)) { close(); return }
   if (root.value?.contains(target) || submenuRoot.value?.contains(target)
     || customRoot.value?.contains(target)) return
   close()
@@ -154,14 +198,16 @@ function onOutside(event: Event): void {
  * order, which puts the menu last. Claiming tells them it is taken.
  */
 function onKey(event: KeyboardEvent): void {
-  if (event.key === 'Escape' && !isEscapeClaimed(event)) { claimEscape(event); close(true) }
+  // Only the menu's own document's Escape: a menu in a pop-out stays through one in the page.
+  if (event.key === 'Escape' && !isEscapeClaimed(event) && eventDocument(event) === menuDoc()) {
+    claimEscape(event)
+    close(true)
+  }
 }
 
 onBeforeUnmount(() => {
   clearTimers()
-  document.removeEventListener('pointerdown', onOutside, { capture: true })
-  window.removeEventListener('click', onOutside)
-  document.removeEventListener('keydown', onKey, { capture: true })
+  unlisten()
 })
 
 // ── items ──────────────────────────────────────────────────────────────────
@@ -207,9 +253,9 @@ function openSubmenuAt(index: number): void {
   const el = itemEls.get(index)
   if (el) {
     const box = el.getBoundingClientRect()
-    // Opens away from the parent item, mirrored for reading direction.
+    // Opens away from the parent item, mirrored for reading direction, in the menu's window.
     submenuPosition.value = ws.state.isRtl
-      ? { x: window.innerWidth - box.left + 2, y: box.top }
+      ? { x: winOf(el)!.innerWidth - box.left + 2, y: box.top }
       : { x: box.right + 2, y: box.top }
   }
   openSubmenu.value = index
@@ -242,129 +288,131 @@ const submenuStyle = computed(() => ws.state.isRtl
 </script>
 
 <template>
-  <Teleport v-if="request" to="body">
-    <!-- A box around the slot so dismissal can tell a press inside it from one outside.
-         `display: contents` keeps it out of the slot's layout. -->
-    <div
-      v-if="$slots.default"
-      ref="customRoot"
-      data-vdd-menu-custom
-      style="display: contents"
-    >
-      <slot
-        :items="request.items"
-        :x="position.x"
-        :y="position.y"
-        :close="close"
-      />
-    </div>
+  <Teleport v-if="request" :to="container ?? 'body'">
+    <VddPopoutWrap :wrapper="wrapper" :win="wrapDoc?.defaultView ?? null" :doc="wrapDoc">
+      <!-- A box around the slot so dismissal can tell a press inside it from one outside.
+           `display: contents` keeps it out of the slot's layout. -->
+      <div
+        v-if="$slots.default"
+        ref="customRoot"
+        data-vdd-menu-custom
+        style="display: contents"
+      >
+        <slot
+          :items="request.items"
+          :x="position.x"
+          :y="position.y"
+          :close="close"
+        />
+      </div>
 
-    <div
-      v-else
-      ref="root"
-      class="vdd-context-menu"
-      :class="`vdd-context-menu--${theme}`"
-      :style="{ position: 'fixed', left: `${position.x}px`, top: `${position.y}px` }"
-      :dir="ws.state.dir"
-      data-vdd-menu
-      role="menu"
-      tabindex="-1"
-      aria-orientation="vertical"
-      @keydown="onMenuKey"
-    >
-      <template v-for="(item, index) in request.items" :key="index">
-        <hr v-if="isSeparator(item)" class="vdd-context-menu__separator" role="separator" >
+      <div
+        v-else
+        ref="root"
+        class="vdd-context-menu"
+        :class="`vdd-context-menu--${theme}`"
+        :style="{ position: 'fixed', left: `${position.x}px`, top: `${position.y}px` }"
+        :dir="ws.state.dir"
+        data-vdd-menu
+        role="menu"
+        tabindex="-1"
+        aria-orientation="vertical"
+        @keydown="onMenuKey"
+      >
+        <template v-for="(item, index) in request.items" :key="index">
+          <hr v-if="isSeparator(item)" class="vdd-context-menu__separator" role="separator" >
 
-        <button
-          v-else-if="isSubMenu(item)"
-          :ref="(el) => keepEl(index, el)"
-          type="button"
-          class="vdd-context-menu__item vdd-context-menu__item--has-submenu"
-          :class="{ 'vdd-context-menu__item--submenu-open': openSubmenu === index }"
-          :title="(item as ContextMenuSubMenu).title ? ws.format((item as ContextMenuSubMenu).title) : undefined"
-          :data-vdd-menu-submenu="ws.format((item as ContextMenuSubMenu).label)"
-          role="menuitem"
-          tabindex="-1"
-          aria-haspopup="menu"
-          :aria-expanded="openSubmenu === index"
-          @click="onSubmenuClick(index)"
-          @pointerenter="onItemEnter(index, item)"
-          @pointerleave="onItemLeave(item)"
-        >
-          <span class="vdd-context-menu__icon" aria-hidden="true" />
-          <span class="vdd-context-menu__label">{{ ws.format((item as ContextMenuSubMenu).label) }}</span>
-          <span class="vdd-context-menu__chevron" aria-hidden="true">›</span>
-        </button>
-
-        <button
-          v-else
-          :ref="(el) => keepEl(index, el)"
-          type="button"
-          class="vdd-context-menu__item"
-          :class="{ 'vdd-context-menu__item--disabled': isDisabled(item) }"
-          :disabled="isDisabled(item)"
-          :title="simple(item).title ? ws.format(simple(item).title) : undefined"
-          :data-cy-action="simple(item).cyAction"
-          :data-vdd-menu-item="ws.format(simple(item).label)"
-          :role="showsCheckbox(item) ? 'menuitemcheckbox' : 'menuitem'"
-          tabindex="-1"
-          :aria-checked="showsCheckbox(item) ? isChecked(item) : undefined"
-          @click="activate(item)"
-          @pointerenter="onItemEnter(index, item)"
-          @pointerleave="onItemLeave(item)"
-        >
-          <span class="vdd-context-menu__icon" :aria-hidden="!simple(item).icon">
-            <component :is="simple(item).icon" v-if="simple(item).icon" />
-          </span>
-          <span class="vdd-context-menu__label">{{ ws.format(simple(item).label) }}</span>
-          <span
-            v-if="showsCheckbox(item)"
-            class="vdd-context-menu__checkbox"
-            :class="{ 'vdd-context-menu__checkbox--checked': isChecked(item) }"
-            aria-hidden="true"
+          <button
+            v-else-if="isSubMenu(item)"
+            :ref="(el) => keepEl(index, el)"
+            type="button"
+            class="vdd-context-menu__item vdd-context-menu__item--has-submenu"
+            :class="{ 'vdd-context-menu__item--submenu-open': openSubmenu === index }"
+            :title="(item as ContextMenuSubMenu).title ? ws.format((item as ContextMenuSubMenu).title) : undefined"
+            :data-vdd-menu-submenu="ws.format((item as ContextMenuSubMenu).label)"
+            role="menuitem"
+            tabindex="-1"
+            aria-haspopup="menu"
+            :aria-expanded="openSubmenu === index"
+            @click="onSubmenuClick(index)"
+            @pointerenter="onItemEnter(index, item)"
+            @pointerleave="onItemLeave(item)"
           >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <rect x="0.75" y="0.75" width="10.5" height="10.5" rx="2" :fill="isChecked(item) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.5" />
-              <path v-if="isChecked(item)" d="M2.5 6 L4.5 8.5 L9.5 3.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-          </span>
-        </button>
-      </template>
-    </div>
+            <span class="vdd-context-menu__icon" aria-hidden="true" />
+            <span class="vdd-context-menu__label">{{ ws.format((item as ContextMenuSubMenu).label) }}</span>
+            <span class="vdd-context-menu__chevron" aria-hidden="true">›</span>
+          </button>
 
-    <div
-      v-if="openSubmenu !== null && submenuItems.length"
-      ref="submenuRoot"
-      class="vdd-context-menu vdd-context-menu--submenu"
-      :class="`vdd-context-menu--${theme}`"
-      :style="submenuStyle"
-      :dir="ws.state.dir"
-      data-vdd-submenu
-      role="menu"
-      tabindex="-1"
-      @keydown="onMenuKey"
-      @pointerenter="clearTimers()"
-      @pointerleave="openSubmenu = null"
-    >
-      <template v-for="(item, index) in submenuItems" :key="index">
-        <hr v-if="isSeparator(item)" class="vdd-context-menu__separator" role="separator" >
-        <button
-          v-else
-          type="button"
-          class="vdd-context-menu__item"
-          :class="{ 'vdd-context-menu__item--disabled': isDisabled(item) }"
-          :disabled="isDisabled(item)"
-          :data-vdd-menu-item="ws.format(simple(item).label)"
-          role="menuitem"
-          tabindex="-1"
-          @click="activate(item)"
-        >
-          <span class="vdd-context-menu__icon" :aria-hidden="!simple(item).icon">
-            <component :is="simple(item).icon" v-if="simple(item).icon" />
-          </span>
-          <span class="vdd-context-menu__label">{{ ws.format(simple(item).label) }}</span>
-        </button>
-      </template>
-    </div>
+          <button
+            v-else
+            :ref="(el) => keepEl(index, el)"
+            type="button"
+            class="vdd-context-menu__item"
+            :class="{ 'vdd-context-menu__item--disabled': isDisabled(item) }"
+            :disabled="isDisabled(item)"
+            :title="simple(item).title ? ws.format(simple(item).title) : undefined"
+            :data-cy-action="simple(item).cyAction"
+            :data-vdd-menu-item="ws.format(simple(item).label)"
+            :role="showsCheckbox(item) ? 'menuitemcheckbox' : 'menuitem'"
+            tabindex="-1"
+            :aria-checked="showsCheckbox(item) ? isChecked(item) : undefined"
+            @click="activate(item)"
+            @pointerenter="onItemEnter(index, item)"
+            @pointerleave="onItemLeave(item)"
+          >
+            <span class="vdd-context-menu__icon" :aria-hidden="!simple(item).icon">
+              <component :is="simple(item).icon" v-if="simple(item).icon" />
+            </span>
+            <span class="vdd-context-menu__label">{{ ws.format(simple(item).label) }}</span>
+            <span
+              v-if="showsCheckbox(item)"
+              class="vdd-context-menu__checkbox"
+              :class="{ 'vdd-context-menu__checkbox--checked': isChecked(item) }"
+              aria-hidden="true"
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <rect x="0.75" y="0.75" width="10.5" height="10.5" rx="2" :fill="isChecked(item) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.5" />
+                <path v-if="isChecked(item)" d="M2.5 6 L4.5 8.5 L9.5 3.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </span>
+          </button>
+        </template>
+      </div>
+
+      <div
+        v-if="openSubmenu !== null && submenuItems.length"
+        ref="submenuRoot"
+        class="vdd-context-menu vdd-context-menu--submenu"
+        :class="`vdd-context-menu--${theme}`"
+        :style="submenuStyle"
+        :dir="ws.state.dir"
+        data-vdd-submenu
+        role="menu"
+        tabindex="-1"
+        @keydown="onMenuKey"
+        @pointerenter="clearTimers()"
+        @pointerleave="openSubmenu = null"
+      >
+        <template v-for="(item, index) in submenuItems" :key="index">
+          <hr v-if="isSeparator(item)" class="vdd-context-menu__separator" role="separator" >
+          <button
+            v-else
+            type="button"
+            class="vdd-context-menu__item"
+            :class="{ 'vdd-context-menu__item--disabled': isDisabled(item) }"
+            :disabled="isDisabled(item)"
+            :data-vdd-menu-item="ws.format(simple(item).label)"
+            role="menuitem"
+            tabindex="-1"
+            @click="activate(item)"
+          >
+            <span class="vdd-context-menu__icon" :aria-hidden="!simple(item).icon">
+              <component :is="simple(item).icon" v-if="simple(item).icon" />
+            </span>
+            <span class="vdd-context-menu__label">{{ ws.format(simple(item).label) }}</span>
+          </button>
+        </template>
+      </div>
+    </VddPopoutWrap>
   </Teleport>
 </template>

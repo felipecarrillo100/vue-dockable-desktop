@@ -44,6 +44,7 @@ panels: {
       tabClassName: 'app-notes-tab',  // on its tab (1.9.0)
       keepAlive: true,                // false: unmount while hidden, see below (1.9.0)
       preserveEmbeds: false,          // true: an iframe inside doesn't reload when it moves (1.13.0)
+      canPopOut: false,               // true: it may move into its own browser window (1.14.0)
     },
   },
 }
@@ -56,6 +57,12 @@ the panel, so it applies docked, floating and in the taskbar preview.
 from reloading when the panel moves: docked, floated, minimised, restored, or the grid changing
 around it. The library then moves the panel's element with `moveBefore()`, in Chrome and Edge 133+
 and Firefox 144+; in Safari an iframe reloads as before (1.13.0, rdd 7.11.0).
+
+`canPopOut: true` lets a panel of this type move into its own browser window, for a second
+monitor, with "Open in new window" in its menus or `workspace.popOutPanel(id)`. It needs a
+workspace created with `popOut: true`. Inside, `usePanel().isPoppedOut` says when it is out, and
+`usePanelWindow()` gives the window it is in (1.14.0, rdd 7.12.0;
+[Chapter 15](15-popout-windows.md)).
 
 The keys of `panels` are what `openPanel` and saved layouts name, so keep them stable. Keys
 starting with `vdd:` are the library's: `'vdd:widget'` is the kind of a managed widget's own panel
@@ -290,7 +297,8 @@ usePanelContextMenu(() => [
 ])
 ```
 
-Your items are appended to the standard Float / Minimize / Close menu. Pass a getter and the
+Your items are appended to the standard Float / Minimize / Close menu (with "Open in new window"
+after Float for a type with `canPopOut`, [Chapter 15](15-popout-windows.md)). Pass a getter and the
 list is re-read each time the menu opens, so `disabled` and friends track state.
 
 **A managed widget's own panel** (1.13.0) is the exception: its `titleMenu` items come first, and

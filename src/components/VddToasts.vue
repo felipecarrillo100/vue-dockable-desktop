@@ -8,7 +8,11 @@
  * one is simply inside the slice, so promotion is not code.
  */
 import { computed, inject, onBeforeUnmount, toRaw, watch } from 'vue'
-import { removeToast, setToastAdapter, toastQueue } from '../core/toast'
+import { removeToast, setToastAdapter, toastDocument, toastQueue } from '../core/toast'
+import type { ToastRecord } from '../core/toast'
+import { isRegistered, onDocumentsChange } from '../core/documentRegistry'
+import { popoutWrapperFor } from '../core/panelWindow'
+import VddPopoutWrap from './popoutWrap'
 import { useLibraryMessage } from '../composables/useLibraryMessage'
 import type { ToastAdapter, ToastPosition } from '../core/toast'
 import VddToastItem from './VddToastItem.vue'
@@ -94,6 +98,63 @@ watch(() => toastQueue.items.map(t => `${t.id}:${t.exiting}`).join(','), () => {
 
 const isLeft = computed(() => props.position.endsWith('left'))
 
+// ── Pop-out windows (1.14.0): each toast in the window it was raised in ──────
+const mainDoc = typeof document === 'undefined' ? null : document
+/**
+ * The window a toast shows in: its own while that is open, else the page. Read again whenever the
+ * shown toasts change, which a closing window's own toasts leaving does.
+ */
+const shownIn = (item: ToastRecord): Document | null => {
+  const doc = toastDocument(item.id)
+  return doc && doc !== mainDoc && isRegistered(doc) ? doc : mainDoc
+}
+/** A stable key per window's container, so one window's emptying doesn't remount another's. */
+const containerKeys = new WeakMap<Document, string>()
+let containerCount = 0
+const keyOf = (doc: Document | null): string => {
+  if (!doc || doc === mainDoc) return 'main'
+  let key = containerKeys.get(doc)
+  if (!key) { key = `vdd-toasts-${++containerCount}`; containerKeys.set(doc, key) }
+  return key
+}
+/**
+ * One container per window with toasts: the page's always, a pop-out's while it shows some, there
+ * inside the app's `popoutWrapper`. `maxVisible` counts all windows together (`visible`).
+ */
+const containers = computed(() => {
+  const docs: (Document | null)[] = [mainDoc]
+  const byDoc = new Map<Document | null, ToastRecord[]>([[mainDoc, []]])
+  for (const item of visible.value) {
+    const doc = shownIn(item)
+    if (!byDoc.has(doc)) { docs.push(doc); byDoc.set(doc, []) }
+    byDoc.get(doc)!.push(item)
+  }
+  return docs.map(doc => ({
+    doc,
+    key: keyOf(doc),
+    items: byDoc.get(doc)!,
+    inPopOut: !!doc && doc !== mainDoc,
+    wrapper: doc && doc !== mainDoc ? popoutWrapperFor(doc) : null,
+  }))
+})
+
+/**
+ * A pop-out window closing takes its toasts with it, and runs their `onClose`; one still waiting
+ * for a place (beyond `maxVisible`) shows in the page instead when its turn comes (`shownIn`).
+ */
+const stopDocuments = onDocumentsChange(() => {
+  if (props.adapter) return
+  const onScreen = new Set(visible.value.map(t => t.id))
+  for (const item of [...toastQueue.items]) {
+    const doc = toastDocument(item.id)
+    if (!doc || isRegistered(doc)) continue
+    if (!onScreen.has(item.id)) continue
+    removeToast(item.id)
+    if (!item.exiting) item.options.onClose?.()
+  }
+})
+onBeforeUnmount(stopDocuments)
+
 // Toasts are teleported to <body>: they follow the workspace into RTL (1.5.0), and otherwise
 // inherit the page's direction, as before.
 const workspace = inject(WORKSPACE_KEY, null)
@@ -105,32 +166,40 @@ const workspaceDir = computed(() => (workspace?.state.dir === 'rtl' ? 'rtl' : un
     <component :is="adapter.component" v-if="adapter.component" :position="position" />
   </Teleport>
 
-  <Teleport v-else to="body">
-    <div
-      class="vdd-toast-container"
-      :class="[
-        `vdd-toast-container--${position}`,
-        newestOnTop ? 'vdd-toast-container--newest-top' : 'vdd-toast-container--newest-bottom',
-      ]"
-      :style="{ width: `${width}px` }"
-      :dir="workspaceDir"
-      role="region"
-      :aria-label="message('notifications')"
-      aria-live="polite"
-      data-vdd-toasts
-    >
-      <VddToastItem
-        v-for="item in visible"
-        :key="item.id"
-        :toast="item"
-        :is-left="isLeft"
-        :show-progress="progressBar"
-        :pause-on-hover="pauseOnHover"
-        :animation="animation"
-        :default-duration="defaultDuration"
-        :default-closable="defaultClosable"
-        @exited="removeToast"
-      />
-    </div>
-  </Teleport>
+  <!-- One per window with toasts (1.14.0): the page's always, a pop-out's while it has some. -->
+  <template v-else>
+    <template v-for="c in containers" :key="c.key">
+      <Teleport :to="c.inPopOut ? c.doc!.body : 'body'">
+        <!-- The app's component from the desktop, stable across renders: not one made here. -->
+        <VddPopoutWrap :wrapper="c.wrapper" :win="c.inPopOut ? c.doc!.defaultView : null" :doc="c.inPopOut ? c.doc : null">
+          <div
+            class="vdd-toast-container"
+            :class="[
+              `vdd-toast-container--${position}`,
+              newestOnTop ? 'vdd-toast-container--newest-top' : 'vdd-toast-container--newest-bottom',
+            ]"
+            :style="{ width: `${width}px` }"
+            :dir="workspaceDir"
+            role="region"
+            :aria-label="message('notifications')"
+            aria-live="polite"
+            data-vdd-toasts
+          >
+            <VddToastItem
+              v-for="item in c.items"
+              :key="item.id"
+              :toast="item"
+              :is-left="isLeft"
+              :show-progress="progressBar"
+              :pause-on-hover="pauseOnHover"
+              :animation="animation"
+              :default-duration="defaultDuration"
+              :default-closable="defaultClosable"
+              @exited="removeToast"
+            />
+          </div>
+        </VddPopoutWrap>
+      </Teleport>
+    </template>
+  </template>
 </template>
