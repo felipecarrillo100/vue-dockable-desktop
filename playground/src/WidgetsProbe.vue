@@ -4,10 +4,19 @@ import { defineComponent, h, markRaw } from 'vue'
 import { useFloatingWidgets } from 'vue-dockable-desktop'
 import type { WidgetMenuContext } from 'vue-dockable-desktop'
 import ManagedContent from './ManagedContent.vue'
+import { rcIcon } from './runtimeCss'
+import { unsizedIcon } from './unsizedIcon'
 import EmbedFrame from './EmbedFrame.vue'
 
 const api = useFloatingWidgets()
-const icon = markRaw(defineComponent({ render: () => h('span', { class: 'wo-icon', style: 'display:inline-block;width:12px;height:12px;background:currentColor' }) }))
+// rdd 7.12.2: `?rc=1` the runtime CSS-in-JS stand-in's 16 x 16 icon, bigger than a title-icon box;
+// `?poico=1` an icon that takes its size from its box.
+const search = new URLSearchParams(location.search)
+const icon = search.get('rc') === '1'
+  ? rcIcon('wo')
+  : search.get('poico') === '1'
+    ? unsizedIcon
+    : markRaw(defineComponent({ render: () => h('span', { class: 'wo-icon', style: 'display:inline-block;width:12px;height:12px;background:currentColor' }) }))
 const w = window as unknown as { __overlay: Record<string, unknown>; __woPopResult?: unknown }
 w.__overlay.widgets = {
   api,

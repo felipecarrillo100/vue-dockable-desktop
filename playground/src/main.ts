@@ -7,6 +7,7 @@ import OverlayPanel from './OverlayPanel.vue'
 import EmbedFrame from './EmbedFrame.vue'
 import PopPanel from './PopPanel.vue'
 import { rcIcon } from './runtimeCss'
+import { unsizedIcon } from './unsizedIcon'
 
 // Set before mount, as an application would (the M15 branding gate): `?cs=light` puts
 // `data-color-scheme="light"` on <html> (dark is the attribute's absence); `?ba=HEX` / `?bon=HEX`
@@ -27,6 +28,8 @@ const POPOUT = params.get('po') === '1'
 // `?rc=1` (P4): `popper`'s icon is styled only by the runtime CSS-in-JS stand-in (runtimeCss.ts), so
 // the pop-out frame's icon shows whether the app's popoutWrapper is around the frame.
 const RC = params.get('rc') === '1'
+// `?poico=1` (rdd 7.12.2): `popper`'s icon takes its size from its box (unsizedIcon.ts).
+const POICO = params.get('poico') === '1'
 // `?wo=1` (P5): the overlay panel `ov` docked beside p1, with a managed widget `wo` (canPopOut, a
 // titleMenu) opened in it (WidgetsProbe.vue); `?opo=1`: the overlay type can pop out too, and its
 // #wo-po-in pops the widget out from inside the overlay (rdd 7.12.1's harness `opo=1`).
@@ -36,7 +39,7 @@ const OPO = params.get('opo') === '1'
 const workspace = createWorkspace({
   popOut: POPOUT,
   panels: {
-    popper: { component: PopPanel, defaultOptions: { title: 'Pop', canPopOut: true, ...(RC ? { icon: rcIcon('frame') } : {}) } },
+    popper: { component: PopPanel, defaultOptions: { title: 'Pop', canPopOut: true, ...(RC ? { icon: rcIcon('frame') } : POICO ? { icon: unsizedIcon } : {}) } },
     // M11 gate (7.11): an iframe in a panel type with preserveEmbeds, and one without.
     // The iframe's name comes from the panel's props.
     embedKept: { component: EmbedFrame, defaultOptions: { title: 'Kept', preserveEmbeds: true } },

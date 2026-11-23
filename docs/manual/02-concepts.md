@@ -100,6 +100,11 @@ const { activePanelId, panels, floating, minimized, openPanel, saveLayout } = us
 
 State members are refs, so destructuring keeps them reactive. Actions are plain functions.
 
+Inside a component, `useWorkspace()` returns a copy of the workspace whose `subscribe` unsubscribes
+by itself when the component goes away; outside one, it returns the workspace itself. So don't compare
+it with the object `createWorkspace()` gave you, or wrap a method on that object to see a component's
+calls: test what the call does (the active panel, say), or spy where the component calls it.
+
 ## Two layers of "floating"
 
 A naming point that saves confusion later:

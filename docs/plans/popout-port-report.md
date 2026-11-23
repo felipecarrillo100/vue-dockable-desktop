@@ -531,3 +531,18 @@ demo:build, M18, browser 15/15). `npm run gate:sweep` then `npm run gate -- M13`
   Still MISSED, not part of these five rules: `non-vacuity … never executes`
   (contributions.test.ts blanked) and `M14 … managed widgets declaratively`.
 - `npm run verify` PASS (1384 tests).
+
+## 7.12.2 follow-up (2026-11-23)
+
+MapEvolution tried the 1.14.0 tgz: everything worked except the pop-out frame's title icon, which had
+no size, so an icon that takes its size from its box (their `mat-icon`, width/height auto) grew the
+header to 309 px. rdd fixed it as 7.12.2, and 1.14.0 takes the same fix before it is published:
+
+- `.vdd-popout-frame__icon` is a 14 × 14 box, as `.vdd-panel-float__icon`; in both boxes an `svg` or
+  `img` is drawn at 14 × 14 (as a tab's icon slot does) and any other child is capped at the box, so
+  a 16 × 16 icon shows at 14 × 14, not squeezed to 14 × 16 (the floating window did that before).
+- M18's new `title icon` case; the `wrapper` case's frame icon now expects 14 × 14. Five CSS
+  mutations, each caught (docs/evidence/M18.md).
+- The parity line names rdd 7.12.2; M18's parity rule and its selftest seed moved with it, recorded
+  in the pop-out ADR. PARITY's 7.12.x heading is unchanged.
+- vdd only: chapter 02 explains that `useWorkspace()` inside a component returns a copy with a self-unsubscribing `subscribe` (MapEvolution's note).

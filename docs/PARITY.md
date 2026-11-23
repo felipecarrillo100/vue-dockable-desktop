@@ -6,7 +6,7 @@ must, but a vdd user should be able to do as much as an rdd user can.*
 This file is the audit trail for that claim. Three sections: what the API maps to, what the
 tests map to, and where vdd deliberately differs.
 
-**1.14.0** adds rdd **7.12.0** and **7.12.1**'s pop-out windows (§1, *Pop-out windows*; §3, *rdd
+**1.14.0** adds rdd **7.12.0** and **7.12.1**'s pop-out windows, with **7.12.2**'s title-icon fix (§1, *Pop-out windows*; §3, *rdd
 7.12.0 and 7.12.1 pop-out windows, traced*; §4, *Pop-out windows (1.14.0)*;
 [0022](decisions/0022-popout-windows.md)).
 
@@ -280,7 +280,9 @@ comment, so a reviewer can see the trade rather than discover a silent gap.
 
 rdd 7.12.0 is pop-out windows (stages S1–S7 and next.1, with 7.12.0's event timing); 7.12.1 lets a
 click inside a pop-out open another one (a panel from a button in another panel's window, a widget
-from its owner's window). vdd 1.14.0 ports the final 7.12.1 behaviour at once, not the history:
+from its owner's window); 7.12.2 sizes the frame's title icon as a floating window's (14 × 14) and
+scales a bigger icon down to fit both (M18's `title icon` case). vdd 1.14.0 ports the final 7.12.2
+behaviour at once, not the history:
 no synchronous events, no main-window-only gesture check, no text return button, no toasts that
 stay in the main window. Every ported test keeps rdd's number behind an `X`, because `PO` and
 `PF` were already vdd test ids.

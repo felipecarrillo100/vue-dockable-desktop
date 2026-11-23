@@ -496,7 +496,7 @@ check('M17 catches the old Label type in the i18n chapter', 'docs/manual/11-i18n
 
 // The 1.14.0 rules: the pop-out release stays recorded, documented and traced.
 check('M18 catches the 1.14.0 entry naming the wrong rdd release', 'CHANGELOG.md',
-  s => s.replace('**Parity: react-dockable-desktop 7.12.1.**', '**Parity: react-dockable-desktop 7.12.0.**'),
+  s => s.replace('**Parity: react-dockable-desktop 7.12.2.**', '**Parity: react-dockable-desktop 7.12.1.**'),
   'node scripts/gates/m18.mjs')
 
 check('M18 catches the 1.14.0 entry losing a section', 'CHANGELOG.md',

@@ -1,8 +1,8 @@
 /**
- * M18 gate — pop-out windows (1.14.0), ported from react-dockable-desktop 7.12.1 (ADR 0022).
+ * M18 gate — pop-out windows (1.14.0), ported from react-dockable-desktop 7.12.2 (ADR 0022).
  *
  *   1  the release files: the package version equals `version` in src/index.ts and has its own
- *      CHANGELOG entry; the 1.14.0 entry states a parity line naming react-dockable-desktop 7.12.1
+ *      CHANGELOG entry; the 1.14.0 entry states a parity line naming react-dockable-desktop 7.12.2
  *      and has every section. No current-version pin.
  *   2  the decision is recorded: ADR 0022 exists and is indexed
  *   3  the manual documents it: chapter 15 exists, is in the manual's index and covers what rdd's
@@ -35,7 +35,7 @@ const entryOf = v => {
 must(entryOf(pkg.version) !== '', `CHANGELOG.md has no entry for the package version ${pkg.version}`)
 const entry = entryOf('1.14.0')
 must(entry !== '', 'CHANGELOG.md has no 1.14.0 entry')
-must(/\*\*Parity:[^*]*react-dockable-desktop[^*]*7\.12\.1/.test(entry), 'the 1.14.0 entry must state its parity line, naming react-dockable-desktop 7.12.1')
+must(/\*\*Parity:[^*]*react-dockable-desktop[^*]*7\.12\.2/.test(entry), 'the 1.14.0 entry must state its parity line, naming react-dockable-desktop 7.12.2')
 for (const section of ['### Added', '### Changed', '### Tests', '### Documentation']) {
   must(entry.includes(section), `the 1.14.0 entry has no "${section}" section`)
 }

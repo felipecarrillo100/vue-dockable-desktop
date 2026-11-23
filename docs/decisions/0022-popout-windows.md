@@ -92,3 +92,8 @@ earlier decisions (the cache element of 0002, the Escape claims of 0016) already
 - Pinned by the ported suites (`documentAware`, `popOutStore`, `popOutWindows`, `popOutStyles`,
   `popoutWrapper`, `popOutChrome`, `popOutWidgets`, `popOutFocus`, `popOutFromPopOut`), by the M18
   browser gate in real Chrome, and by the M18 rules.
+- rdd 7.12.2 (the frame's title icon at 14 × 14, a bigger icon scaled to fit it and a floating
+  window's) landed before 1.14.0 was published, so 1.14.0 names it as its parity release. M18's rule
+  on the parity line changed from 7.12.1 to 7.12.2, still exact, and its selftest seed with it
+  (`7.12.2` → `7.12.1`). PARITY's "rdd 7.12.0 and 7.12.1 pop-out windows, traced" heading, which
+  M18 matches, stays: 7.12.2 is traced inside it.

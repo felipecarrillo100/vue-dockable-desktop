@@ -596,7 +596,9 @@ Check real focus by hand, with two windows on screen.
   [chapter 11](11-i18n.md) and [chapter 12](12-migrating.md).
 - **CSS:** the frame is `.vdd-popout-frame` (with `data-vdd-popout="<panel id>"`), its parts
   `__header`, `__icon`, `__title`, `__return` and `__body`; a widget's title icon that opens its
-  `titleMenu` is also `.vdd-popout-frame__icon--menu`. The return button is also
+  `titleMenu` is also `.vdd-popout-frame__icon--menu`. The title icon is a 14 × 14 box, as a
+  floating window's: an `svg` or `img` in it is drawn at 14 × 14, as in a tab, and any other icon
+  bigger than the box is scaled down to fit it. The return button is also
   `.vdd-custom-tab-btn`, so it takes the skin's title-bar button look; style it with
   `.vdd-popout-frame__return`. In the taskbar, a panel in its own window is
   `.vdd-taskbar-item--popout` (with `data-vdd-taskbar-popout="<panel id>"`), and its marker

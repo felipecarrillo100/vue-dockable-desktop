@@ -13,12 +13,12 @@ correspondence lives, alongside the feature-by-feature map in [docs/PARITY.md](d
 
 ## [1.14.0] — 2026-11-22
 
-**Parity: react-dockable-desktop 7.12.1.** Pop-out windows: a panel can move into its own browser
+**Parity: react-dockable-desktop 7.12.2.** Pop-out windows: a panel can move into its own browser
 window, for a second monitor, and come back, without its component remounting: its state, scroll
 offsets and a canvas's WebGL context go with it, and the page's styles follow it there. A managed
 widget out of its panel can go into a window too, and a click inside a pop-out can open another
-one. rdd 7.12.0 is the feature and 7.12.1 the click-from-a-pop-out fix; this release ports the final
-7.12.1 behaviour at once. Same names as rdd, with `vdd` where rdd says `rdd`. Guide:
+one. rdd 7.12.0 is the feature, 7.12.1 the click-from-a-pop-out fix and 7.12.2 the title icon's size;
+this release ports the final 7.12.2 behaviour at once. Same names as rdd, with `vdd` where rdd says `rdd`. Guide:
 [Pop-out windows](docs/manual/15-popout-windows.md). Off by default: an app that doesn't pass
 `popOut: true` sees no change.
 
@@ -95,6 +95,11 @@ one. rdd 7.12.0 is the feature and 7.12.1 the click-from-a-pop-out fix; this rel
 - **Escape listeners and click-to-activate go through a registry of the app's documents** (the page
   and its open pop-outs), each acting only in its own document. In the page they behave as before.
 - `layout:changed` is also published when a panel pops out, and when it comes back into the grid.
+- **A floating window's title icon fits its 14 × 14 box** (`.vdd-panel-float__icon`): an `svg` or
+  `img` in it is drawn at 14 × 14, as in a tab's icon slot, and any other element bigger than the
+  box is scaled down to fit it (a 16 × 16 icon showed squeezed to 14 × 16). A pop-out frame's title
+  icon (`.vdd-popout-frame__icon`) is the same 14 × 14 box, so an icon that takes its size from its
+  box (an SVG with only a `viewBox`, say) can't grow the frame's header (rdd 7.12.2).
 
 ### Tests
 
@@ -107,10 +112,10 @@ one. rdd 7.12.0 is the feature and 7.12.1 the click-from-a-pop-out fix; this rel
   `test/components/popOutWidgets.test.ts` (XWG1–XWG14; 36), `test/components/popOutFocus.test.ts`
   (XPF1–XPF6; 19) and `test/components/popOutFromPopOut.test.ts` (XFP1–XFP7, XFP6b; 8). 1,384 tests
   in all. Every new test was mutation-checked against the line it covers.
-- **The M18 browser gate,** 15 cases in real Chrome with real child windows: out and back, closed by
+- **The M18 browser gate,** 16 cases in real Chrome with real child windows: out and back, closed by
   the user, `popoutUrl`, two neighbours in both orders, blocked, a pop-out from a pop-out (after a
   5.5 s wait, its `opener` checked), the four events, the styles under a skin in both schemes, the
-  wrapper with a runtime CSS-in-JS stand-in, the return button, a widget out and back, its menu, a
+  wrapper with a runtime CSS-in-JS stand-in, the title icon's size (rdd 7.12.2), the return button, a widget out and back, its menu, a
   widget from its owner's window, focus across windows, and `focusPanelWindow` with the `hasFocus`
   recipe.
 - **M18 rules** (`scripts/gates/m18.mjs`): the release files, ADR 0022, chapter 15 and the API

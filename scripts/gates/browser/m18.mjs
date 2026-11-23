@@ -23,10 +23,15 @@
  *                    equal through a scheme switch and a skin switch; a sheet added later applies
  *   wrapper          (P4) `?rc=1`: a runtime CSS-in-JS stand-in (one cache per document, rules added
  *                    with insertRule, so the head copy carries its <style> empty) and the app's
- *                    popoutWrapper: the frame's icon, a menu item's icon opened in the pop-out and a
- *                    toast's icon raised from a click there (it shows there) are 16 x 16 and red in
- *                    the window; the panel's content is styled there and after the return, unmounted
+ *                    popoutWrapper: the frame's icon (14 x 14, scaled to its box), a menu item's icon
+ *                    opened in the pop-out and a toast's icon raised from a click there (it shows
+ *                    there; 16 x 16) are red in the window; the panel's content is styled there and after the return, unmounted
  *                    never
+ *   title icon       (rdd 7.12.2) `?poico=1`: an icon that takes its size from its box stays in the
+ *                    frame's 14 x 14 box, the header is one line and the panel gets the rest of the
+ *                    window, and the icon fills the box (an svg is drawn at 14 x 14, as in a tab);
+ *                    `?wo=1&poico=1` the same in a floating window's title; `?wo=1&rc=1`: a 16 x 16
+ *                    icon is scaled to 14 x 14 in a floating window's title and in a widget's frame
  *   return button    (P4) the frame's button looks like a floating window's title-bar button (default
  *                    skin and nord, dark and light); its label is the tooltip and the name
  *   widget           (P5) `?wo=1`: a managed widget out of its panel into a real window (#wo-po-btn,
@@ -390,6 +395,8 @@ const rcLook = (p, sel) => p.evaluate((s) => {
   return { w: Math.round(r.width), h: Math.round(r.height), bg: getComputedStyle(el).backgroundColor }
 }, sel)
 const RC_LOOK = { w: 16, h: 16, bg: 'rgb(200, 30, 40)' }
+/** In a 14 x 14 title-icon box (a frame's, a floating window's), the 16 x 16 icon is scaled to fit (rdd 7.12.2). */
+const RC_FIT = { ...RC_LOOK, w: 14, h: 14 }
 /** The panel content's styled element. */
 const rcContent = p => p.evaluate(() => {
   const el = document.getElementById('po-rc')
@@ -421,7 +428,7 @@ async function wrapper() {
   await frameShown(popup)
   const out = {}
   out.frame = await rcLook(popup, '.vdd-popout-frame__icon [data-rc-icon="frame"]')
-  check(step, same(out.frame, RC_LOOK), `the frame's icon in the window: ${JSON.stringify(out.frame)}`)
+  check(step, same(out.frame, RC_FIT), `the frame's icon in the window: ${JSON.stringify(out.frame)}`)
   out.content = await rcContent(popup)
   check(step, same(out.content, RC_CONTENT), `the content in the window: ${JSON.stringify(out.content)}`)
   check(step, await insertedOnly(popup), 'the window\'s rules are not inserted into its own <style> with insertRule')
@@ -451,6 +458,69 @@ async function wrapper() {
   check(step, (await page.evaluate(() => window.__poMounts)) === mounts, 'the panel remounted')
   check(step, errors.length === 0, `errors: ${errors.join('; ')}`)
   await close()
+}
+
+// rdd 7.12.2: the frame's title icon is sized as a floating window's (14 x 14), and an icon bigger
+// than a title-icon box is scaled to fit it. An icon that takes its size from its box (MapEvolution's
+// mat-icon, width/height auto) grew to 300 px and pushed the panel out of the window.
+
+/** The frame's icon box, the icon inside it, the header's height and the slot's, in `p`. */
+const frameIconLayout = p => p.evaluate(() => {
+  const box = (s) => {
+    const r = document.querySelector(s).getBoundingClientRect()
+    return { w: Math.round(r.width), h: Math.round(r.height) }
+  }
+  return {
+    icon: box('.vdd-popout-frame__icon'),
+    inner: box('.vdd-popout-frame__icon [data-po-icon]'),
+    header: box('.vdd-popout-frame__header').h,
+    body: box('.vdd-popout-frame__body').h,
+    window: window.innerHeight,
+  }
+})
+
+async function titleIcon() {
+  const step = 'title icon'
+  {
+    const { page, errors, close } = await openApp('po=1&poico=1')
+    const popup = await popOutByClick(page)
+    await frameShown(popup)
+    const l = await frameIconLayout(popup)
+    report[`${step}: unsized`] = l
+    check(step, same(l.icon, { w: 14, h: 14 }), `the frame's icon box: ${JSON.stringify(l.icon)}`)
+    check(step, l.header < 40, `the header is ${l.header} px tall`)
+    check(step, l.body >= l.window - l.header - 1, `the slot is ${l.body} px of ${l.window} (header ${l.header})`)
+    check(step, same(l.inner, { w: 14, h: 14 }), `the icon is ${JSON.stringify(l.inner)}, not its box's 14 x 14`)
+    check(step, errors.length === 0, `errors: ${errors.join('; ')}`)
+    await close()
+  }
+  {
+    const { page, errors, close } = await openApp('po=1&wo=1&poico=1')
+    await page.waitForSelector('[data-vdd-widget="wo"] #wo-fill')
+    const inFloat = await page.evaluate(() => {
+      const r = document.querySelector('.vdd-panel-float__icon [data-po-icon]')?.getBoundingClientRect()
+      return r ? { w: Math.round(r.width), h: Math.round(r.height) } : null
+    })
+    report[`${step}: unsized, floating`] = inFloat
+    check(step, same(inFloat, { w: 14, h: 14 }), `the unsized icon in a floating window's title: ${JSON.stringify(inFloat)}`)
+    check(step, errors.length === 0, `errors: ${errors.join('; ')}`)
+    await close()
+  }
+  {
+    const { page, errors, close } = await openApp('po=1&wo=1&rc=1')
+    await page.waitForSelector('[data-vdd-widget="wo"] #wo-fill')
+    const inFloat = await rcLook(page, '.vdd-panel-float__icon [data-rc-icon="wo"]')
+    report[`${step}: floating`] = inFloat
+    check(step, same(inFloat, RC_FIT), `the widget's icon in its floating window's title: ${JSON.stringify(inFloat)}`)
+    const [popup] = await Promise.all([page.waitForEvent('popup'), page.click('#wo-po-btn')])
+    await popup.waitForSelector('#wo-fill')
+    await frameShown(popup)
+    const inFrame = await rcLook(popup, '.vdd-popout-frame__icon--menu [data-rc-icon="wo"]')
+    report[`${step}: widget frame`] = inFrame
+    check(step, same(inFrame, RC_FIT), `the widget's icon in its window's frame: ${JSON.stringify(inFrame)}`)
+    check(step, errors.length === 0, `errors: ${errors.join('; ')}`)
+    await close()
+  }
 }
 
 /** The look of a button in `p`. */
@@ -794,7 +864,7 @@ async function focusWindow() {
   await close()
 }
 
-const cases = { outAndBack, closedByUser, withPopoutUrl, neighbours, blocked, fromPopOut, events, styles, wrapper, returnButton, widget, widgetMenu, widgetFromOwner, focusAcross, focusWindow }
+const cases = { outAndBack, closedByUser, withPopoutUrl, neighbours, blocked, fromPopOut, events, styles, wrapper, titleIcon, returnButton, widget, widgetMenu, widgetFromOwner, focusAcross, focusWindow }
 // `M18_CASES=wrapper,styles` runs only those cases (while working); the gate runs them all.
 const only = process.env.M18_CASES?.split(',')
 const selected = Object.keys(cases).filter(name => !only || only.includes(name))
@@ -812,4 +882,4 @@ if (failures.length) {
   failures.forEach(f => console.error('  ' + f))
   process.exit(1)
 }
-console.log(`\nM18 browser: ok — ${selected.length} of ${Object.keys(cases).length} cases: the same node, state and WebGL context out and back, closing, popoutUrl, neighbours, blocked, from a pop-out, events, styles, wrapper, return button, widget, widget menu, widget from owner, focus, focusPanelWindow`)
+console.log(`\nM18 browser: ok — ${selected.length} of ${Object.keys(cases).length} cases: the same node, state and WebGL context out and back, closing, popoutUrl, neighbours, blocked, from a pop-out, events, styles, wrapper, title icon, return button, widget, widget menu, widget from owner, focus, focusPanelWindow`)
