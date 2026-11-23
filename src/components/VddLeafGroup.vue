@@ -16,6 +16,7 @@ import { tabSide } from '../core/dragResize'
 import { optionsFor } from '../core/panelOptions'
 import VddPanelSlot from './VddPanelSlot.vue'
 import VddDropZones from './VddDropZones.vue'
+import { usePopOutMenu } from '../composables/usePopOutWindows'
 
 const props = defineProps<{ leaf: LayoutLeafNode }>()
 
@@ -26,6 +27,8 @@ defineSlots<{
 
 const ws = useWorkspace()
 const drag = useDragDock()
+/** "Open in new window" (1.14.0), when the workspace has pop-out windows. */
+const popOutMenu = usePopOutMenu()
 
 /** The standard panel menu, plus whatever the panel itself contributed. */
 function openMenu(panelId: string, event: MouseEvent | PointerEvent): void {
@@ -38,7 +41,7 @@ function openMenu(panelId: string, event: MouseEvent | PointerEvent): void {
     close: () => ws.requestClosePanel(panelId),
     restore: () => ws.restorePanel(panelId),
     maximize: () => ws.maximizePanel(panelId),
-  })
+  }, popOutMenu)
   if (items.length === 0) return
   ws.showContextMenu({ event, items })
 }

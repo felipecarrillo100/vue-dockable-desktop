@@ -14,8 +14,9 @@
  * shifted from it when a toast finished exiting; here every toast goes in one list and the
  * container renders a `computed` slice of it, so promotion is not code at all.
  */
-import { reactive, toRaw } from 'vue'
+import { reactive, shallowReactive, toRaw } from 'vue'
 import type { Component } from 'vue'
+import { focusedDocument } from './documentRegistry'
 
 export type ToastType = 'info' | 'success' | 'warning' | 'error'
 export type ToastPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
@@ -108,6 +109,18 @@ export const toastQueue = reactive<{
  */
 const adapterIds = new Set<string>()
 
+/**
+ * The window each toast shows in (1.14.0): the one the user was in when it was raised (a pop-out's,
+ * else the page's), recorded once, at its first `show`. An update by id keeps it. Not on the
+ * record, which is public: internal, read by `<VddToasts>`.
+ */
+const toastDocs = shallowReactive(new Map<string, Document>())
+
+/** @internal The document toast `id` was raised in, or undefined (none recorded, or on the server). */
+export function toastDocument(id: string): Document | undefined {
+  return toastDocs.get(id)
+}
+
 let counter = 0
 
 /** The options with `undefined` values dropped, so they cannot overwrite a default. */
@@ -151,6 +164,9 @@ function show(message: string, options: ToastOptions = {}): string {
     return id
   }
 
+  // Where the user is now (a pop-out window with focus, 1.14.0), else the page.
+  const doc = focusedDocument()
+  if (doc) toastDocs.set(id, doc)
   toastQueue.items.push({ id, message, options: resolved, exiting: false, revision: 0 })
   return id
 }
@@ -167,6 +183,7 @@ export function startExit(id: string): void {
 export function removeToast(id: string): void {
   const index = toastQueue.items.findIndex(t => t.id === id)
   if (index !== -1) toastQueue.items.splice(index, 1)
+  toastDocs.delete(id)
 }
 
 /**
@@ -249,6 +266,7 @@ export function resetToasts(): void {
   toastQueue.adapter = null
   toastQueue.defaults = { ...DEFAULTS }
   adapterIds.clear()
+  toastDocs.clear()
 }
 
 /**
@@ -266,5 +284,6 @@ export function setToastAdapter(adapter: ToastAdapter | null, defaults: ToastDef
   adapterIds.clear()
   if (!adapter) return
   const waiting = toastQueue.items.splice(0).filter(t => !t.exiting)
+  toastDocs.clear()
   for (const t of waiting) showViaAdapter(adapter, t.id, t.message, t.options)
 }

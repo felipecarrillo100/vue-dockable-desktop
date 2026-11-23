@@ -36,6 +36,9 @@ const locale = ref<Locale>('en')
 
 const workspace = createWorkspace({
   formatMessage: createFormatter(() => locale.value),
+  // Pop-out windows (1.14.0): the Leaflet map can open in its own browser window, and so can the
+  // main map's Cameras table (CamerasTableToggle.vue). The page they open is public/popout.html.
+  popOut: true,
 
   panels: {
     control: { component: ControlCenterPanel, defaultOptions: { title: 'Control Center', icon: ICONS.rocket } },
@@ -49,7 +52,9 @@ const workspace = createWorkspace({
     },
     leafletMap: {
       component: LeafletMapPanel,
-      defaultOptions: { title: 'Leaflet Map', icon: ICONS.globe, disableLivePreview: true },
+      // "Open in new window" in its tab menu. Leaflet 1.9 drag-pans with listeners on the main
+      // document, so in a pop-out the map zooms but doesn't pan by dragging (manual, chapter 15).
+      defaultOptions: { title: 'Leaflet Map', icon: ICONS.globe, disableLivePreview: true, canPopOut: true },
     },
 
     layers: { component: LayerTreePanel, defaultOptions: { title: 'Layers', icon: ICONS.layers } },

@@ -50,5 +50,14 @@
   "widgetsOut.test.ts": 40,
   "widgetsOutMenus.test.ts": 33,
   "widgetPlacement.test.ts": 11,
-  "hostedPanels.test.ts": 19
+  "hostedPanels.test.ts": 19,
+  "documentAware.test.ts": 36,
+  "popOutStore.test.ts": 113,
+  "popOutWindows.test.ts": 45,
+  "popOutFromPopOut.test.ts": 8,
+  "popOutStyles.test.ts": 14,
+  "popoutWrapper.test.ts": 17,
+  "popOutChrome.test.ts": 18,
+  "popOutWidgets.test.ts": 36,
+  "popOutFocus.test.ts": 19
 }

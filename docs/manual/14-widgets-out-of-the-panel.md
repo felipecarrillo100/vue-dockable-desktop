@@ -272,6 +272,12 @@ element carries the widget.
   `.vdd-panel-float__body`, so a selector on the body's direct child (`.vdd-panel-float__body > …`)
   no longer matches it. Out of the panel, its panel's body is `.vdd-hosted-widget`. See
   [Chapter 10](10-theming.md#styling-by-state-and-by-panel-kind).
+- **Into its own browser window** (1.14.0, rdd 7.12.0): with `canPopOut: true` and a workspace
+  created with `popOut: true`, `useFloatingWidgets().popOut(id)` moves the widget into a window of
+  its own, from the panel or from any place out of it, still without remounting. `WidgetMenuContext`
+  gains `canPopOut`, `isPoppedOut` and `popOut()` for your own "Open in new window" item (there is no
+  built-in one), and `useWidget().isPoppedOut` says when it is out; `location` stays `'floating'`.
+  See [Chapter 15](15-popout-windows.md#widgets-in-their-own-window).
 
 ## API summary
 
@@ -286,6 +292,7 @@ element carries the widget.
 | `ManagedWidget.preserveEmbeds` | Keep iframes alive across moves |
 | `useWidget()` | `WidgetHandle \| null`: `{ id, ownerPanelId, panelId, location, onWillMove, onMoved }` |
 | `PanelInfo.owner` | `PanelOwner`: set on a widget's own panel |
+| `useFloatingWidgets().popOut(id)`, `ManagedWidget.canPopOut`, `useWidget().isPoppedOut` | Its own browser window (1.14.0): [Chapter 15](15-popout-windows.md) |
 
 See also: [Chapter 7](07-panel-overlay.md) (the overlay and its widgets), [Chapter 4](04-layout.md)
 (`focusPanel(id, { restore })`, events), [Chapter 3](03-panels.md) (`updatePanelProps`,

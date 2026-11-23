@@ -32,6 +32,7 @@ import type { PanelFloatPlacement, Stretch } from '../core/stretch'
 import type { FloatAnchor, Label } from '../types'
 import type { ManagedPlacement } from '../core/overlayState'
 import VddWidgetContentSlot from './VddWidgetContentSlot.vue'
+import { docOf } from '../core/domContext'
 
 const props = withDefaults(defineProps<{
   /** Unique within this panel's overlay. Drives z-order and stack membership. */
@@ -81,6 +82,8 @@ const placement = defineModel<PanelFloatPlacement>('placement', {
 const ws = useWorkspace()
 const store = usePanelOverlayOptional()
 const el = useTemplateRef<HTMLDivElement>('el')
+/** The frame's own `<body>` (the page's, or a pop-out window's, 1.14.0): the drag classes go there. */
+const frameBody = (): HTMLElement => docOf(el.value).body
 
 const isRtl = computed(() => ws.state.isRtl)
 
@@ -306,7 +309,7 @@ function onPointerMove(event: PointerEvent): void {
       store?.undock(props.widgetId)
       mode.value = 'free'
     }
-    document.body.classList.add('vdd-dragging-active')
+    frameBody().classList.add('vdd-dragging-active')
     if (store) store.draggingId.value = props.widgetId
   }
 
@@ -334,7 +337,7 @@ function onPointerUp(): void {
     store.hovered.value = null
     store.draggingId.value = null
   }
-  document.body.classList.remove('vdd-dragging-active')
+  frameBody().classList.remove('vdd-dragging-active')
   drag = null
 }
 
@@ -343,7 +346,7 @@ function onPointerCancel(): void {
     store.hovered.value = null
     store.draggingId.value = null
   }
-  document.body.classList.remove('vdd-dragging-active')
+  frameBody().classList.remove('vdd-dragging-active')
   drag = null
 }
 
@@ -411,7 +414,7 @@ function onResizeDown(dir: ResizeDir, event: PointerEvent): void {
     startClientX: event.clientX,
     startClientY: event.clientY,
     captureStart: () => start,
-    activeClasses: [{ el: document.body, classes: ['vdd-resizing-active'] }],
+    activeClasses: [{ el: docOf(event.currentTarget as HTMLElement).body, classes: ['vdd-resizing-active'] }],
     onMove: (dx, dy, from) => {
       // Re-measured every move: the container can change size mid-drag.
       const { cw, ch } = containerBounds()

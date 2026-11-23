@@ -105,6 +105,10 @@ localStorage.setItem('layout', ws.saveLayout())
 - **Widgets out of the panel** — a managed widget can dock beside its panel, become a tab or float
   as a window of its own, and come back, without remounting; its placement saves and restores
   (see [Widgets out of the panel](docs/manual/14-widgets-out-of-the-panel.md))
+- **Pop-out windows** — a panel, or a managed widget, can move into its own browser window for a
+  second monitor and come back, still without remounting: its state and a canvas's WebGL context go
+  with it, and the page's styles follow it there. Opt in with `createWorkspace({ popOut: true })` and
+  `canPopOut` per panel type (see [Pop-out windows](docs/manual/15-popout-windows.md))
 - **Overlays** — side panels, a modal stack, dirty-close confirmation, and toasts
 - **Layout serialisation** — save and restore the whole workspace as a JSON string
 - **Theming** — built-in skins, each with its own font, light/dark colour schemes, all
@@ -139,7 +143,7 @@ localStorage.setItem('layout', ws.saveLayout())
 | | |
 |---|---|
 | [Live demo](https://felipecarrillo100.github.io/vue-dockable-desktop/demo/) | Every capability in one application — published from `demo/` by GitHub Pages on each push to `main` |
-| [`docs/manual/`](docs/manual/) | Users manual — 14 chapters, start with [Getting started](docs/manual/01-getting-started.md) |
+| [`docs/manual/`](docs/manual/) | Users manual — 15 chapters, start with [Getting started](docs/manual/01-getting-started.md) |
 | [`docs/decisions/`](docs/decisions/) | ADRs — why the Vue design diverges from the React one |
 | [`docs/PARITY.md`](docs/PARITY.md) | Feature-by-feature parity with `react-dockable-desktop`, and the 16 deliberate divergences |
 | [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) | The milestone plan and its gates |

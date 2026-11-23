@@ -43,6 +43,12 @@ from their owner panel with `placement()`; see
 [Chapter 14](14-widgets-out-of-the-panel.md#saving-and-restoring-placement). A layout that names
 one, which only a hand-made JSON can, loads without it.
 
+A panel in its own browser window (1.14.0) is saved **at the place it would come back to**: docked
+in its place, or floating at its rect, with no `poppedOut` flag. So the saved layout is the one from
+before it left, in the same format as always. Nothing reopens in a window after a reload, since a
+window may only open from a user's click; the panel is in the page, and "Open in new window" takes
+it out again. See [Chapter 15](15-popout-windows.md#saving-the-layout).
+
 ## What cannot be saved: non-serialisable props
 
 `openPanel`'s `props` accept anything, but only JSON-serialisable values survive a save. A

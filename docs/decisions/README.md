@@ -30,3 +30,5 @@ importance.
 | [0019](0019-frost-on-a-pseudo-element.md) | Frost on a pseudo-element; the sidebar and toasts follow the workspace into RTL | Accepted |
 | [0020](0020-stale-milestone-rules.md) | Three milestone rules that outlived the code they described | Accepted |
 | [0021](0021-opt-in-unmount-while-hidden.md) | Opt-in unmount while hidden (`keepAlive: false`); amends 0002 for kinds that opt in | Accepted |
+| [0022](0022-popout-windows.md) | Pop-out windows: the desktop owns them, a Teleport into the child body carries the panel; Escape claims per document | Accepted |
+| [0023](0023-popout-port-stale-rules.md) | Milestone rules after the pop-out port: three code fixes, seven rules that followed the code | Accepted (owner to review) |

@@ -119,9 +119,15 @@ must(/if \(item\.exiting && !onScreen\.has\(item\.id\)\) removeToast\(item\.id\)
 // The height re-sync, which is the whole of rdd's T13 regression.
 must(/scrollHeight/.test(toastItem),
   'the height cap must be read from scrollHeight — offsetHeight returns the stale cap')
-must(/observer\.observe\(body\.value\)/.test(toastItem),
+// Since 1.14.0 the observer comes from the card's own window, through `resizeObserverFor`, which
+// returns null where there is none (ADR 0023).
+must(/observer\??\.observe\(body\.value\)/.test(toastItem)
+  && (!/resizeObserverFor\(/.test(toastItem) || /resizeObserverFor\(body\.value, applyHeight\)/.test(toastItem)),
   'the observer must watch the inner body: the card holds its own height and never resizes')
-must(/typeof ResizeObserver !== 'undefined'/.test(toastItem),
+const domContext = src('src/core/domContext.ts')
+must(/typeof ResizeObserver !== 'undefined'/.test(toastItem)
+  || (/resizeObserverFor\(body\.value, applyHeight\)/.test(toastItem) && /observer\?\.observe\(/.test(toastItem)
+    && /typeof ResizeObserver === 'undefined' \? null/.test(domContext)),
   'the height sync is a browser refinement and must not be required for the toast to work')
 must(/setTimeout\(\(\) => emit\('exited', props\.toast\.id\), 520\)/.test(toastItem),
   'a transition that never runs must not strand the record')

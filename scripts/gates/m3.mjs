@@ -24,8 +24,9 @@ const resolverDefs = src.match(/function resolveActive\b/g) ?? []
 must(resolverDefs.length === 1, `expected exactly one resolveActive definition, found ${resolverDefs.length}`)
 
 // Only resolveActive may assign activePanelId — with two documented exceptions: an explicit
-// focusPanel() on a minimized panel (a deliberate caller decision, honoured as rdd does),
-// and loadLayout, which takes the value the snapshot resolved.
+// focusPanel() on a minimized panel (a deliberate caller decision, honoured as rdd does; since
+// 1.14.0 written in activatePanel, focusPanel's body, ADR 0023), and loadLayout, which takes
+// the value the snapshot resolved.
 const assignments = [...src.matchAll(/state\.activePanelId\s*=/g)].length
 must(assignments === 3,
   `activePanelId is assigned in ${assignments} places; expected 3 (resolveActive, focusPanel's ` +
@@ -37,16 +38,20 @@ const PLACEMENT = [
   'function floatPanel', 'function dockPanel', 'function dockPanelToGroup',
   'function dockPanelToWorkspaceEdge', 'function movePanelOrder', 'function maximizePanel',
   'function closeLeafGroup', 'function focusPanel',
+  // focusPanel's body since 1.14.0 (ADR 0023): checked itself, so focusPanel may route through it.
+  'function activatePanel',
 ]
 for (const marker of PLACEMENT) {
-  const start = src.indexOf(marker)
+  // The whole name: `function focusPanel` must not find `function focusPanelWindow`.
+  const start = src.search(new RegExp(`${marker}[(<]`))
   must(start !== -1, `${marker} not found`)
   if (start === -1) continue
   // the function body ends at the next top-level `function ` declaration
   const rest = src.slice(start + marker.length)
   const end = rest.search(/\n {2}(?:async )?function /)
   const body = end === -1 ? rest : rest.slice(0, end)
-  const routes = /resolveActive\(/.test(body) || /restorePanel\(|focusPanel\(/.test(body)
+  // restorePanel, focusPanel and activatePanel are placement actions this loop checks itself.
+  const routes = /resolveActive\(/.test(body) || /restorePanel\(|focusPanel\(|activatePanel\(/.test(body)
   must(routes, `${marker} does not route through resolveActive — activePanelId can go stale (D2)`)
 }
 

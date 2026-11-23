@@ -2,8 +2,9 @@
 /**
  * A collapsed tool family: one button, and a flyout listing its sub-tools.
  *
- * The flyout is teleported to `document.body` so the strip's own `overflow: hidden` cannot
- * clip it, then clamped back inside the viewport once it has a size.
+ * The flyout is teleported to the button's own `<body>` (the page's, or a pop-out window's,
+ * 1.14.0) so the strip's own `overflow: hidden` cannot clip it, then clamped back inside that
+ * window once it has a size.
  */
 import { computed, nextTick, onBeforeUnmount, ref, useTemplateRef } from 'vue'
 import type { ToolbarGroupItem } from '../core/toolbarTypes'
@@ -11,6 +12,8 @@ import { flyoutPlacement, isSubItem } from '../core/toolbarTypes'
 import { useWorkspace } from '../composables/useWorkspace'
 import { claimEscape, isEscapeClaimed } from '../core/escape'
 import { isRtlElement } from '../core/dragResize'
+import { docOf, isNode, winOf } from '../core/domContext'
+import { eventDocument, listenOnDocuments } from '../core/documentRegistry'
 
 const props = defineProps<{
   item: ToolbarGroupItem
@@ -22,6 +25,9 @@ const button = useTemplateRef<HTMLButtonElement>('button')
 const flyout = useTemplateRef<HTMLDivElement>('flyout')
 const open = ref(false)
 const placement = ref<Record<string, number>>({})
+/** The body the flyout renders into: the button's document's, chosen when it opens. */
+const target = ref<HTMLElement | null>(null)
+let stopListening: (() => void) | null = null
 
 /** Controlled when the prop is present at all — `null` means "nothing selected", not "unset". */
 const controlled = computed(() => props.item.activeItemId !== undefined)
@@ -38,23 +44,33 @@ async function toggle(): Promise<void> {
   if (props.item.disabled) return
   if (open.value) { open.value = false; return }
   const rect = button.value?.getBoundingClientRect()
+  // The button's window: the page's, or a pop-out's.
+  const win = winOf(button.value)!
   if (rect) {
     // The strip's own direction, not the workspace's: the strip sits outside the workspace
     // and follows the host page, so the two can differ.
     placement.value = flyoutPlacement(rect, props.position,
-      { width: window.innerWidth, height: window.innerHeight }, isRtlElement(button.value))
+      { width: win.innerWidth, height: win.innerHeight }, isRtlElement(button.value))
   }
+  target.value = docOf(button.value).body
   open.value = true
   await nextTick()
   clampIntoView()
-  document.addEventListener('pointerdown', onOutside, { capture: true })
-  document.addEventListener('keydown', onKey, { capture: true })
+  stopListening?.()
+  // Outside presses in the button's document; Escape through the registry, answered only there.
+  const doc = docOf(button.value)
+  doc.addEventListener('pointerdown', onOutside, { capture: true })
+  const offKey = listenOnDocuments('keydown', onKey, { capture: true })
+  stopListening = () => {
+    doc.removeEventListener('pointerdown', onOutside, { capture: true })
+    offKey()
+  }
 }
 
 function close(): void {
   open.value = false
-  document.removeEventListener('pointerdown', onOutside, { capture: true })
-  document.removeEventListener('keydown', onKey, { capture: true })
+  stopListening?.()
+  stopListening = null
 }
 
 /** Nudge the flyout back on screen. It is positioned before it has a size, so this is a second pass. */
@@ -64,16 +80,18 @@ function clampIntoView(): void {
   const rect = el.getBoundingClientRect()
   const pad = 8
   const next = { ...placement.value }
-  if (rect.right > window.innerWidth - pad) { next.left = Math.max(pad, window.innerWidth - rect.width - pad); delete next.right }
+  // Clamped into the window the flyout is shown in.
+  const { innerWidth, innerHeight } = winOf(el)!
+  if (rect.right > innerWidth - pad) { next.left = Math.max(pad, innerWidth - rect.width - pad); delete next.right }
   if (rect.left < pad) { next.left = pad; delete next.right }
-  if (rect.bottom > window.innerHeight - pad) { next.top = Math.max(pad, window.innerHeight - rect.height - pad); delete next.bottom }
+  if (rect.bottom > innerHeight - pad) { next.top = Math.max(pad, innerHeight - rect.height - pad); delete next.bottom }
   if (rect.top < pad) { next.top = pad; delete next.bottom }
   placement.value = next
 }
 
 function onOutside(event: Event): void {
   const target = event.target
-  if (!(target instanceof Node)) { close(); return }
+  if (!isNode(target)) { close(); return }
   if (button.value?.contains(target) || flyout.value?.contains(target)) return
   close()
 }
@@ -82,7 +100,11 @@ function onOutside(event: Event): void {
  * the strip sits in listens on `document` too (see `../core/escape`).
  */
 function onKey(event: KeyboardEvent): void {
-  if (event.key === 'Escape' && !isEscapeClaimed(event)) { claimEscape(event); close() }
+  // Only an Escape in the flyout's own document (1.14.0).
+  if (event.key === 'Escape' && !isEscapeClaimed(event) && eventDocument(event) === docOf(button.value)) {
+    claimEscape(event)
+    close()
+  }
 }
 
 function select(id: string, onActivate?: (id: string) => void): void {
@@ -116,7 +138,7 @@ const style = computed(() => {
     @click="toggle"
   ><component :is="icon" /></button>
 
-  <Teleport v-if="open" to="body">
+  <Teleport v-if="open" :to="target ?? 'body'">
     <div
       ref="flyout"
       class="vdd-toolbar-group-flyout"

@@ -69,6 +69,11 @@ export interface ContextMenuRequest {
   y: number
   items: ContextMenuItem[]
   initialFocus: 'menu' | 'first-item'
+  /**
+   * The body the menu renders into (1.14.0): the body of the document its opening event came
+   * from, chosen per open, so a menu opened in a pop-out window shows there. `null`: the main one.
+   */
+  container?: HTMLElement | null
 }
 
 /** The menu's initial focus, from what the caller passed (see `ShowContextMenuOptions.initialFocus`). */
@@ -85,6 +90,20 @@ export const isSeparator = (item: ContextMenuItem): item is ContextMenuSeparator
 
 export const isSubMenu = (item: ContextMenuItem): item is ContextMenuSubMenu =>
   !isSeparator(item) && 'items' in item
+
+/**
+ * @internal A menu opened from the keyboard on a button (Enter or Space: a click with `detail` 0,
+ * no pointer position) opens below it (1.14.0). This is the stand-in event for `showContextMenu`:
+ * at the button's bottom-left corner, in its window's coordinates, with the button as `target`. The
+ * menu is placed there (`menuPosition` reads the event's position, and doesn't place a 0,0 event
+ * at its target) and shows in the button's document, a pop-out window's too.
+ */
+export function menuEventBelow(button: HTMLElement): MouseEvent {
+  const r = button.getBoundingClientRect()
+  const at = new MouseEvent('click', { clientX: r.left, clientY: r.bottom })
+  Object.defineProperty(at, 'target', { value: button })
+  return at
+}
 
 /** Where a menu should open, from whatever the caller supplied. */
 export function menuPosition(options: ShowContextMenuOptions): { x: number; y: number } {

@@ -12,6 +12,8 @@
  * (`PanelDomCache`, `WidgetContentCache`), on its own document, so `park` takes the store.
  */
 
+import { rafOf } from './domContext'
+
 const preserving = new WeakSet<Element>()
 
 /**
@@ -57,9 +59,11 @@ export function moveIntoWhenConnected(slot: Element, el: Element, move: () => vo
   if (!preserving.has(el) || slot.isConnected) { move(); return () => {} }
   let cancelled = false
   let frames = 0
-  const frame = typeof requestAnimationFrame === 'undefined'
+  // The slot's window's frames (1.14.0): a pop-out's go on while the page is hidden.
+  const raf = rafOf(slot)
+  const frame = raf === null
     ? (cb: () => void) => { setTimeout(cb, 16) }
-    : (cb: () => void) => { requestAnimationFrame(cb) }
+    : (cb: () => void) => { raf(cb) }
   const attempt = (): void => {
     if (cancelled) return
     // A slot that never connects (it was left detached) still gets its element, after a while.

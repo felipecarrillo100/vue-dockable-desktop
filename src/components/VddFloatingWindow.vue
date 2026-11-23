@@ -19,6 +19,7 @@ import { computeResizedRect, startPointerDrag } from '../core/dragResize'
 import type { ResizeDir } from '../core/dragResize'
 import { optionsFor } from '../core/panelOptions'
 import VddPanelSlot from './VddPanelSlot.vue'
+import { usePopOutMenu } from '../composables/usePopOutWindows'
 
 const props = defineProps<{
   window: FloatingWindow
@@ -28,6 +29,8 @@ const props = defineProps<{
 
 const ws = useWorkspace()
 const drag = useDragDock()
+/** "Open in new window" (1.14.0), when the workspace has pop-out windows. */
+const popOutMenu = usePopOutMenu()
 
 /** Inset from the workspace edge, and the gap between windows stacked in one corner. */
 const CORNER_INSET = 8
@@ -44,7 +47,7 @@ const px = (v: number | string) => (typeof v === 'number' ? `${v}px` : v)
 
 /** Windows sharing this corner, in stack order. */
 const stack = computed(() =>
-  ws.state.floating.filter(w => w.anchor === props.window.anchor && !w.maximized))
+  ws.state.floating.filter(w => w.anchor === props.window.anchor && !w.maximized && !ws.state.panels[w.id]?.poppedOut))
 
 /** How far along the block axis this window sits, clearing whatever is stacked before it. */
 const stackOffset = computed(() => {
@@ -83,6 +86,8 @@ const style = computed<CSSProperties>(() => {
 })
 
 const contributed = computed(() => ws.panelMenuItems(props.window.id))
+/** The ⋮ button shows for the panel's own items, or for "Open in new window" (1.14.0). */
+const hasMoreActions = computed(() => contributed.value.length > 0 || !!popOutMenu?.canPopOut(props.window.id))
 
 /**
  * A widget's panel (7.11) opens its ⋮ menu from the title icon too, as in its owner panel; with no
@@ -92,14 +97,14 @@ const iconOpensMenu = computed(() => !!panel.value?.owner && contributed.value.l
 
 function openMenu(event: MouseEvent | PointerEvent, onlyContributed = false): void {
   const items = onlyContributed
-    ? buildMoreActionsMenu(ws, props.window.id, options.value, () => ws.requestClosePanel(props.window.id))
+    ? buildMoreActionsMenu(ws, props.window.id, options.value, () => ws.requestClosePanel(props.window.id), popOutMenu)
     : buildPanelMenu(ws, props.window.id, options.value, {
         float: () => ws.floatPanel(props.window.id),
         minimize: () => ws.minimizePanel(props.window.id),
         close: () => ws.requestClosePanel(props.window.id),
         restore: () => ws.restorePanel(props.window.id),
         maximize: () => ws.maximizePanel(props.window.id),
-      })
+      }, popOutMenu)
   if (items.length === 0) return
   ws.showContextMenu({ event, items })
 }
@@ -220,7 +225,7 @@ function onHandlePointerDown(dir: ResizeDir, event: PointerEvent): void {
       </span>
       <div class="vdd-titlebar-actions" @pointerdown.stop>
         <button
-          v-if="contributed.length > 0"
+          v-if="hasMoreActions"
           type="button"
           class="vdd-custom-tab-btn vdd-btn-more-actions"
           :data-vdd-more="window.id"

@@ -307,6 +307,11 @@ widgets.location('results')                                    // 'panel' | 'doc
 widgets.placement('results')                                   // WidgetPlacement | null, to save
 ```
 
+It can also go into **its own browser window** (1.14.0, rdd 7.12.0), on a workspace with
+`popOut: true`: `canPopOut: true` on the widget, then `widgets.popOut('results')` from a click, or an
+item in its `titleMenu` calling `w.popOut()` (there is no built-in one). See
+[Chapter 15](15-popout-windows.md#widgets-in-their-own-window).
+
 The widget's component is rendered once, teleported into an element of its own,
 `div.vdd-panel-float__content` (the full width and height of the body), so it can move out of the
 panel and back without remounting. Content laid out with `height: 100%` fills the widget as

@@ -24,6 +24,9 @@ import HelpPanel from './panels/HelpPanel.vue'
 import LayerTreePanel from './panels/LayerTreePanel.vue'
 
 const ws = useWorkspace()
+// The page a pop-out window opens (1.14.0): public/popout.html. BASE_URL keeps it under the build's
+// base, which is './' (so it also works on GitHub Pages); the library resolves it against the page.
+const popoutUrl = `${import.meta.env.BASE_URL}popout.html`
 /**
  * A ref, injected. The template auto-unwraps a ref held in `setup`, so it is bound as
  * `locale` there and read as `locale.value` only in script — writing `locale.value` in the
@@ -173,6 +176,7 @@ onMounted(() => {
               :animations="animations"
               :taskbar="taskbar"
               :default-panel-icon="ICONS.panel"
+              :popout-url="popoutUrl"
             />
           </div>
         </VddSecondarySidebar>

@@ -17,8 +17,10 @@ import { WORKSPACE_KEY } from '../core/workspace'
 import { PANEL_KEY } from './usePanel'
 import { usePanelDom } from './usePanelDom'
 import { optionsFor } from '../core/panelOptions'
+import { rafOf, resizeObserverFor } from '../core/domContext'
 import { findLeafForPanel } from '../core/layoutTree'
-import type { HostedPanelPlacement, Label, LayoutNode, PanelInfo } from '../types'
+import type { HostedPanelPlacement, Label, LayoutNode, PanelInfo, PopOutResult } from '../types'
+import { usePopOutWindows } from './usePopOutWindows'
 import type { ContextMenuItem } from '../core/contextMenu'
 import type { OutTarget } from '../core/widgetPlacement'
 import type {
@@ -39,7 +41,8 @@ export function containerKey(
 ): string {
   const panel = hostedId ? state.panels[hostedId] : undefined
   if (!hostedId || !panel) return 'panel'
-  if (panel.state === 'floating') return 'floating'
+  // In its own browser window (1.14.0): still 'floating' (its panel is), but another container.
+  if (panel.state === 'floating') return panel.poppedOut ? 'floating|out' : 'floating'
   if (panel.state === 'minimized') return 'minimized'
   const leaf = findLeafForPanel(state.gridRoot, hostedId)
   return `${leaf === findLeafForPanel(state.gridRoot, ownerId) ? 'tabbed' : 'docked'}|${leaf ?? ''}`
@@ -57,6 +60,10 @@ export function useWidgetHosting(store: PanelOverlayStore): WidgetHostingPort {
   // The owner panel's id. A modal or side panel provides a panel context too, but its id is not
   // in the layout, so move() refuses there as it does outside any panel.
   const ownerId = inject(PANEL_KEY, null)?.id ?? null
+  /** The desktop's pop-out windows (1.14.0); null outside a `<VddDesktop>`. */
+  const popOuts = usePopOutWindows()
+  /** Widgets already warned about `canPopOut` on a workspace without `popOut`. */
+  const warned = new Set<string>()
 
   const hostedIds = reactive<Record<string, string>>({})
   /**
@@ -65,7 +72,11 @@ export function useWidgetHosting(store: PanelOverlayStore): WidgetHostingPort {
    * to settle `onMoved` itself), and the last move's target (`target`, for `placement()`: what
    * the grid alone can't say, which side and how big).
    */
-  const hosted = new Map<string, { panelId: string; unregister: () => void; key: string; target: WidgetTarget }>()
+  const hosted = new Map<string, {
+    panelId: string; unregister: () => void; key: string; target: WidgetTarget
+    /** Its window is closing to bring it back into its panel (1.14.0): its panel's steps until then are not moves. */
+    returning?: boolean
+  }>()
   /** Each widget's `onWillMove` / `onMoved` callbacks (7.11, M5). */
   const listeners = new Map<string, { will: Set<() => void>; moved: Set<() => void> }>()
   const fire = (id: string, kind: 'will' | 'moved'): void => {
@@ -83,13 +94,15 @@ export function useWidgetHosting(store: PanelOverlayStore): WidgetHostingPort {
       observer?.disconnect()
       fire(id, 'moved')
     }
-    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(entries => {
+    // The element's own window's observer and frames (1.14.0): it may be in a pop-out.
+    const observer = resizeObserverFor(el, entries => {
       if (entries.some(e => e.contentRect.width > 0 && e.contentRect.height > 0)) finish()
     })
     observer?.observe(el)
-    const frame = typeof requestAnimationFrame === 'undefined'
+    const raf = rafOf(el)
+    const frame = raf === null
       ? (cb: () => void) => setTimeout(cb, 16)
-      : requestAnimationFrame
+      : raf
     frame(() => frame(finish))
   }
 
@@ -180,7 +193,19 @@ export function useWidgetHosting(store: PanelOverlayStore): WidgetHostingPort {
     // The app's titleMenu items lead the hosted panel's own menus (M4). The getter reads the
     // widget's config each time, so a re-open with a new titleMenu applies at once.
     const unregisterMenu = ws.registerPanelMenu(panelId, () => menuItems(id))
-    const unregister = (): void => { unregisterClose(); unregisterMenu() }
+    // Its own window (1.14.0): popOutPanel / returnPanel on this panel id go through the widget, and
+    // closing that window sends it back into its panel, with one onWillMove / onMoved pair.
+    const unregisterPopOut = popOuts?.registerHosted(panelId, {
+      popOut: () => popOut(id),
+      returning: () => {
+        fire(id, 'will')
+        // Its panel floats (or goes back where it was) for a moment: not a move of its own.
+        const entry = hosted.get(id)
+        if (entry) entry.returning = true
+      },
+      returned: () => detach(id, true),
+    }) ?? (() => {})
+    const unregister = (): void => { unregisterClose(); unregisterMenu(); unregisterPopOut() }
     const nowIn = containerKey(ws.state, panelId, ownerId)
     // Its hosted panel's element moves the content wherever the user takes it: it keeps embeds too.
     if (widget.preserveEmbeds) dom.preserveEmbeds(panelId)
@@ -192,6 +217,63 @@ export function useWidgetHosting(store: PanelOverlayStore): WidgetHostingPort {
     // settle it here (rdd 7.11.0).
     if (wasIn !== undefined && wasIn === nowIn) settled(id)
     return { ok: true }
+  }
+
+  const isPoppedOut = (id: string): boolean => {
+    const entry = hosted.get(id)
+    return !!entry && ws?.state.panels[entry.panelId]?.poppedOut === true
+  }
+
+  /**
+   * Into its own browser window (1.14.0): from the panel it leaves it first (into its own floating
+   * panel), as one step; from docked, tabbed, floating or minimised its panel pops out. The checks
+   * come first, so a refusal changes nothing; then the window opens, still inside the user's click
+   * (nothing here waits), and only then does the widget move.
+   */
+  const popOut = (id: string): PopOutResult => {
+    if (!ws) return { ok: false, reason: 'disabled' }
+    if (!ws.popOutEnabled) return ws.popOutPanel(id)   // 'disabled', with its development warning
+    const widget = store.managed.get(id)
+    const el = store.content.get(id)
+    if (!widget || !el) return { ok: false, reason: 'not-open' }
+    const owner = ownerId ? ws.state.panels[ownerId] : undefined
+    // Its own opt-in; and a workspace panel to take it out of, whose content stays mounted.
+    if (!widget.canPopOut || !dom || !ownerId || !owner || owner.owner
+      || optionsFor(ws.registry, owner)?.keepAlive === false) return { ok: false, reason: 'not-allowed' }
+    // No desktop to show a window's content.
+    if (!popOuts) return { ok: false, reason: 'no-window' }
+    const current = hosted.get(id)
+    if (current) return popOuts.popOut(current.panelId, { prepare: () => true })
+    // Still in the panel: the window opens over where the widget is, on its owner's window's screen.
+    const root = store.container.value
+    const frame = root
+      ? Array.from(root.querySelectorAll<HTMLElement>('[data-vdd-widget]')).find(f => f.getAttribute('data-vdd-widget') === id)
+      : undefined
+    const r = frame?.getBoundingClientRect()
+    return popOuts.popOut(`${ownerId}/${id}`, {
+      rect: r && r.width > 0 ? { left: r.left, top: r.top, width: r.width, height: r.height } : null,
+      // Measured in its owner's window, which may be a pop-out of its own (rdd 7.12.1).
+      view: frame?.ownerDocument.defaultView ?? undefined,
+      prepare: () => {
+        if (!move(id, { to: 'floating' }).ok) return false
+        // Out of the panel and into the window are one move: one onWillMove (fired), one onMoved.
+        const entry = hosted.get(id)
+        if (entry) entry.key = 'floating|out'
+        return true
+      },
+    })
+  }
+
+  /** `canPopOut` on a workspace without `popOut`: said once per widget, outside production. */
+  const opened = (id: string, widget: ManagedWidget): void => {
+    if (!widget.canPopOut || !ws || ws.popOutEnabled || warned.has(id)) return
+    warned.add(id)
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn(
+        `[vue-dockable-desktop] Widget "${id}" sets canPopOut, but this workspace was created without ` +
+        'popOut, so it can\'t open in its own window. Pass createWorkspace({ popOut: true }) to enable it.',
+      )
+    }
   }
 
   const location = (id: string): WidgetLocation | null => {
@@ -217,6 +299,9 @@ export function useWidgetHosting(store: PanelOverlayStore): WidgetHostingPort {
       id,
       location: location(id) ?? 'panel',
       ...capabilities(widget),
+      canPopOut: widget.canPopOut === true && !!ws?.popOutEnabled,
+      isPoppedOut: isPoppedOut(id),
+      popOut: () => popOut(id),
       move: to => move(id, to),
       close: () => store.closeManaged(id),
     })
@@ -307,6 +392,8 @@ export function useWidgetHosting(store: PanelOverlayStore): WidgetHostingPort {
           if (!(entry.panelId in ws.state.panels)) continue   // gone: a close, or a layout load
           const key = containerKey(ws.state, entry.panelId, ownerId)
           if (key === entry.key || key.endsWith('|')) continue
+          // On its way back into its panel from its window: `returning` fired onWillMove already.
+          if (entry.returning) { entry.key = key; continue }
           if (!moving.has(id)) {
             moving.set(id, entry.key)
             fire(id, 'will')
@@ -330,7 +417,7 @@ export function useWidgetHosting(store: PanelOverlayStore): WidgetHostingPort {
   })
 
   return {
-    hostedIds, move, location, release: id => detach(id, true), refresh,
+    hostedIds, move, location, popOut, isPoppedOut, opened, release: id => detach(id, true), refresh,
     menuItems, ownerPanelId, keyOf, listen, settled, outTarget, preserveOwner,
   }
 }

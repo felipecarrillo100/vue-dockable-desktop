@@ -8,7 +8,7 @@
  * shows `useWidget().location`, and the move callbacks record the element's size.
  */
 import { ref } from 'vue'
-import { useWidget } from 'vue-dockable-desktop'
+import { usePanelWindow, useWidget } from 'vue-dockable-desktop'
 
 const n = ref(0)
 
@@ -16,8 +16,10 @@ const n = ref(0)
 const widget = useWidget()
 type Call = { kind: 'will' | 'moved'; size: [number, number]; location: string }
 const probe = (window as unknown as { __overlay: { widgets: { calls?: Call[] } } }).__overlay.widgets
+// In the widget's own window too (1.14.0, P5): the document it is shown in.
+const panelWindow = usePanelWindow()
 const size = (): [number, number] => {
-  const el = document.querySelector<HTMLElement>('.vdd-panel-float__content')
+  const el = panelWindow.document.querySelector<HTMLElement>('.vdd-panel-float__content')
   return [el?.offsetWidth ?? 0, el?.offsetHeight ?? 0]
 }
 const record = (kind: Call['kind']) => () => {

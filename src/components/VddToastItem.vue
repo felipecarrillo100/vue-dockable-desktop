@@ -17,6 +17,7 @@ import type { Component } from 'vue'
 import type { ToastRecord, ToastType } from '../core/toast'
 import { startExit } from '../core/toast'
 import VddToastIcon from './VddToastIcon.vue'
+import { rafOf, resizeObserverFor } from '../core/domContext'
 import { useLibraryMessage } from '../composables/useLibraryMessage'
 
 /** The library's own strings, translated when a workspace is present. */
@@ -102,12 +103,13 @@ function applyHeight(): void {
 onMounted(() => {
   applyHeight()
   // jsdom has no ResizeObserver; the height sync is a browser refinement, not behaviour.
-  if (typeof ResizeObserver !== 'undefined' && body.value) {
-    observer = new ResizeObserver(applyHeight)
-    observer.observe(body.value)
+  // Element-relative (1.14.0): the card's own window's observer and frame.
+  if (body.value) {
+    observer = resizeObserverFor(body.value, applyHeight)
+    observer?.observe(body.value)
   }
   if (props.animation !== 'none') {
-    requestAnimationFrame(() => { entryClass.value = 'vdd-toast--visible' })
+    rafOf(card.value)?.(() => { entryClass.value = 'vdd-toast--visible' })
   }
 })
 

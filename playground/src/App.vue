@@ -14,6 +14,7 @@ import {
 } from 'vue-dockable-desktop'
 import type { SidebarTab, ToolbarItem } from 'vue-dockable-desktop'
 import HostilePanel from './HostilePanel.vue'
+import RcWrapper from './RcWrapper.vue'
 
 const ws = useWorkspace()
 const taskbar = ref<'always' | 'compact' | 'autohide'>('always')
@@ -35,6 +36,18 @@ const toolbarPosition = ref<'left' | 'right' | 'top' | 'bottom'>('left')
 const params = new URLSearchParams(location.search)
 const animations = ref(params.get('anim') !== '0')
 const skin = ref(params.get('skin') ?? 'vscode')
+// ?po=1 (the M18 gate): the pop-out buttons; ?pourl=1: the playground's own pop-out page.
+const popOut = params.get('po') === '1'
+const popoutUrl = params.get('pourl') === '1' ? '/popout.html' : undefined
+const poResult = ref<unknown>(null)
+// ?rc=1 (M18, P4): the runtime CSS-in-JS stand-in's popoutWrapper (runtimeCss.ts).
+const popoutWrapper = params.get('rc') === '1' ? markRaw(RcWrapper) : undefined
+;(window as unknown as Record<string, unknown>).__poResult = poResult
+/** `?wo=1` (P5): `useFloatingWidgets().popOut('wo')` from a real click in the page. */
+function popOutWidget(): void {
+  const w = window as unknown as { __overlay?: { widgets?: { api: { popOut(id: string): unknown } } }; __woPopResult?: unknown }
+  w.__woPopResult = w.__overlay?.widgets?.api.popOut('wo')
+}
 // The toast container's own options, so the gate can reach every position and the progress
 // bar — one mount can only render one position at a time.
 const toastPosition = ref<'top-right' | 'top-left' | 'bottom-left' | 'bottom-right'>('top-right')
@@ -126,6 +139,14 @@ const toolbarItems = ref<ToolbarItem[]>([
       <button data-act="restore" @click="ws.restorePanel('a')">restore a</button>
       <button data-act="anchor" @click="ws.updateFloatingPosition('a', { anchor: 'top-right' })">anchor a</button>
       <button data-act="max" @click="ws.maximizePanel('a')">max a</button>
+      <!-- ?po=1 (M18): the pop-outs, from a real click; the result is kept for the gate. -->
+      <template v-if="popOut">
+        <button id="po-btn" @click="poResult = ws.popOutPanel('pp')">pop out pp</button>
+        <button id="po-btn-q" @click="ws.popOutPanel('pq')">pop out q</button>
+        <!-- ?wo=1 (P5): the managed widget into its own window; ?opo=1: its owner panel. -->
+        <button id="wo-po-btn" @click="popOutWidget">pop out wo</button>
+        <button id="ov-po-btn" @click="ws.popOutPanel('ov')">pop out ov</button>
+      </template>
       <span data-active>{{ ws.state.activePanelId }}</span>
     </div>
 
@@ -150,6 +171,8 @@ const toolbarItems = ref<ToolbarItem[]>([
               :taskbar="taskbar"
               :animations="animations"
               :skin="skin"
+              :popout-url="popoutUrl"
+              :popout-wrapper="popoutWrapper"
             >
               <template v-if="emptyView" #empty-workspace>
                 <p data-playground-empty-view>No panel is open.</p>

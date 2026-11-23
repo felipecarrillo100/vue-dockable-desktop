@@ -281,6 +281,11 @@ into an existing chain.
 Beyond `maxVisible`, toasts queue and are promoted as the ones on screen leave. A queued
 toast can still be dismissed by id before it is ever shown.
 
+**With pop-out windows** (1.14.0), a toast shows in the window the user is in: raised while a
+pop-out has focus, it shows there, otherwise in the page. It stays in that window and goes when the
+window closes; `maxVisible` counts every window's together. Modals and side panels stay in the main
+window. See [Chapter 15](15-popout-windows.md#toasts).
+
 ### Using your own notification UI
 
 Pass an `adapter` to route every `toast.*` call to another library — Sonner, Vuetify's

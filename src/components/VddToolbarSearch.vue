@@ -12,6 +12,7 @@ import { computed, nextTick, onBeforeUnmount, ref, useTemplateRef } from 'vue'
 import type { Component } from 'vue'
 import { useWorkspace } from '../composables/useWorkspace'
 import { claimEscape, isEscapeClaimed } from '../core/escape'
+import { docOf, isNode, winOf } from '../core/domContext'
 
 /** One row in the dropdown. */
 export interface SearchResult {
@@ -41,7 +42,8 @@ const input = useTemplateRef<HTMLInputElement>('input')
 const expanded = ref(false)
 const query = ref('')
 const results = ref<SearchResult[]>([])
-const dropdown = ref<{ top: number; left: number; width: number } | null>(null)
+/** Where the dropdown sits, and the body it renders into: the field's own document's (1.14.0). */
+const dropdown = ref<{ top: number; left: number; width: number; body: HTMLElement } | null>(null)
 
 let controller: AbortController | null = null
 let timer: ReturnType<typeof setTimeout> | null = null
@@ -78,8 +80,9 @@ function place(): void {
   if (!node || results.value.length === 0) { dropdown.value = null; return }
   const r = node.getBoundingClientRect()
   const width = Math.max(r.width, 240)
-  const left = Math.min(r.left, window.innerWidth - width - 8)
-  dropdown.value = { top: r.bottom + 4, left: Math.max(8, left), width }
+  // Fitted to the field's window (a pop-out's, for a panel shown there).
+  const left = Math.min(r.left, winOf(node)!.innerWidth - width - 8)
+  dropdown.value = { top: r.bottom + 4, left: Math.max(8, left), width, body: docOf(node).body }
 }
 
 function onInput(): void {
@@ -110,7 +113,7 @@ function choose(result: SearchResult): void {
 /** Collapse when focus leaves the field entirely, but not when it moves inside it. */
 function onFocusOut(event: FocusEvent): void {
   const next = event.relatedTarget
-  if (next instanceof Node && root.value?.contains(next)) return
+  if (isNode(next) && root.value?.contains(next)) return
   collapse()
 }
 
@@ -167,7 +170,7 @@ onBeforeUnmount(reset)
       Teleported so the toolbar's bounds cannot clip the dropdown. Its z-index comes from the
       stylesheet, against --vdd-z-base, so `zIndexBase` moves it with everything else.
     -->
-    <Teleport v-if="dropdown && results.length" to="body">
+    <Teleport v-if="dropdown && results.length" :to="dropdown.body">
       <div
         class="vdd-panel-toolbar-search__dropdown"
         :style="{ position: 'fixed', top: `${dropdown.top}px`, left: `${dropdown.left}px`, width: `${dropdown.width}px` }"
